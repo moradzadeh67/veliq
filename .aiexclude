@@ -1,0 +1,56 @@
+# .aiexclude - Veliq (Flutter macOS desktop + Swift)
+
+# 1. Secrets
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+*.p12
+*.pem
+*.key
+*.crt
+key.properties
+secrets.*
+credentials.*
+
+# 2. Flutter / Dart build and generated
+build/
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+*.g.dart
+*.freezed.dart
+*.gr.dart
+
+# 3. IDE and OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# 4. Temporary / backup
+*.tmp
+*.temp
+*.log
+*.bak
+*.orig
+*.swp
+*.swo
+
+# 5. macOS native build output
+macos/Flutter/ephemeral/
+macos/Pods/
+macos/Runner.xcodeproj/project.xcworkspace/xcshareddata/
+macos/Runner.xcodeproj/xcuserdata/
+macos/Runner.xcworkspace/xcshareddata/
+
+# 6. Tests output
+coverage/
+*.lcov
+
+# 7. Not useful for agents
+LICENSE
+pubspec.lock
