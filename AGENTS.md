@@ -40,3 +40,5 @@ NOTES: <max 2 lines, optional>
 ## Sync command
 If I write `fdfd`: re-read AGENTS.md, AGENTS.PROJECT.md and CURRENT_TASK.md.
 This is read-only. It is NOT permission to change anything.
+
+- Do NOT run git commit, git push, git reset or git checkout. I do all git operations myself.
