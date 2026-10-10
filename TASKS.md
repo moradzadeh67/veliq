@@ -3,7 +3,7 @@ Legend: [S] Qwen 4B can do it · [L] needs a strong model
 Status: TODO | DOING | DONE | BLOCKED
 
 ## Phases
-P0 Scaffold ................ DOING   (T-001, T-002)
+P0 Scaffold ................ DONE
 P1 Research & decisions .... TODO   (all [L]; results go into docs/ARCHITECTURE.md)
 P2 Capture MVP ............. TODO   (split into tasks after P1 handover)
 P3 OCR ..................... TODO
@@ -18,7 +18,7 @@ Folders, .gitkeep and feature placeholder files are created by the setup script 
 - Files: lib/main.dart
 - Do: see CURRENT_TASK.md (exact code is given there)
 - Done when: `flutter analyze lib/main.dart` clean
-- Status: TODO
+- Status: DONE
 
 ### T-002 · [S] Replace the default widget test
 - Files: test/widget_test.dart
@@ -37,7 +37,7 @@ void main() {
 - Don't: Do not change lib/main.dart or pubspec.yaml. No new packages.
 - Ctx: AGENTS.md, AGENTS.PROJECT.md, lib/main.dart
 - Done when: `flutter test test/widget_test.dart` passes + `flutter analyze` clean
-- Status: TODO
+- Status: DONE
 
 ## P1 — Research & decisions (all [L]; not started)
 Each task ends with: findings written to docs/ARCHITECTURE.md (decision table) and
