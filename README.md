@@ -1,4 +1,4 @@
-# velig
+# veliq
 
 A new Flutter project.
 
