@@ -48,13 +48,13 @@ marked VERIFIED or UNVERIFIED. No production code.
       CGWindowListCreateImage is still usable on target macOS versions, or whether
       ScreenCaptureKit is required. Define Retina / multi-display coordinate rules.
 - Done when: D-003 in ARCHITECTURE.md is decided, with a reproducible test note.
-- Status: TODO
+- Status: DONE
 
 ### T-011 · [L] Choose global shortcut approach
 - Do: Compare native API vs maintained Flutter plugin; test foreground/background,
       conflicts, sleep/wake, and whether Accessibility permission is needed.
 - Done when: D-004 decided; docs/MACOS_PERMISSIONS.md updated.
-- Status: TODO
+- Status: DEFERRED
 
 ### T-012 · [L] Choose translation provider
 - Do: Pick provider(s) for text-only translation to Persian; document cost, limits,

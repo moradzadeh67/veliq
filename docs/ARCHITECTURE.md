@@ -47,7 +47,7 @@ no analytics. See docs/PRIVACY.md.
 |---|---|---|---|
 | D-001 | State management | BLoC | DECIDED |
 | D-002 | Dart<->Swift bridge | Pigeon | PLANNED, verify in T-014 |
-| D-003 | Screen capture API | CGWindowListCreateImage was the original idea; it may be deprecated/unavailable on newer macOS (UNVERIFIED). Candidate alternative: ScreenCaptureKit | OPEN, T-010 |
+| D-003 | Screen capture API | ScreenCaptureKit (SCScreenshotManager); CGWindowListCreateImage is obsoleted in macOS 15 SDK. Minimum macOS 14. Region capture, Retina and multi-display conversion, and macOS 27 behavior are UNVERIFIED | DECIDED (API), UNVERIFIED (details) |
 | D-004 | Global shortcut | native API vs maintained Flutter plugin | OPEN, T-011 |
 | D-005 | Translation provider | text-only provider | OPEN, T-012 |
 | D-006 | Local storage (history/settings) | undecided | OPEN, T-013 |
