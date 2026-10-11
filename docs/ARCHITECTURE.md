@@ -46,12 +46,12 @@ no analytics. See docs/PRIVACY.md.
 | ID | Topic | Decision | Status |
 |---|---|---|---|
 | D-001 | State management | BLoC | DECIDED |
-| D-002 | Dart<->Swift bridge | Pigeon | PLANNED, verify in T-014 |
+| D-002 | Dart<->Swift bridge | Pigeon | DECIDED (verified in T-014) |
 | D-003 | Screen capture API | ScreenCaptureKit (SCScreenshotManager); CGWindowListCreateImage is obsoleted in macOS 15 SDK. Minimum macOS 14. Region capture, Retina and multi-display conversion, and macOS 27 behavior are UNVERIFIED | DECIDED (API), UNVERIFIED (details) |
 | D-004 | Global shortcut | native API vs maintained Flutter plugin | OPEN, T-011 |
-| D-005 | Translation provider | text-only provider | OPEN, T-012 |
-| D-006 | Local storage (history/settings) | undecided | OPEN, T-013 |
-| D-007 | OCR | Apple Vision (VNRecognizeTextRequest), local | PLANNED, verify when implemented |
+| D-005 | Translation provider | Apple Translation framework (on-device) via `TranslationService` abstraction. Local-first, zero cost, zero API keys, complete privacy. Pluggable interface for alternative text-only providers. NOTE (verified in T-041): the programmatic `TranslationSession(installedSource:target:)` API is only available on macOS 26.0+, so the native handler is `#available(macOS 26.0)`-guarded and returns nil on older systems (Dart side must fall back). | DECIDED (API), UNVERIFIED (fallback UX) |
+| D-006 | Local storage (history/settings) | `shared_preferences` (backed by NSUserDefaults) for app settings; JSON file at `~/Library/Application Support/veliq/history.json` for translation history (`JsonHistoryRepository`). Both behind service interfaces; no cloud sync. | DECIDED |
+| D-007 | OCR | Apple Vision (VNRecognizeTextRequest), local | DECIDED |
 | D-008 | IDE | Android Studio daily; Xcode only for deep Swift/permission/profiling issues | DECIDED |
 
 An OPEN decision must not be implemented until its task is DONE.

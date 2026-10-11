@@ -40,6 +40,27 @@ Capture is not independent of display geometry. Verify:
 - selection rectangle conversion
 A capture that looks right on one Mac is not proof that conversion is correct.
 
+### Current implementation status: INCOMPLETE (verified by code review)
+`ScreenCaptureHandler.captureRegion` in `macos/Runner/MainFlutterWindow.swift`
+currently maps the Flutter selection rectangle straight onto
+`SCStreamConfiguration.sourceRect` with no conversion:
+
+- **No Retina scaling.** On a 2x display the requested logical rect is applied to a
+  backing-store coordinate space, so the captured region is offset and smaller than
+  the region the user drew.
+- **No display selection.** The handler always uses `content.displays.first` and
+  ignores which display the selection was made on. Selecting on a secondary display
+  captures from the primary display instead.
+- **No multi-display origin handling.** Display origins (including negative
+  coordinates for displays arranged left of / above the main one) are not applied.
+
+Consequence: the app is usable only on a single, non-Retina-scaled display until
+this is fixed. The PROJECT_SPEC.md MVP acceptance criteria ("works on a Retina display
+and on a second display") are **not yet met**. Tracking task: T-063.
+
+Do not treat this as a permission problem when reproducing; the failure looks like an
+off-by-region capture, not a denial.
+
 ## Permission denial UX
 - show a clear error state
 - explain the required permission

@@ -63,6 +63,10 @@ credentials.*
 *.bak
 *.orig
 
+# --- Local agent/IDE session artifacts (must never be committed) ---
+*.artifact.md
+.aiexclude
+
 coverage/
 macos/Pods/
 **/Pods/

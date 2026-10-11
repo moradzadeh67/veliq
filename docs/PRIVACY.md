@@ -24,15 +24,43 @@ A selected region may contain sensitive information.
 - The OCR service returns text and relevant metadata and does not retain the source image unnecessarily.
 
 ## Translation
-The translation layer is abstracted behind a service interface, conceptually:
-`TranslationService.translate(text, sourceLanguage, targetLanguage)`
+The translation layer is abstracted behind a service interface:
+`TranslationService.translateText(text, sourceLanguage, targetLanguage)`
 
-- Send extracted text, never the original screenshot.
-- Do not log full user text in production by default.
-- Never commit API keys or secrets.
-- Handle network failures explicitly.
-- Document the chosen provider's privacy policy before production use.
-- If a provider needs a different data flow, document it before implementation.
+Veliq ships two providers, chosen by the user in Settings. Which one is active
+is the only thing that decides whether text leaves the machine.
+
+### Apple (on-device)
+- **Privacy**: Text is translated on the machine; nothing is sent anywhere.
+- **Availability**: The programmatic `TranslationSession` API requires macOS 26.0+.
+  On older systems this provider cannot translate at all.
+- **Languages**: Limited to the roughly 21 languages Apple ships. **Persian is not
+  among them**, so this provider cannot produce Persian output.
+- **Cost & Limits**: Free. No API key, no subscription.
+
+### Google Gemini (cloud)
+- **Privacy**: The extracted text **is sent to Google** for translation. This is a
+  deliberate, user-selected exception to the local-first principle:
+  screenshots are still never uploaded — only the recognized text.
+- **Requirements**: A user-supplied Google AI (Gemini) API key, created at
+  https://aistudio.google.com/apikey.
+- **Data Flow**: The recognized text travels inside a single prompt, with
+  `temperature: 0`. No screenshots, no history, no identifiers.
+- **Cost & Limits**: Billed by Google against the user's own key.
+- **Why not Cloud Translation**: its API answers a plain API key with
+  `CREDENTIALS_MISSING` — "API keys are not supported by this API" — for many
+  projects, and demands OAuth2 instead. That would mean shipping a
+  service-account private key inside a desktop app, which is not acceptable.
+  Gemini accepts an ordinary API key.
+
+### Shared rules
+- **Data Flow**: Send extracted text only (never screenshots).
+- **Logging & Security**: Do not log full user text in production. The API key is
+  stored only in this Mac's local app preferences and must never be committed
+  (see "Security rules"). Error messages surfaced to the UI must not contain the
+  key or the translated text.
+- **Extensibility**: The pluggable `TranslationService` interface allows further
+  text-only providers.
 
 ## Local history (if enabled)
 - Store only what the history feature needs.

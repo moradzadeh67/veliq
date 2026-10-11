@@ -25,3 +25,19 @@ License: MIT (see LICENSE). The repository is public.
 6. LICENSE has the correct copyright holder name.
 7. README documents required macOS permissions.
 8. Verify permission flows on a clean machine or a separate macOS user account.
+
+## Hygiene review — 2026 (T-062)
+
+| # | Check | Result |
+|---|-------|--------|
+| 1 | `git ls-files` for secrets/build/IDE | PASS — no matches |
+| 2 | Secret scan of working tree + history | PASS — no credentials; history clean |
+| 3 | Manual review of `api_key|secret|token|password|/Users/` hits | PASS — all hits are docs or ignore-pattern text, no values |
+| 4 | No real API keys in source | PASS — Veliq has no API keys by design (on-device OCR + Apple Translation) |
+| 5 | Git author email | PASS — `139646005+moradzadeh67@users.noreply.github.com` |
+| 6 | LICENSE copyright holder | PASS — `Copyright (c) 2026 moradzadeh67` |
+| 7 | README documents macOS permissions | PASS — added the Screen Recording section and macOS 26 translation requirement |
+| 8 | Clean-machine permission verification | **TODO — not done**; needs a separate macOS user account |
+| — | Local agent/IDE artifacts | FIXED in T-062 — `*.artifact.md` and `.aiexclude` added to `.gitignore` |
+
+Remaining before a public release: item 8, and the capture-coordinate fix in T-063.
