@@ -280,34 +280,6 @@ class MessagesPigeonCodec: FlutterStandardMessageCodec, @unchecked Sendable {
 
 
 /// Generated protocol from Pigeon that represents a handler of messages from Flutter.
-protocol PingApi {
-  func ping(message: String) throws -> String
-}
-
-/// Generated setup class from Pigeon to handle messages through the `binaryMessenger`.
-class PingApiSetup {
-  static var codec: FlutterStandardMessageCodec { MessagesPigeonCodec.shared }
-  /// Sets up an instance of `PingApi` to handle messages through the `binaryMessenger`.
-  static func setUp(binaryMessenger: FlutterBinaryMessenger, api: PingApi?, messageChannelSuffix: String = "") {
-    let channelSuffix = messageChannelSuffix.count > 0 ? ".\(messageChannelSuffix)" : ""
-    let pingChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.veliq.PingApi.ping\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
-    if let api = api {
-      pingChannel.setMessageHandler { message, reply in
-        let args = message as! [Any?]
-        let messageArg = args[0] as! String
-        do {
-          let result = try api.ping(message: messageArg)
-          reply(wrapResult(result))
-        } catch {
-          reply(wrapError(error))
-        }
-      }
-    } else {
-      pingChannel.setMessageHandler(nil)
-    }
-  }
-}
-/// Generated protocol from Pigeon that represents a handler of messages from Flutter.
 protocol SelectionApi {
   /// Presents a native, borderless, full-screen region picker that covers every
   /// attached display, so the user can drag a selection over any application.

@@ -28,11 +28,6 @@ class CaptureRect {
 }
 
 @HostApi()
-abstract class PingApi {
-  String ping(String message);
-}
-
-@HostApi()
 abstract class SelectionApi {
   /// Presents a native, borderless, full-screen region picker that covers every
   /// attached display, so the user can drag a selection over any application.
