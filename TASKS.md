@@ -9,7 +9,7 @@ P2 Capture MVP ............. DONE
 P3 OCR ..................... DONE
 P4 Translation ............. DONE
 P5 History & settings ...... DONE
-P6 Polish & release ........ DOING (open: T-071)
+P6 Polish & release ........ DONE
 
 ## P0 — Scaffold
 Folders, .gitkeep and feature placeholder files are created by the setup script (not a task).
@@ -245,5 +245,5 @@ Needs a strong model (platform security behavior). Decision D-009 in docs/ARCHIT
 
 ### T-071 · [L] Real README and release checklist
 - Do: README with description, features, status, build instructions, required permissions, privacy (incl. Gemini note), license. Run the checklist in docs/RELEASE.md (gitleaks on full history, author email, About/Topics).
-- Status: TODO
+- Status: DONE (2026-10-12) — README: Status section added, macOS 14.6, AI Studio link, 167 tests, stale T-063 limitation replaced. Checklist items 1-7 PASS (gitleaks full history: no leaks; results table in docs/RELEASE.md). Items left to the user: #8 (clean machine) and GitHub About/Topics.
 

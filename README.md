@@ -10,6 +10,12 @@ Veliq is a small, local-first macOS utility built with **Flutter (Dart)** and a 
 Screenshots never leave your Mac and are never written to disk: capture and OCR run on-device with Apple's
 ScreenCaptureKit and Vision frameworks. Only the extracted **text** is sent to the translation provider.
 
+## Status
+
+Works end to end on macOS 14.6+ for personal use: region select -> on-device OCR -> Gemini translation ->
+local history. Builds are unsigned; the public-release checklist lives in
+[docs/RELEASE.md](docs/RELEASE.md) (one item outstanding).
+
 ## Features
 
 - Drag-select any region of the screen, from a full-screen overlay (`Esc` cancels)
@@ -28,9 +34,9 @@ select region (Swift overlay) -> capture (ScreenCaptureKit) -> OCR (Vision, on-d
 
 ## Requirements
 
-- macOS 14 or later <!-- TODO: confirm with MACOSX_DEPLOYMENT_TARGET in the Xcode project -->
+- macOS 14.6 or later (the Xcode deployment target)
 - **Screen Recording** permission (required to capture the selected region)
-- A Google Gemini API key (create one in Google AI Studio) <!-- TODO: link the official page after checking it -->
+- A Google Gemini API key (create one in [Google AI Studio](https://aistudio.google.com/apikey))
 
 ## Getting started
 
@@ -83,7 +89,7 @@ Pigeon-generated interface. Decisions and their status (with sources for platfor
 ```bash
 flutter pub get
 flutter analyze
-flutter test          # 160+ unit and widget tests
+flutter test          # 167 unit and widget tests
 flutter run -d macos
 ```
 
@@ -107,7 +113,7 @@ test/                         mirrors lib/
 
 ## Known limitations
 
-- Region capture on a **second display / Retina scaling** is not fully verified yet (tracked in TASKS.md, T-063).
+- Displays placed **above** the main one (negative-coordinate layouts) were not reproducible to test; Retina and a side-by-side second display are verified (T-063).
 - Builds are unsigned; see "Getting started" for first launch.
 - Global shortcut is deferred.
 

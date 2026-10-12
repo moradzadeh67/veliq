@@ -1,6 +1,6 @@
 # CURRENT_TASK.md
 
-### P6 — Polish & release (T-060..T-063, T-065..T-070 DONE)
+### P6 — Polish & release (T-060..T-063, T-065..T-071 DONE — phase complete)
 
 The core gap that P5 left behind is now closed: the capture -> OCR -> translate
 -> history pipeline is wired end to end and reachable from the UI.
@@ -28,11 +28,18 @@ The core gap that P5 left behind is now closed: the capture -> OCR -> translate
   `gemini-3.5-flash-lite` (what the fallback serves) is Google's recommended
   model for new projects; quota numbers UNVERIFIED (official rate-limits page
   has no static RPD table → AI Studio). Details: TASKS.md T-070, D-005.
+- **T-071 DONE** — README completed (Status section, macOS 14.6, AI Studio
+  link, 167 tests, stale T-063 limitation replaced) and the release checklist
+  re-run: items 1-7 PASS, gitleaks full history clean (details table in
+  docs/RELEASE.md).
 
-### Next: open task T-071
-- **T-071** [L] Real README and release checklist (docs/RELEASE.md).
+### Next: no open tasks — every task in TASKS.md is DONE
+Wait for the user's next instruction (e.g. new tasks, a phase P7, or the
+GitHub-side release items below).
 
 ### Also outstanding
 - Release hygiene item 8 (verify permissions on a clean machine / separate user account).
+- GitHub repository About/Topics (user, browser).
 - `D-004` (global shortcut) still OPEN/DEFERRED.
-- No git commit made — all git operations are the user's.
+- T-071 edits (README.md, docs/RELEASE.md, TASKS.md, CURRENT_TASK.md) are not
+  committed yet — all git operations are the user's.

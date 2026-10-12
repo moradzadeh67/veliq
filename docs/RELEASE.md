@@ -40,4 +40,19 @@ License: MIT (see LICENSE). The repository is public.
 | 8 | Clean-machine permission verification | **TODO — not done**; needs a separate macOS user account |
 | — | Local agent/IDE artifacts | FIXED in T-062 — `*.artifact.md` and `.aiexclude` added to `.gitignore` |
 
-Remaining before a public release: item 8, and the capture-coordinate fix in T-063.
+## Hygiene review — 2026-10-12 (T-071)
+
+| # | Check | Result |
+|---|-------|--------|
+| 1 | `git ls-files` for secrets/build/IDE | PASS — no matches; `xcuserdata`, `Flutter/ephemeral` and `Pods/` confirmed ignored, not tracked |
+| 2 | Secrets scan of full git history | PASS — gitleaks 8.30.1, 32 commits, `no leaks found` |
+| 3 | Manual review of `api_key|secret|token|password|/Users/` hits | PASS — 1,807 hits reviewed: identifiers, URLs, policy docs, ignore patterns and synthetic test values (`test-api-key`, `key-1`, `legacy-key`); no real values and no personal `/Users/` paths in tracked files |
+| 4 | No real API keys in source | PASS — only the UI hint `'AIza...'` |
+| 5 | Git author email | PASS — `139646005+moradzadeh67@users.noreply.github.com` |
+| 6 | LICENSE copyright holder | PASS — `Copyright (c) 2026 moradzadeh67` |
+| 7 | README documents macOS permissions | PASS — dedicated "Permissions" section (Screen Recording only) |
+| 8 | Clean-machine permission verification | **TODO — not done**; needs a separate macOS user account (user's task) |
+
+Also outstanding for the user: GitHub repository **About/Topics** (browser), item 8 above.
+
+Remaining before a public release: item 8 and the GitHub About/Topics entry.
