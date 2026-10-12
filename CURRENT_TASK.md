@@ -1,16 +1,13 @@
 # CURRENT_TASK.md
 
-### T-100 · [L] Research: iOS image acquisition strategy   ⚠ strong model
+### T-110 · [S] Add iOS Info.plist privacy usage descriptions
 
-- Files: docs/ARCHITECTURE.md (add rows D-010, D-011, D-012 only)
-- Do: Decide and document (with Apple official sources):
-  1. Gallery: PHPickerViewController (PhotosUI) vs UIImagePickerController.
-  2. Camera: UIImagePickerController (rear camera, .photo).
-  3. Entitlements: which Info.plist keys are required for (1) and (2)?
-  4. iOS minimum version (recommend iOS 16+).
-  5. Defer decision: Share Extension (out of scope for MVP).
-  6. Defer decision: ReplayKit (why it does not solve our use case).
-- Don't: no production code, no Swift, no Dart, no pubspec changes.
-- Ctx: AGENTS.md, AGENTS.PROJECT.md
-- Done when: D-010, D-011, D-012 rows written in docs/ARCHITECTURE.md with status DECIDED or UNVERIFIED, each with a source URL.
+- Files: ios/Runner/Info.plist
+- Do: Add ONLY these keys inside the top-level <dict>:
+  <key>NSCameraUsageDescription</key>
+  <string>Veliq reads text from a photo you take, to translate it. Photos never leave your device.</string>
+  Do NOT add NSPhotoLibraryUsageDescription — D-012 says it is not required (PHPickerViewController is out-of-process).
+- Don't: no other key, no other file, do not reorder existing keys.
+- Ctx: AGENTS.md, AGENTS.PROJECT.md, ios/Runner/Info.plist, docs/ARCHITECTURE.md (row D-012 only)
+- Done when: `plutil -lint ios/Runner/Info.plist` prints "OK"
 - Status: TODO

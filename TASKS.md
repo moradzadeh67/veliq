@@ -259,19 +259,8 @@ P11 iOS polish & release ......... TODO
 ---
 
 ## P7 — iOS Research & decisions
-
-### T-100 · [L] Research: iOS image acquisition strategy   ⚠ strong model
-- Files: docs/ARCHITECTURE.md (add rows D-010, D-011, D-012)
-- Do: Decide and document (with Apple official sources):
-  1. Gallery: PHPickerViewController (PhotosUI) vs UIImagePickerController.
-  2. Camera: UIImagePickerController (rear camera, .photo).
-  3. Entitlements: which Info.plist keys are required for (1) and (2)?
-  4. iOS minimum version (recommend iOS 16+).
-  5. Defer decision: Share Extension (out of scope for MVP).
-  6. Defer decision: ReplayKit (why it does not solve our use case).
-- Don't: no production code, no Swift, no Dart, no pubspec changes.
-- Done when: D-010, D-011, D-012 rows written in docs/ARCHITECTURE.md with status DECIDED or UNVERIFIED, each with a source URL.
-- Status: TODO
+### T-100 · [L] Research: iOS image acquisition strategy
+- Status: DONE (2026-10-12) — D-010..D-014 added. Gallery: PHPickerViewController (no permission). Camera: UIImagePickerController (+ NSCameraUsageDescription only). iOS minimum: 16.0. Pigeon: no limitation for 2–5 MB JPEG.
 
 ---
 
