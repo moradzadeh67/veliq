@@ -295,7 +295,7 @@ Goal: user picks a photo from the gallery or takes a photo with the camera, app 
 - Don't: no other file. Do not modify existing services.
 - Ctx: AGENTS.md, AGENTS.PROJECT.md, lib/pigeon/messages.g.dart
 - Done when: `scripts/verify.sh lib/services` clean
-- Status: TODO
+- Status: DONE
 
 ### T-115 · [S] Unit test for PigeonImageSourceService with fake
 - Files: test/services/image_source_service_test.dart (new)
@@ -308,18 +308,33 @@ Goal: user picks a photo from the gallery or takes a photo with the camera, app 
 - Do: Add ImageSourceService dependency. Add PickImageFromGallery / TakePhoto events that run the same OCR → translate → save pipeline.
 - Don't: do not change ocr_bloc.dart or translation_bloc.dart.
 - Done when: `scripts/verify.sh lib/features/translation test/features/translation/bloc/translate_flow_bloc_test.dart` clean
-- Status: TODO
+- Status: DONE
 
 ### T-117 · [S] Add iOS capture buttons in TranslateView
 - Files: lib/features/translation/translate_view.dart
 - Do: If defaultTargetPlatform == iOS show "Pick image" and "Take photo" buttons. On macOS keep "Select region".
 - Don't: do not redesign layout.
 - Done when: `scripts/verify.sh lib/features/translation` clean
-- Status: TODO
+- Status: DONE
 
 ### T-118 · [L] Manual verification on a real iPhone
 - Files: (none — manual task)
 - Do: run `flutter run -d <device-id>` and verify 5 scenarios (gallery, camera, cancel, denied permission, history persists).
 - Done when: all five checks pass on a physical iPhone.
+- Status: TODO
+
+### T-119 · [S] Route iOS retry/again buttons to gallery picker
+
+- Files: lib/features/translation/translate_view.dart, test/features/translation/translate_view_test.dart
+- Do:
+  1. Find the `TranslateFlowFailure` "Try again" button.
+  2. Find `_ResultState` "Select another region" button.
+  3. On iOS (defaultTargetPlatform == TargetPlatform.iOS), instead of calling
+     _startSelection, call _pickFromGallery().
+  4. On macOS, keep the existing behavior.
+  5. Add widget tests for both iOS buttons.
+- Don't: Do NOT change macOS behavior.
+- Ctx: AGENTS.md, AGENTS.PROJECT.md, translate_view.dart (read first)
+- Done when: flutter test test/features/translation passes and analyze is clean.
 - Status: TODO
 

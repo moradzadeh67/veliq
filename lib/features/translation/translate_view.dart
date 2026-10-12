@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -52,6 +53,13 @@ class _TranslateViewState extends State<TranslateView> {
     );
   }
 
+  /// True on iOS/iPadOS, where there is no native screen-region overlay.
+  bool get _isIOS => defaultTargetPlatform == TargetPlatform.iOS;
+
+  Future<void> _pickFromGallery() => widget.bloc.pickImageFromGallery();
+
+  Future<void> _takePhoto() => widget.bloc.takePhoto();
+
   Future<void> _copy(String text) async {
     await Clipboard.setData(ClipboardData(text: text));
     if (!mounted) return;
@@ -69,11 +77,23 @@ class _TranslateViewState extends State<TranslateView> {
       appBar: AppBar(
         title: const Text('Translate'),
         actions: [
-          IconButton(
-            tooltip: 'Select a region',
-            onPressed: _selecting ? null : _startSelection,
-            icon: const Icon(Icons.crop_free),
-          ),
+          if (_isIOS) ...[
+            IconButton(
+              tooltip: 'Pick image',
+              onPressed: _pickFromGallery,
+              icon: const Icon(Icons.photo_library),
+            ),
+            IconButton(
+              tooltip: 'Take photo',
+              onPressed: _takePhoto,
+              icon: const Icon(Icons.photo_camera),
+            ),
+          ] else
+            IconButton(
+              tooltip: 'Select a region',
+              onPressed: _selecting ? null : _startSelection,
+              icon: const Icon(Icons.crop_free),
+            ),
         ],
       ),
       body: StreamBuilder<TranslateFlowState>(
@@ -90,7 +110,11 @@ class _TranslateViewState extends State<TranslateView> {
 
   Widget _buildBody(TranslateFlowState state) {
     return switch (state) {
-      TranslateFlowIdle() => _IdleState(onSelect: _startSelection),
+      TranslateFlowIdle() => _IdleState(
+        onSelect: _startSelection,
+        onPickImage: _isIOS ? _pickFromGallery : null,
+        onTakePhoto: _isIOS ? _takePhoto : null,
+      ),
       TranslateFlowSelecting() => const _IdleState(
         hint:
             'Drag anywhere on screen to select a region, '
@@ -134,10 +158,14 @@ class _TranslateViewState extends State<TranslateView> {
 
 class _IdleState extends StatelessWidget {
   final VoidCallback? onSelect;
+  final VoidCallback? onPickImage;
+  final VoidCallback? onTakePhoto;
   final String hint;
 
   const _IdleState({
     this.onSelect,
+    this.onPickImage,
+    this.onTakePhoto,
     this.hint = 'Select a region of the screen to read and translate its text.',
   });
 
@@ -157,7 +185,24 @@ class _IdleState extends StatelessWidget {
             style: theme.textTheme.bodyMedium,
           ),
           const SizedBox(height: 20),
-          if (onSelect != null)
+          if (onPickImage != null || onTakePhoto != null)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FilledButton.icon(
+                  onPressed: onPickImage,
+                  icon: const Icon(Icons.photo_library),
+                  label: const Text('Pick image'),
+                ),
+                const SizedBox(width: 12),
+                FilledButton.icon(
+                  onPressed: onTakePhoto,
+                  icon: const Icon(Icons.photo_camera),
+                  label: const Text('Take photo'),
+                ),
+              ],
+            )
+          else if (onSelect != null)
             FilledButton.icon(
               onPressed: onSelect,
               icon: const Icon(Icons.add),

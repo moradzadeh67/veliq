@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import '../../../models/translation_entry.dart';
 import '../../../services/capture_service.dart';
 import '../../../services/history_repository.dart';
+import '../../../services/image_source_service.dart';
 import '../../../services/settings_repository.dart';
 import '../../ocr/bloc/ocr_bloc.dart';
 import '../../ocr/bloc/ocr_state.dart';
@@ -19,6 +20,7 @@ import 'translate_flow_state.dart';
 /// their tests) remain the single source of truth for those stages.
 class TranslateFlowBloc {
   final CaptureService _captureService;
+  final ImageSourceService? _imageSourceService;
   final OcrBloc _ocrBloc;
   final TranslationBloc _translationBloc;
   final HistoryRepository _historyRepository;
@@ -36,6 +38,7 @@ class TranslateFlowBloc {
 
   TranslateFlowBloc({
     required this._captureService,
+    this._imageSourceService,
     required this._ocrBloc,
     required this._translationBloc,
     required this._historyRepository,
@@ -97,6 +100,21 @@ class TranslateFlowBloc {
               'Could not capture that region. Veliq needs Screen Recording '
               'permission — grant it in System Settings > Privacy & Security, '
               'then try again.',
+        ),
+      );
+      return;
+    }
+
+    await runForImageBytes(imageBytes);
+  }
+
+  /// Runs OCR -> translate -> save pipeline for given [imageBytes].
+  Future<void> runForImageBytes(Uint8List imageBytes) async {
+    if (imageBytes.isEmpty) {
+      _emit(
+        const TranslateFlowFailure(
+          stage: TranslateFlowStage.capture,
+          message: 'No image data provided.',
         ),
       );
       return;
@@ -171,6 +189,33 @@ class TranslateFlowBloc {
         targetLanguage: settings.targetLanguage,
       ),
     );
+  }
+
+  /// Picks an image from gallery and runs the translation pipeline.
+  Future<void> pickFromGallery() async {
+    if (_imageSourceService == null) return;
+    _emit(const TranslateFlowCapturing());
+    final bytes = await _imageSourceService.pickFromGallery();
+    if (bytes == null || bytes.isEmpty) {
+      _emit(const TranslateFlowIdle());
+      return;
+    }
+    await runForImageBytes(bytes);
+  }
+
+  /// Alias for pickFromGallery.
+  Future<void> pickImageFromGallery() => pickFromGallery();
+
+  /// Captures a photo with camera and runs the translation pipeline.
+  Future<void> takePhoto() async {
+    if (_imageSourceService == null) return;
+    _emit(const TranslateFlowCapturing());
+    final bytes = await _imageSourceService.takePhoto();
+    if (bytes == null || bytes.isEmpty) {
+      _emit(const TranslateFlowIdle());
+      return;
+    }
+    await runForImageBytes(bytes);
   }
 
   void dispose() {
