@@ -164,10 +164,7 @@ P9 iOS UI & storage ........ DOING
 - Status: DONE (2026-10-12) — main() is now async, uses getApplicationSupportDirectory() from path_provider. defaultHistoryFilePath() deleted. JsonHistoryRepository() without an explicit File throws StateError. Verified: analyze clean, 181/181 tests pass, flutter build ios succeeds.
 
 ### T-122 · [S] Responsive navigation for iOS
-- Files: lib/features/home/home_shell.dart
-- Do: Use BottomNavigationBar on iOS (defaultTargetPlatform == TargetPlatform.iOS), keep NavigationRail on macOS.
-- Done when: flutter analyze clean, tests pass.
-- Status: TODO
+- Status: DONE (2026-10-12) — Added `bool get _isIOS` instance getter in _HomeShellState. On iOS: Scaffold with NavigationBar at bottom + SafeArea body. On macOS: existing NavigationRail layout unchanged. Verified: analyze clean, 181/181 tests pass, flutter build ios succeeds.
 
 ### T-123 · [S] SafeArea + mobile padding
 - Files: lib/features/translation/translate_view.dart (and possibly other views)
