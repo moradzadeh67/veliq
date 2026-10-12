@@ -26,15 +26,17 @@ typedef GoogleApiKeyVerifier = Future<String?> Function(
 /// key. Only the OCR-extracted text is sent — screenshots never leave the
 /// machine.
 class GeminiTranslationService implements TranslationService {
-  /// Default model: 2.5-flash has 1,500 requests per day on the free tier
-  /// (compared to 3.8-flash which is capped at 20 requests per day).
-  static const String defaultModel = 'gemini-2.5-flash';
+  /// Default model: 3.5 Flash-Lite is Google's recommended model for new
+  /// projects (https://ai.google.dev/gemini-api/docs/models, checked
+  /// 2026-10-12). The 2.5 family answers HTTP 404 on keys that did not use it
+  /// before, so it is not offered. No quota numbers are hard-coded here on
+  /// purpose — Google publishes none statically (see D-005, ARCHITECTURE.md).
+  static const String defaultModel = 'gemini-3.5-flash-lite';
 
   /// Fallback models tried in order if the primary model hits a 429 rate limit
   /// or 404 model-not-found error.
   static const List<String> fallbackModels = [
-    'gemini-2.5-flash',
-    'gemini-3.5-flash-lite',
+    'gemini-3.8-flash',
     'gemini-2.0-flash',
   ];
 

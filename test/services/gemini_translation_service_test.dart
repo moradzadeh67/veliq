@@ -6,7 +6,7 @@ import 'package:http/testing.dart';
 import 'package:veliq/services/gemini_translation_service.dart';
 import 'package:veliq/services/translation_exception.dart';
 
-const String _apiKey = 'AIza-test-key';
+const String _apiKey = 'test-api-key';
 
 GeminiTranslationService _serviceReturning(
   http.Response response, {

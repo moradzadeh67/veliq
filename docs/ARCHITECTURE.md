@@ -49,10 +49,11 @@ no analytics. See docs/PRIVACY.md.
 | D-002 | Dart<->Swift bridge | Pigeon | DECIDED (verified in T-014) |
 | D-003 | Screen capture API | ScreenCaptureKit (SCScreenshotManager); CGWindowListCreateImage is obsoleted in macOS 15 SDK. Minimum macOS 14. Region capture, Retina and multi-display conversion, and macOS 27 behavior are UNVERIFIED | DECIDED (API), UNVERIFIED (details) |
 | D-004 | Global shortcut | native API vs maintained Flutter plugin | OPEN, T-011 |
-| D-005 | Translation provider | Apple Translation framework (on-device) via `TranslationService` abstraction. Local-first, zero cost, zero API keys, complete privacy. Pluggable interface for alternative text-only providers. NOTE (verified in T-041): the programmatic `TranslationSession(installedSource:target:)` API is only available on macOS 26.0+, so the native handler is `#available(macOS 26.0)`-guarded and returns nil on older systems (Dart side must fall back). | DECIDED (API), UNVERIFIED (fallback UX) |
+| D-005 | Translation provider | Gemini API (text only, never the screenshot) via `GeminiTranslationService`, selected through `SwitchingTranslationService`. Apple Translation (`PigeonTranslationService`) is kept as the on-device option (programmatic API is macOS 26.0+ only; no Persian support per project owner). The user supplies their own API key. Free-tier Gemini content may be used by Google to improve its products (see docs/PRIVACY.md). Model ids VERIFIED (T-070, checked 2026-10-12 against https://ai.google.dev/gemini-api/docs/models): `gemini-2.5-flash` exists, but Google limits the 2.5 family to projects that actively used them before, so new keys get HTTP 404. The default model is therefore `gemini-3.5-flash-lite` (Google's recommended model for new projects) with fallbacks `gemini-3.8-flash` → `gemini-2.0-flash`; before this fix the default was `gemini-2.5-flash` (commit 6f4d048), which cost a failed 404 round trip on every run. Quota numbers (1500 RPD in commit 6f4d048) UNVERIFIED: the official rate-limits page (https://ai.google.dev/gemini-api/docs/rate-limits, last updated 2026-10-09) publishes no static RPD table and refers to AI Studio instead. | DECIDED (API); privacy notice DONE (T-067); model ids VERIFIED / quota UNVERIFIED (T-070) |
 | D-006 | Local storage (history/settings) | `shared_preferences` (backed by NSUserDefaults) for app settings; JSON file at `~/Library/Application Support/veliq/history.json` for translation history (`JsonHistoryRepository`). Both behind service interfaces; no cloud sync. | DECIDED |
 | D-007 | OCR | Apple Vision (VNRecognizeTextRequest), local | DECIDED |
 | D-008 | IDE | Android Studio daily; Xcode only for deep Swift/permission/profiling issues | DECIDED |
+| D-009 | API key storage | flutter_secure_storage with MacOsOptions(usesDataProtectionKeychain: false) (legacy login keychain: no keychain-access-groups, no provisioning profile; documented by the package). No paid Apple account assumed. App Sandbox interplay, Keychain password prompts after ad-hoc rebuilds, and a later move to the data-protection keychain are UNVERIFIED. One-time migration from shared_preferences. | DECIDED (approach), UNVERIFIED (details) |
 
 An OPEN decision must not be implemented until its task is DONE.
 
@@ -60,6 +61,9 @@ An OPEN decision must not be implemented until its task is DONE.
 Dart (lib/services, lib/features/*): CaptureService, OcrService, TranslationService
 (abstract interfaces); HistoryRepository, SettingsRepository; Pigeon APIs in lib/pigeon.
 Swift (macos/Runner): screen capture, Vision OCR, permission manager, shortcut manager (if native).
+Translation implementations: GeminiTranslationService (network, user key), PigeonTranslationService (Apple, macOS 26+),
+SwitchingTranslationService (chooses between them from settings).
+Native selection overlay: macos/Runner/SelectionOverlayWindow.swift (SelectionApi).
 Exact class/file names are fixed in each task, not here.
 
 ## Code organization
