@@ -6,10 +6,12 @@ If the implementation differs from it, the implementation must not be described 
 compliant until the difference is resolved.
 
 ## Principle
-Veliq is a local-first desktop utility. Screen content stays on the user's Mac as long as possible.
+Veliq is a local-first macOS and iOS utility. Captured content stays on the device as long
+as possible.
 
 Target flow:
-Screen region -> local capture -> local OCR -> extracted text -> translation provider (text only) -> result
+macOS: screen region -> local capture -> local OCR -> extracted text -> translation provider (text only) -> result
+iOS:   picked/taken photo -> local OCR -> extracted text -> translation provider (text only) -> result
 
 ## Screen content
 A selected region may contain sensitive information.
@@ -18,6 +20,17 @@ A selected region may contain sensitive information.
 - Do not upload screenshots to a translation provider when extracted text is sufficient.
 - Release temporary image data when no longer needed.
 - Debug logging must not dump screenshot content.
+
+## Image sources (iOS)
+On iOS the user supplies the image instead of selecting a screen region.
+- **Photo library**: `PHPickerViewController` (PhotosUI). It runs out-of-process, so the app
+  never receives photo-library access and **no photo-library permission is requested or
+  needed** (D-010, D-012).
+- **Camera**: `UIImagePickerController`. The captured photo is handed to the app as image
+  bytes; the app needs `NSCameraUsageDescription` and nothing else (D-011, D-012).
+- Picked/captured image bytes are held in memory, passed to Vision for OCR, then released.
+  They are never written to disk and never uploaded. Veliq never writes to the photo library.
+- The macOS rule still applies: only the recognized **text** may leave the device.
 
 ## OCR
 - Preferred: Apple Vision, local processing, no network for the OCR stage.
@@ -63,8 +76,8 @@ is the only thing that decides whether text leaves the machine.
 ### Shared rules
 - **Data Flow**: Send extracted text only (never screenshots).
 - **Logging & Security**: Do not log full user text in production. The API key is
-  stored only in this Mac's local app preferences and must never be committed
-  (see "Security rules"). Error messages surfaced to the UI must not contain the
+  stored only in the device Keychain (`flutter_secure_storage`, D-009) and must never be
+  committed (see "Security rules"). Error messages surfaced to the UI must not contain the
   key or the translated text.
 - **Extensibility**: The pluggable `TranslationService` interface allows further
   text-only providers.
@@ -84,9 +97,11 @@ Current scope: no analytics, no advertising SDK, no behavioral tracking, no prof
 Any future telemetry needs an explicit product decision and updated documentation.
 
 ## Permissions
-Veliq may need macOS permissions (screen capture, possibly global input/shortcuts).
-They must be documented, requested only when necessary, and handled gracefully when denied.
-See docs/MACOS_PERMISSIONS.md.
+- **macOS**: screen capture, and possibly global input/shortcuts.
+- **iOS**: camera only (`NSCameraUsageDescription`). The photo library needs no permission
+  because `PHPickerViewController` is out-of-process.
+Permissions must be documented, requested only when necessary, and handled gracefully when
+denied. See docs/MACOS_PERMISSIONS.md.
 
 ## Security rules
 Never commit: API keys, access tokens, private certificates, provisioning secrets,

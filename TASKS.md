@@ -13,6 +13,7 @@ P6 Polish & release ........ DONE
 P7 iOS Research ............ DONE
 P8 iOS Image acquisition ... DONE
 P9 iOS UI & storage ........ DOING
+P10 Branding & icons ....... DONE
 
 ---
 
@@ -174,3 +175,25 @@ P9 iOS UI & storage ........ DOING
 - Do: Run flutter run -d "iPhone 15" and verify: navigation bar at bottom, three main screens work, RTL Persian result displays correctly, history persists across app restart.
 - Done when: all checks pass on simulator.
 - Status: TODO
+
+---
+
+## P10 — Branding & icons (DONE)
+
+### T-125 · [S] Real macOS and iOS app icons
+- Files: assets/app_icon/source/{icon_master.png,generate_icons.sh,README.md}, assets/app_icon/veliq.icns, macos/Runner/Assets.xcassets/AppIcon.appiconset/*.png, ios/Runner/Assets.xcassets/AppIcon.appiconset/*.png
+- Do: Generate every required icon size from the Concept B master. macOS keeps a transparent surround; iOS is flattened onto #2B1F5C with no alpha channel.
+- Done when: flutter analyze lib/ clean, flutter test passes, flutter build macos --debug and flutter build ios --no-codesign succeed.
+- Status: DONE (2026-10-12) — 7 macOS + 15 iOS PNGs regenerated in place; file names were kept, so neither Contents.json needed an edit (both are byte-identical to before, confirmed with git status). Pipeline: key the master's black surround out → crop the ~1% empty margin → Lanczos resize → flatten for iOS. Also fixed a dark edge halo (a 256 px edge pixel was #0f0d38 at 42% alpha, now #2b15b5 at 100%). Source of truth: assets/app_icon/source/. Verified: analyze clean, 181/181 tests, both builds pass. Committed as c1ca1cd (source + script) and 3fdf23d (regenerated PNGs); pushed to origin/main.
+
+---
+
+## Open items found during the 2026-10-12 documentation sync (no task yet)
+
+1. `ios/Runner.xcodeproj/project.pbxproj` still carries the Flutter template defaults:
+   `IPHONEOS_DEPLOYMENT_TARGET = 15.0` (D-013 chose 16.0, so the decision is NOT applied)
+   and `PRODUCT_BUNDLE_IDENTIFIER = com.example.veliq` (macOS uses com.moradzadeh67.veliq).
+   Both need an explicit task before any iOS release.
+2. `assets/app_icon/veliq.icns` is a build output but is tracked (committed in `c1ca1cd`), and it
+   is also now listed in `.gitignore`. Ignore rules never apply to tracked files — either run
+   `git rm --cached assets/app_icon/veliq.icns` to untrack it, or drop the `.gitignore` line.

@@ -1,14 +1,15 @@
 # PROJECT_SPEC.md — Veliq
 
 ## Goal
-Select any region of the screen, extract its text locally, translate it to Persian,
-and show the result in a small, fast UI.
+Select any region of the screen (macOS) or pick a photo (iOS), extract its text locally,
+translate it to Persian, and show the result in a small, fast UI.
 
 ## Users
-Primarily the author. Secondarily GitHub users who want a local-first screen translator.
+Primarily the author. Secondarily GitHub users who want a local-first screen/photo translator.
 
 ## MVP (must have)
-1. Trigger capture (button first; global shortcut later).
+1. Trigger capture (button first; global shortcut later). On iOS: pick from the photo
+   library or take a photo (no region selection is possible).
 2. Selection overlay to choose a screen region (Retina + multi-display correct).
 3. Local capture of that region.
 4. Local OCR with Apple Vision.
@@ -21,11 +22,11 @@ Primarily the author. Secondarily GitHub users who want a local-first screen tra
   dictionary-style lookup, source language selection, other target languages.
 
 ## Out of scope
-Windows/Linux/mobile, accounts, cloud sync, analytics, backend, payments,
+Windows/Linux/Android, accounts, cloud sync, analytics, backend, payments,
 saving screenshots permanently.
 
 ## Constraints
-- macOS only; Flutter + Swift; open source; GitHub distribution first.
+- macOS 14.6+ and iOS; Flutter + Swift; open source; GitHub distribution first.
 - Do not design around App Store submission, but do not block it.
 - Privacy rules: docs/PRIVACY.md. Permissions: docs/MACOS_PERMISSIONS.md.
 
@@ -33,3 +34,17 @@ saving screenshots permanently.
 - Capture -> OCR -> Persian translation works on a Retina display and on a second display.
 - Denied permission shows a clear error, no crash, retry works.
 - No screenshot stored on disk; no secrets in repo.
+
+## iOS scope (P7-P9, in progress)
+iOS was added as a second target after the macOS MVP shipped.
+- **Image acquisition**: photo library via `PHPickerViewController` (out-of-process, no
+  permission) and camera via `UIImagePickerController` (`NSCameraUsageDescription` only).
+  There is no region selection — iOS has no ScreenCaptureKit equivalent for third-party apps.
+- **UI**: bottom `NavigationBar` instead of the macOS `NavigationRail`, with `SafeArea`
+  handling and a wrapping button row for narrow screens (T-122, T-123).
+- **Storage**: history lives in the app's Application Support directory via `path_provider`
+  (`getApplicationSupportDirectory()`, T-120/T-121).
+- **Status**: T-110..T-117 and T-119..T-123 DONE; T-118 (physical iPhone) DEFERRED;
+  T-124 (simulator review) TODO.
+- **Open**: the iOS Xcode target still uses the template bundle id `com.example.veliq` and
+  `IPHONEOS_DEPLOYMENT_TARGET = 15.0`, while D-013 chose iOS 16.0. Neither is applied yet.

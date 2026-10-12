@@ -1,8 +1,9 @@
 # Veliq — Architecture
 
 ## Overview
-macOS desktop utility: Flutter/Dart for the app layer, Swift/macOS for native integration.
-Local-first and privacy-focused: screen content stays on the Mac whenever possible.
+macOS and iOS utility: Flutter/Dart for the app layer, Swift for native integration
+(`macos/Runner`, `ios/Runner`). Local-first and privacy-focused: captured content stays
+on the device whenever possible.
 
 ## Layers
 ```
@@ -34,13 +35,20 @@ Local-first and privacy-focused: screen content stays on the Mac whenever possib
 - Native: only what Flutter cannot do reliably. Keep it small.
 
 ## Data flow
+macOS:
 ```
 trigger -> selection overlay (Dart) -> region coordinates -> Swift capture
 -> image data -> Swift Vision OCR (local) -> extracted text -> Dart
 -> translation provider (TEXT ONLY) -> result panel
 ```
-Rules: screenshots stay local; image data released after OCR; only text leaves the Mac;
-no analytics. See docs/PRIVACY.md.
+iOS (no region selection — the user supplies the image):
+```
+Pick image / Take photo (Dart) -> Swift ImageSourceHandler (PHPickerViewController or
+UIImagePickerController) -> image bytes -> Swift Vision OCR (local) -> extracted text
+-> Dart -> translation provider (TEXT ONLY) -> result panel
+```
+Rules: captured content stays local; image data released after OCR; only text leaves the
+device; no analytics. See docs/PRIVACY.md.
 
 ## Decisions (append-only; keep IDs stable)
 | ID | Topic | Decision | Status |
@@ -57,15 +65,20 @@ no analytics. See docs/PRIVACY.md.
 | D-010 | iOS image source (gallery) | `PHPickerViewController` (PhotosUI framework). Runs out-of-process, requires NO photo-library permission. Available since iOS 14.0. Apple's recommended picker for new apps. | DECIDED (source: https://developer.apple.com/documentation/photokit/phpickerviewcontroller) |
 | D-011 | iOS image source (camera) | `UIImagePickerController` with `sourceType = .camera`, `mediaTypes = ["public.image"]`. Still Apple's standard camera modal for capturing a single photo. Available since iOS 2.0. | DECIDED (source: https://developer.apple.com/documentation/uikit/uiimagepickercontroller) |
 | D-012 | iOS Info.plist privacy keys | Only `NSCameraUsageDescription` is required (for the camera). `NSPhotoLibraryUsageDescription` is NOT required because `PHPickerViewController` is out-of-process. `NSPhotoLibraryAddUsageDescription` is NOT required because Veliq never writes to the photo library. | DECIDED (source: https://developer.apple.com/documentation/bundleresources/information-property-list/nscamerausagedescription) |
-| D-013 | iOS minimum deployment target | iOS 16.0. Rationale: (1) aligns with the existing macOS 14.6 baseline's modernity; (2) `PHPickerViewController` comfortably available; (3) modern Swift concurrency available without `#available` guards; (4) VNRecognizeTextRequest stable. The user's own device baseline is iPhone with iOS 16+. | DECIDED (source: https://developer.apple.com/documentation/photokit/phpickerviewcontroller — "Availability: iOS 14.0+"; we choose 16.0 as a stricter, still-compatible floor) |
+| D-013 | iOS minimum deployment target | iOS 16.0. Rationale: (1) aligns with the existing macOS 14.6 baseline's modernity; (2) `PHPickerViewController` comfortably available; (3) modern Swift concurrency available without `#available` guards; (4) VNRecognizeTextRequest stable. The user's own device baseline is iPhone with iOS 16+. | DECIDED — **NOT APPLIED**: `ios/Runner.xcodeproj/project.pbxproj` still has `IPHONEOS_DEPLOYMENT_TARGET = 15.0` and `ios/Podfile` still has the platform line commented out (checked 2026-10-12). Needs a task. (source: https://developer.apple.com/documentation/photokit/phpickerviewcontroller — "Availability: iOS 14.0+"; we choose 16.0 as a stricter, still-compatible floor) |
+| D-015 | App icon source of truth | One master PNG at `assets/app_icon/source/icon_master.png`, turned into every required size by `assets/app_icon/source/generate_icons.sh` (key the black surround out → crop the empty margin → Lanczos resize → flatten for iOS). macOS icons keep a **transparent** surround; iOS icons are **opaque** on `#2B1F5C` because Apple rejects icons carrying an alpha channel. File names are unchanged from the Flutter templates, so neither `Contents.json` needed an edit. | DECIDED, IMPLEMENTED (T-125) |
 | D-014 | Pigeon bridge and image bytes | Dart `Uint8List` maps to Swift `FlutterStandardTypedData` via the standard codec. Sizes of 2–5 MB JPEG are within Flutter's standard channel limits (no fragmentation API needed). No platform-specific workaround required. | DECIDED (source: https://docs.flutter.dev/platform-integration/platform-channels) |
 
 An OPEN decision must not be implemented until its task is DONE.
 
 ## Components
-Dart (lib/services, lib/features/*): CaptureService, OcrService, TranslationService
-(abstract interfaces); HistoryRepository, SettingsRepository; Pigeon APIs in lib/pigeon.
+Dart (lib/services, lib/features/*): CaptureService, OcrService, TranslationService,
+ImageSourceService (abstract interfaces); HistoryRepository, SettingsRepository;
+Pigeon APIs in lib/pigeon.
 Swift (macos/Runner): screen capture, Vision OCR, permission manager, shortcut manager (if native).
+Swift (ios/Runner): ImageSourceHandler.swift (PHPickerViewController + UIImagePickerController),
+registered in AppDelegate via ImageSourceApiSetup. iOS reuses the same generated Pigeon Swift
+file as macOS — it carries `#if os(iOS)` / `#elseif os(macOS)` import guards (T-112).
 Translation implementations: GeminiTranslationService (network, user key), PigeonTranslationService (Apple, macOS 26+),
 SwitchingTranslationService (chooses between them from settings).
 Native selection overlay: macos/Runner/SelectionOverlayWindow.swift (SelectionApi).
@@ -80,13 +93,18 @@ lib/
   models/      data models
   pigeon/      Pigeon definition + generated Dart
 macos/Runner/  Swift native code (+ generated Pigeon Swift)
+ios/Runner/    Swift native code (+ the same generated Pigeon Swift)
+assets/app_icon/  icon master + generator script (not bundled: no pubspec assets entry)
 test/          mirrors lib/
-docs/  references/  assets/
+docs/  references/
 ```
 Subfolders inside a feature (e.g. bloc/, view/) are decided when the first feature task needs them.
 
 ## Permissions
-Screen Recording expected; Accessibility NOT assumed. See docs/MACOS_PERMISSIONS.md.
+macOS: Screen Recording expected; Accessibility NOT assumed.
+iOS: camera only (`NSCameraUsageDescription`); the photo library needs no permission because
+`PHPickerViewController` runs out-of-process (D-012).
+See docs/MACOS_PERMISSIONS.md.
 
 ## Testing
 - Dart: unit tests for blocs/services, widget tests for UI, mocks for native services.

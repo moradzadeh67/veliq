@@ -7,6 +7,10 @@ License: MIT (see LICENSE). The repository is public.
 ## Current distribution
 - GitHub releases, built manually with `flutter build macos`.
 - Personal use: no code signing required.
+- iOS is **not distributed yet** (only `flutter build ios --no-codesign` is run, as a build check).
+  Before any iOS distribution the target must be fixed: `ios/Runner.xcodeproj/project.pbxproj`
+  still has the template `PRODUCT_BUNDLE_IDENTIFIER = com.example.veliq` and
+  `IPHONEOS_DEPLOYMENT_TARGET = 15.0`, while D-013 chose iOS 16.0.
 
 ## Future (nothing decided)
 - Code signing and notarization for Gatekeeper.
@@ -23,7 +27,7 @@ License: MIT (see LICENSE). The repository is public.
    or an equivalent secure store (mechanism decided in T-012).
 5. Git author email is a GitHub noreply address, not a private one.
 6. LICENSE has the correct copyright holder name.
-7. README documents required macOS permissions.
+7. README documents required permissions (macOS Screen Recording, iOS camera).
 8. Verify permission flows on a clean machine or a separate macOS user account.
 
 ## Hygiene review — 2026 (T-062)
@@ -55,4 +59,19 @@ License: MIT (see LICENSE). The repository is public.
 
 Also outstanding for the user: GitHub repository **About/Topics** (browser), item 8 above.
 
-Remaining before a public release: item 8 and the GitHub About/Topics entry.
+## Hygiene review — 2026-10-12 (T-125, app icons)
+
+| # | Check | Result |
+|---|-------|--------|
+| 1 | `git ls-files` for secrets/build/IDE | PASS — 22 app-icon PNGs added under the two `Assets.xcassets/AppIcon.appiconset` folders, plus `assets/app_icon/` (master PNG, shell script, README); no build output tracked |
+| 2 | Secrets scan of the new files | PASS — new files are PNGs, a shell script and Markdown; no credentials, no `/Users/` paths |
+| 4 | No real API keys in source | PASS — unchanged |
+| 7 | README documents required permissions | PASS — now covers macOS Screen Recording **and** the iOS camera |
+| — | `.gitignore` syntax fix | FIXED — the line `assets/app_icon/veliq.icns # comment` did **not** ignore anything: gitignore has no trailing comments, so the whole line became the pattern. The comment was moved to its own line and `git check-ignore --no-index assets/app_icon/veliq.icns` now matches. **However the rule has no effect yet**: `assets/app_icon/veliq.icns` was already committed in `c1ca1cd`, and ignore rules never apply to tracked files. Run `git rm --cached assets/app_icon/veliq.icns` if it should stop being tracked. |
+
+## Outstanding before a public release
+1. Item 8 above (clean-machine / separate-user-account permission verification) — user's task.
+2. GitHub repository **About/Topics** (browser) — user's task.
+3. **iOS**: T-118 physical-device verification (DEFERRED) and T-124 simulator review (TODO).
+4. **iOS**: fix `PRODUCT_BUNDLE_IDENTIFIER` (`com.example.veliq`) and apply D-013's iOS 16.0 floor
+   in `ios/Runner.xcodeproj`.

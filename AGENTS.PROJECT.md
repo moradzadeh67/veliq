@@ -1,23 +1,26 @@
 # AGENTS.PROJECT.md — Veliq
 
 ## Project
-macOS-only, open-source desktop utility (personal use + GitHub portfolio).
-Flow: select screen region -> local capture -> local OCR (Apple Vision)
--> translate extracted TEXT to Persian -> compact result UI.
+macOS + iOS, open-source utility (personal use + GitHub portfolio). macOS is the
+mature target; the iOS port (P7-P9) is in progress and is not yet device-verified.
+Flow: select a screen region (macOS) or pick/take a photo (iOS) -> local capture
+-> local OCR (Apple Vision) -> translate extracted TEXT to Persian -> compact result UI.
 Local-first. No backend, no account, no analytics, no payments.
 
 ## Stack
-Flutter/Dart (macOS desktop) · State: BLoC · Native: Swift (macos/) · Bridge: Pigeon
+Flutter/Dart (macOS + iOS) · State: BLoC · Native: Swift (macos/, ios/) · Bridge: Pigeon
 
 ## Folders
 lib/core/  lib/features/{capture,ocr,translation,history,settings}/
-lib/services/  lib/models/  lib/pigeon/  macos/ (Swift)  test/ (mirrors lib/)
+lib/services/  lib/models/  lib/pigeon/  macos/ (Swift)  ios/ (Swift)
+assets/app_icon/ (icon master + generator script)  test/ (mirrors lib/)
 
 ## Commands
 - Format:  dart format <file>
 - Analyze: flutter analyze <path>
 - Test:    flutter test <file>
-- Run:     flutter run -d macos
+- Run:     flutter run -d macos   ·   flutter run -d "iPhone 15"
+- Build:   flutter build macos --debug   ·   flutter build ios --no-codesign
 
 ## Source of truth (when files disagree, higher wins)
 1 CURRENT_TASK.md  2 TASKS.md  3 docs/ARCHITECTURE.md  4 PROJECT_SPEC.md

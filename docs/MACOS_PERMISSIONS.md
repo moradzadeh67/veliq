@@ -1,7 +1,9 @@
 # Veliq — macOS Permissions
 
 ## Purpose
-Records macOS permissions Veliq may require and how to handle them.
+Records the platform permissions Veliq may require and how to handle them. The file name is
+historical: since the iOS port (P7-P9) this document also covers **iOS** (see the iOS section
+below).
 Exact requirements depend on the native APIs and shortcut mechanism finally chosen.
 Do not claim a permission is required until implementation or authoritative documentation confirms it.
 
@@ -14,6 +16,21 @@ The app should:
 - handle denial gracefully
 - guide the user on how to grant permission
 The exact System Settings path must be verified on the target macOS version before release docs are final.
+
+## iOS: camera (and why the photo library needs nothing)
+The iOS build acquires an image instead of capturing the screen.
+
+| Source | API | Permission |
+|---|---|---|
+| Photo library | `PHPickerViewController` (PhotosUI) | **none** — runs out-of-process (D-010, D-012) |
+| Camera | `UIImagePickerController` | `NSCameraUsageDescription` in `ios/Runner/Info.plist` (D-011, D-012) |
+
+- No Screen Recording, Accessibility, or photo-library permission is requested on iOS.
+- `NSPhotoLibraryAddUsageDescription` is NOT required: Veliq never writes to the photo library.
+- Denial handling: the camera sheet cannot be presented when the permission is denied; the
+  failure path must surface a clear message and must not crash or request in a loop.
+- Implementation: `ios/Runner/ImageSourceHandler.swift`, registered in `AppDelegate.swift` (T-113).
+- **NOT device-verified yet** (T-118 deferred, T-124 open).
 
 ## Accessibility
 NOT assumed. It may be needed depending on how Veliq implements global shortcuts,
@@ -61,7 +78,7 @@ Verified manually on the user's hardware (2026-10-11):
 - Retina (built-in, 2x): `838x432 pt -> 1676x864 px`, capture matches the drawn region.
 - Second display (origin x=1728): correct `760x126 pt` capture; the pre-fix code clipped the same
   region to an 18 pt sliver.
-- `flutter analyze`, `flutter test` (167), and `flutter build macos --debug` all pass.
+- `flutter analyze`, `flutter test` (167 at the time; 181 as of T-123), and `flutter build macos --debug` all pass.
 
 Not yet verified: displays with negative y-origin (not reproducible in the tested arrangement).
 The formula is sign-agnostic, but this remains UNVERIFIED. PROJECT_SPEC.md MVP acceptance for
