@@ -44,8 +44,13 @@ class _FakeImageSourceService implements ImageSourceService {
   Uint8List? galleryBytes;
   Uint8List? cameraBytes;
 
+  int galleryCalls = 0;
+
   @override
-  Future<Uint8List?> pickFromGallery() async => galleryBytes;
+  Future<Uint8List?> pickFromGallery() async {
+    galleryCalls++;
+    return galleryBytes;
+  }
 
   @override
   Future<Uint8List?> takePhoto() async => cameraBytes;
@@ -325,6 +330,7 @@ void main() {
 
   group('TranslateView iOS Widget Tests', () {
     late _FakeImageSourceService imageSourceService;
+    late _FakeOcrService ocrService;
     late OcrBloc ocrBloc;
     late TranslationBloc translationBloc;
     late _FakeSelectionService selectionService;
@@ -335,7 +341,8 @@ void main() {
         ..galleryBytes = Uint8List.fromList([1, 2, 3])
         ..cameraBytes = Uint8List.fromList([4, 5, 6]);
       selectionService = _FakeSelectionService();
-      ocrBloc = OcrBloc(ocrService: _FakeOcrService());
+      ocrService = _FakeOcrService();
+      ocrBloc = OcrBloc(ocrService: ocrService);
       translationBloc = TranslationBloc(
         translationService: _FakeTranslationService(),
       );
@@ -412,6 +419,43 @@ void main() {
 
       expect(find.text('Pick image'), findsOneWidget);
       expect(find.text('Take photo'), findsOneWidget);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
+
+    testWidgets('Try again on iOS opens the gallery picker', (tester) async {
+      // A null OCR result forces the failure state.
+      ocrService.text = null;
+
+      await pump(tester);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Pick image'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Try again'), findsOneWidget);
+      expect(imageSourceService.galleryCalls, equals(1));
+
+      await tester.tap(find.text('Try again'));
+      await tester.pumpAndSettle();
+
+      expect(imageSourceService.galleryCalls, equals(2));
+    }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
+
+    testWidgets('Select another region on iOS opens the gallery picker', (
+      tester,
+    ) async {
+      await pump(tester);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Pick image'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Select another region'), findsOneWidget);
+      expect(imageSourceService.galleryCalls, equals(1));
+
+      await tester.tap(find.text('Select another region'));
+      await tester.pumpAndSettle();
+
+      expect(imageSourceService.galleryCalls, equals(2));
     }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
   });
 }

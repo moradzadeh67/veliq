@@ -60,6 +60,13 @@ class _TranslateViewState extends State<TranslateView> {
 
   Future<void> _takePhoto() => widget.bloc.takePhoto();
 
+  /// "Start over" action for the failure and result screens.
+  ///
+  /// iOS has no native region overlay, so it falls back to the gallery
+  /// picker; macOS keeps the region selector.
+  Future<void> _retryOrSelect() =>
+      _isIOS ? _pickFromGallery() : _startSelection();
+
   Future<void> _copy(String text) async {
     await Clipboard.setData(ClipboardData(text: text));
     if (!mounted) return;
@@ -135,7 +142,7 @@ class _TranslateViewState extends State<TranslateView> {
       TranslateFlowFailure(:final stage, :final message) => _FailureState(
         stage: stage,
         message: message,
-        onRetry: _startSelection,
+        onRetry: _retryOrSelect,
       ),
       TranslateFlowSuccess(
         :final originalText,
@@ -150,7 +157,7 @@ class _TranslateViewState extends State<TranslateView> {
           targetLanguage: targetLanguage,
           onCopyTranslated: () => _copy(translatedText),
           onCopyOriginal: () => _copy(originalText),
-          onAgain: _startSelection,
+          onAgain: _retryOrSelect,
         ),
     };
   }

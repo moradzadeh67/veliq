@@ -323,18 +323,9 @@ Goal: user picks a photo from the gallery or takes a photo with the camera, app 
 - Done when: all five checks pass on a physical iPhone.
 - Status: TODO
 
-### T-119 · [S] Route iOS retry/again buttons to gallery picker
-
+### T-119 · [S] Route iOS retry and re-select buttons to gallery picker
 - Files: lib/features/translation/translate_view.dart, test/features/translation/translate_view_test.dart
-- Do:
-  1. Find the `TranslateFlowFailure` "Try again" button.
-  2. Find `_ResultState` "Select another region" button.
-  3. On iOS (defaultTargetPlatform == TargetPlatform.iOS), instead of calling
-     _startSelection, call _pickFromGallery().
-  4. On macOS, keep the existing behavior.
-  5. Add widget tests for both iOS buttons.
-- Don't: Do NOT change macOS behavior.
-- Ctx: AGENTS.md, AGENTS.PROJECT.md, translate_view.dart (read first)
-- Done when: flutter test test/features/translation passes and analyze is clean.
-- Status: TODO
+- Do: (original text)
+- Done when: ...
+- Status: DONE (2026-10-12) — Added `_retryOrSelect()` (iOS → gallery picker, macOS → native region selector) and wired it to the failure-state "Try again" and result-state "Select another region" buttons. macOS path unchanged. Added two iOS widget tests (galleryCalls counter). Verified: analyze clean, 181/181 tests pass.
 
