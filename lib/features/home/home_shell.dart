@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../history/bloc/history_bloc.dart';
@@ -28,6 +29,8 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   int _index = 0;
 
+  bool get _isIOS => defaultTargetPlatform == TargetPlatform.iOS;
+
   @override
   Widget build(BuildContext context) {
     final destinations = <_Destination>[
@@ -47,6 +50,23 @@ class _HomeShellState extends State<HomeShell> {
         view: SettingsView(bloc: widget.settingsBloc),
       ),
     ];
+
+    if (_isIOS) {
+      return Scaffold(
+        body: SafeArea(child: destinations[_index].view),
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: _index,
+          onDestinationSelected: (index) => setState(() => _index = index),
+          destinations: [
+            for (final destination in destinations)
+              NavigationDestination(
+                icon: Icon(destination.icon),
+                label: destination.label,
+              ),
+          ],
+        ),
+      );
+    }
 
     return Scaffold(
       body: Row(
