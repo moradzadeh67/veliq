@@ -413,3 +413,51 @@ class TranslationApiSetup {
     }
   }
 }
+/// Generated protocol from Pigeon that represents a handler of messages from Flutter.
+protocol ImageSourceApi {
+  /// Returns JPEG bytes of the picked image, or null if the user cancelled.
+  func pickImageFromGallery() async throws -> FlutterStandardTypedData?
+  /// Returns JPEG bytes of the captured photo, or null if the user cancelled.
+  func takePhotoWithCamera() async throws -> FlutterStandardTypedData?
+}
+
+/// Generated setup class from Pigeon to handle messages through the `binaryMessenger`.
+class ImageSourceApiSetup {
+  static var codec: FlutterStandardMessageCodec { MessagesPigeonCodec.shared }
+  /// Sets up an instance of `ImageSourceApi` to handle messages through the `binaryMessenger`.
+  static func setUp(binaryMessenger: FlutterBinaryMessenger, api: ImageSourceApi?, messageChannelSuffix: String = "") {
+    let channelSuffix = messageChannelSuffix.count > 0 ? ".\(messageChannelSuffix)" : ""
+    /// Returns JPEG bytes of the picked image, or null if the user cancelled.
+    let pickImageFromGalleryChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.veliq.ImageSourceApi.pickImageFromGallery\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      pickImageFromGalleryChannel.setMessageHandler { _, reply in
+        Task { @MainActor in
+          do {
+            let result = try await api.pickImageFromGallery()
+            reply(wrapResult(result))
+          } catch {
+            reply(wrapError(error))
+          }
+        }
+      }
+    } else {
+      pickImageFromGalleryChannel.setMessageHandler(nil)
+    }
+    /// Returns JPEG bytes of the captured photo, or null if the user cancelled.
+    let takePhotoWithCameraChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.veliq.ImageSourceApi.takePhotoWithCamera\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      takePhotoWithCameraChannel.setMessageHandler { _, reply in
+        Task { @MainActor in
+          do {
+            let result = try await api.takePhotoWithCamera()
+            reply(wrapResult(result))
+          } catch {
+            reply(wrapError(error))
+          }
+        }
+      }
+    } else {
+      takePhotoWithCameraChannel.setMessageHandler(nil)
+    }
+  }
+}
