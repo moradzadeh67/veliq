@@ -15,19 +15,12 @@ class MainFlutterWindow: NSWindow {
     RegisterGeneratedPlugins(registry: flutterViewController)
 
     let messenger = flutterViewController.engine.binaryMessenger
-    PingApiSetup.setUp(binaryMessenger: messenger, api: PingHandler())
     SelectionApiSetup.setUp(binaryMessenger: messenger, api: SelectionHandler())
     ScreenCaptureApiSetup.setUp(binaryMessenger: messenger, api: ScreenCaptureHandler())
     OcrApiSetup.setUp(binaryMessenger: messenger, api: OcrHandler())
     TranslationApiSetup.setUp(binaryMessenger: messenger, api: TranslationHandler())
 
     super.awakeFromNib()
-  }
-}
-
-class PingHandler: PingApi {
-  func ping(message: String) throws -> String {
-    return "pong: \(message)"
   }
 }
 
@@ -76,7 +69,11 @@ class ScreenCaptureHandler: ScreenCaptureApi {
       exceptingWindows: []
     )
 
-    // `sourceRect` is display-local, in points, top-left origin.
+    // `sourceRect` is display-local, in points, top-left origin, and
+    // `SCDisplay.frame` lives in the same Quartz global space the overlay
+    // reports (verified on hardware: the secondary display's SCDisplay.frame
+    // was (1728, 0, ...) while its NSScreen.frame was (1728, -323, ...)), so
+    // only the display origin has to be subtracted — no flip.
     let localRect = CGRect(
       x: globalRect.minX - display.frame.minX,
       y: globalRect.minY - display.frame.minY,
