@@ -143,24 +143,24 @@ void main() {
     test('testGoogleApiKey returns null when the key works', () async {
       await settingsBloc.load();
 
-      expect(await settingsBloc.testGoogleApiKey('AIza-1'), isNull);
-      expect(verifiedKeys, equals(['AIza-1|en|fa']));
+      expect(await settingsBloc.testGoogleApiKey('test-api-key'), isNull);
+      expect(verifiedKeys, equals(['test-api-key|en|fa']));
     });
 
     test('testGoogleApiKey checks against the configured pair', () async {
       await settingsBloc.load();
       await settingsBloc.setTargetLanguage('de');
 
-      await settingsBloc.testGoogleApiKey('AIza-1');
+      await settingsBloc.testGoogleApiKey('test-api-key');
 
-      expect(verifiedKeys, equals(['AIza-1|en|de']));
+      expect(verifiedKeys, equals(['test-api-key|en|de']));
     });
 
     test('testGoogleApiKey surfaces the verifier message', () async {
       verifyResult = 'The Cloud Translation API is not enabled';
 
       expect(
-        await settingsBloc.testGoogleApiKey('AIza-1'),
+        await settingsBloc.testGoogleApiKey('test-api-key'),
         equals('The Cloud Translation API is not enabled'),
       );
     });
@@ -170,7 +170,7 @@ void main() {
       addTearDown(unwired.dispose);
 
       expect(
-        await unwired.testGoogleApiKey('AIza-1'),
+        await unwired.testGoogleApiKey('test-api-key'),
         contains('not available'),
       );
     });

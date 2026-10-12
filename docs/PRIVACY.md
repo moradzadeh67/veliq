@@ -52,6 +52,13 @@ is the only thing that decides whether text leaves the machine.
   projects, and demands OAuth2 instead. That would mean shipping a
   service-account private key inside a desktop app, which is not acceptable.
   Gemini accepts an ordinary API key.
+- **Data use (free tier)**: Google's terms state that on unpaid services the
+  submitted text and the generated responses may be used to provide, improve
+  and develop Google products and machine-learning technologies, and that
+  human reviewers may read and annotate API input and output. Users in the
+  European Economic Area, Switzerland and the United Kingdom are covered by
+  the paid-tier terms even on the free tier.
+  Source: https://ai.google.dev/gemini-api/terms
 
 ### Shared rules
 - **Data Flow**: Send extracted text only (never screenshots).

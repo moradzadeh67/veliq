@@ -161,8 +161,11 @@ class _SettingsForm extends StatelessWidget {
             leading: Icon(Icons.cloud_upload_outlined),
             title: Text('Text is sent to Google'),
             subtitle: Text(
-              'Only the recognized text is sent for translation. '
-              'Screenshots never leave this Mac.',
+              'Only the recognized text is sent — never screenshots. On the '
+              'free tier Google may use that text to improve its products, '
+              'and human reviewers may read it. Users in the EEA, Switzerland '
+              'and the UK are covered by the paid-tier terms. See '
+              'docs/PRIVACY.md.',
             ),
           ),
         ],

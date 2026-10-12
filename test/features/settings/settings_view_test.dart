@@ -174,7 +174,7 @@ void main() {
     });
 
     testWidgets('hides the warning once a key is stored', (tester) async {
-      repository.stored = const AppSettings(googleApiKey: 'AIza-test');
+      repository.stored = const AppSettings(googleApiKey: 'test-api-key');
 
       await _pumpView(tester, bloc);
       await tester.pumpAndSettle();
@@ -186,11 +186,11 @@ void main() {
       await _pumpView(tester, bloc);
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byType(TextField), 'AIza-test');
+      await tester.enterText(find.byType(TextField), 'test-api-key');
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
 
-      expect(repository.stored.googleApiKey, equals('AIza-test'));
+      expect(repository.stored.googleApiKey, equals('test-api-key'));
     });
 
     testWidgets('Save & test stores the key and reports success', (
@@ -199,12 +199,12 @@ void main() {
       await _pumpView(tester, bloc);
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byType(TextField), 'AIza-test');
+      await tester.enterText(find.byType(TextField), 'test-api-key');
       await tester.tap(find.text('Save & test'));
       await tester.pumpAndSettle();
 
-      expect(repository.stored.googleApiKey, equals('AIza-test'));
-      expect(verifiedKeys, equals(['AIza-test']));
+      expect(repository.stored.googleApiKey, equals('test-api-key'));
+      expect(verifiedKeys, equals(['test-api-key']));
       expect(find.text('Connected. The API key works.'), findsOneWidget);
     });
 
@@ -216,7 +216,7 @@ void main() {
       await _pumpView(tester, bloc);
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byType(TextField), 'AIza-test');
+      await tester.enterText(find.byType(TextField), 'test-api-key');
       await tester.tap(find.text('Save & test'));
       await tester.pumpAndSettle();
 
@@ -233,12 +233,12 @@ void main() {
       await _pumpView(tester, bloc);
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byType(TextField), 'AIza-test');
+      await tester.enterText(find.byType(TextField), 'test-api-key');
       await tester.tap(find.text('Save & test'));
       await tester.pumpAndSettle();
       expect(find.text('Connected. The API key works.'), findsOneWidget);
 
-      await tester.enterText(find.byType(TextField), 'AIza-test-2');
+      await tester.enterText(find.byType(TextField), 'test-api-key-2');
       await tester.pumpAndSettle();
 
       expect(find.text('Connected. The API key works.'), findsNothing);
@@ -249,7 +249,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('No API key yet'), findsOneWidget);
 
-      await tester.enterText(find.byType(TextField), 'AIza-test');
+      await tester.enterText(find.byType(TextField), 'test-api-key');
       await tester.tap(find.text('Save & test'));
       await tester.pumpAndSettle();
 

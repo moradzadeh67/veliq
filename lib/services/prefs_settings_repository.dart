@@ -1,9 +1,11 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'keychain_api_key_store.dart';
 import 'settings_repository.dart';
 
 /// A [SettingsRepository] backed by [SharedPreferences]
-/// (NSUserDefaults on macOS).
+/// (NSUserDefaults on macOS) for simple values and the Keychain
+/// ([ApiKeyStore]) for the Google API key.
 ///
 /// All keys are namespaced under `veliq.` to avoid collisions with other
 /// plugins that share the same defaults domain.
@@ -13,16 +15,22 @@ class PrefsSettingsRepository implements SettingsRepository {
   static const String _saveScreenshotsKey = 'veliq.settings.saveScreenshots';
   static const String _translationProviderKey =
       'veliq.settings.translationProvider';
-  static const String _googleApiKeyKey = 'veliq.settings.googleApiKey';
+
+  static const String _legacyApiKeyKey = 'veliq.settings.googleApiKey';
 
   /// Optional pre-resolved instance. When omitted, the instance is resolved
   /// lazily on each call, which is convenient in production but slower.
-  final SharedPreferences? _prefs;
+  final SharedPreferences? prefs;
 
-  PrefsSettingsRepository({this._prefs});
+  /// Where the Google API key is persisted (Keychain). Defaults to a
+  /// production [KeychainApiKeyStore]; tests inject a fake here.
+  final ApiKeyStore _apiKeyStore;
+
+  PrefsSettingsRepository({this.prefs, ApiKeyStore? apiKeyStore})
+    : _apiKeyStore = apiKeyStore ?? const KeychainApiKeyStore();
 
   Future<SharedPreferences> _instance() async {
-    return _prefs ?? await SharedPreferences.getInstance();
+    return prefs ?? await SharedPreferences.getInstance();
   }
 
   /// Maps a stored provider name back to its enum value, tolerating values
@@ -51,28 +59,46 @@ class PrefsSettingsRepository implements SettingsRepository {
       translationProvider: _parseProvider(
         prefs.getString(_translationProviderKey),
       ),
-      googleApiKey: prefs.getString(_googleApiKeyKey),
+      googleApiKey: await _loadApiKey(),
     );
+  }
+
+  /// Returns the API key, migrating it from shared_preferences if necessary.
+  ///
+  /// One-time migration (D-009): if an old key exists in shared_preferences
+  /// under `veliq.settings.googleApiKey`, copy it to the Keychain, then remove
+  /// it from shared_preferences so it no longer lingers in the plist.
+  Future<String?> _loadApiKey() async {
+    final p = await _instance();
+
+    final legacyKey = p.getString(_legacyApiKeyKey);
+    if (legacyKey != null && legacyKey.isNotEmpty) {
+      await _apiKeyStore.write(legacyKey);
+      await p.remove(_legacyApiKeyKey);
+      return legacyKey;
+    }
+
+    return _apiKeyStore.read();
   }
 
   @override
   Future<void> save(AppSettings settings) async {
-    final prefs = await _instance();
+    final p = await _instance();
 
-    await prefs.setString(_sourceLanguageKey, settings.sourceLanguage);
-    await prefs.setString(_targetLanguageKey, settings.targetLanguage);
-    await prefs.setBool(_saveScreenshotsKey, settings.saveScreenshots);
-    await prefs.setString(
+    await p.setString(_sourceLanguageKey, settings.sourceLanguage);
+    await p.setString(_targetLanguageKey, settings.targetLanguage);
+    await p.setBool(_saveScreenshotsKey, settings.saveScreenshots);
+    await p.setString(
       _translationProviderKey,
       settings.translationProvider.name,
     );
 
-    // Clear rather than store an empty string, so a removed key doesn't linger.
+    // Key is stored in the Keychain, not in shared_preferences.
     final apiKey = settings.googleApiKey;
     if (apiKey == null || apiKey.isEmpty) {
-      await prefs.remove(_googleApiKeyKey);
+      await _apiKeyStore.delete();
     } else {
-      await prefs.setString(_googleApiKeyKey, apiKey);
+      await _apiKeyStore.write(apiKey);
     }
   }
 }

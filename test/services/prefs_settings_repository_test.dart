@@ -1,7 +1,26 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:veliq/services/keychain_api_key_store.dart';
 import 'package:veliq/services/prefs_settings_repository.dart';
 import 'package:veliq/services/settings_repository.dart';
+
+/// In-memory fake for [ApiKeyStore], used in tests.
+class FakeApiKeyStore implements ApiKeyStore {
+  String? value;
+
+  @override
+  Future<String?> read() async => value;
+
+  @override
+  Future<void> write(String key) async {
+    value = key;
+  }
+
+  @override
+  Future<void> delete() async {
+    value = null;
+  }
+}
 
 void main() {
   group('AppSettings', () {
@@ -42,7 +61,7 @@ void main() {
     test('hasGoogleApiKey ignores blank keys', () {
       expect(const AppSettings(googleApiKey: '   ').hasGoogleApiKey, isFalse);
       expect(
-        const AppSettings(googleApiKey: 'AIza123').hasGoogleApiKey,
+        const AppSettings(googleApiKey: 'test-api-key').hasGoogleApiKey,
         isTrue,
       );
     });
@@ -61,7 +80,7 @@ void main() {
     });
 
     test('withoutGoogleApiKey clears only the key', () {
-      const original = AppSettings(googleApiKey: 'AIza123');
+      const original = AppSettings(googleApiKey: 'test-api-key');
 
       final cleared = original.withoutGoogleApiKey();
 
@@ -73,11 +92,16 @@ void main() {
 
   group('PrefsSettingsRepository', () {
     late PrefsSettingsRepository repository;
+    late FakeApiKeyStore apiKeyStore;
 
     setUp(() async {
       SharedPreferences.setMockInitialValues(<String, Object>{});
       final prefs = await SharedPreferences.getInstance();
-      repository = PrefsSettingsRepository(prefs: prefs);
+      apiKeyStore = FakeApiKeyStore();
+      repository = PrefsSettingsRepository(
+        prefs: prefs,
+        apiKeyStore: apiKeyStore,
+      );
     });
 
     test('load returns defaults when nothing is persisted', () async {
@@ -102,7 +126,10 @@ void main() {
       );
 
       final prefs = await SharedPreferences.getInstance();
-      final second = PrefsSettingsRepository(prefs: prefs);
+      final second = PrefsSettingsRepository(
+        prefs: prefs,
+        apiKeyStore: apiKeyStore,
+      );
 
       expect((await second.load()).sourceLanguage, equals('de'));
     });
@@ -112,7 +139,10 @@ void main() {
         'veliq.settings.sourceLanguage': 'it',
       });
       final prefs = await SharedPreferences.getInstance();
-      final partial = PrefsSettingsRepository(prefs: prefs);
+      final partial = PrefsSettingsRepository(
+        prefs: prefs,
+        apiKeyStore: apiKeyStore,
+      );
 
       final settings = await partial.load();
 
@@ -129,7 +159,10 @@ void main() {
         'settings.sourceLanguage': 'xx',
       });
       final prefs = await SharedPreferences.getInstance();
-      final isolated = PrefsSettingsRepository(prefs: prefs);
+      final isolated = PrefsSettingsRepository(
+        prefs: prefs,
+        apiKeyStore: apiKeyStore,
+      );
 
       expect(
         (await isolated.load()).sourceLanguage,
@@ -140,14 +173,14 @@ void main() {
     test('save then load round-trips the provider and the API key', () async {
       const settings = AppSettings(
         translationProvider: TranslationProvider.apple,
-        googleApiKey: 'AIza-secret',
+        googleApiKey: 'test-api-key',
       );
 
       await repository.save(settings);
 
       final loaded = await repository.load();
       expect(loaded.translationProvider, equals(TranslationProvider.apple));
-      expect(loaded.googleApiKey, equals('AIza-secret'));
+      expect(loaded.googleApiKey, equals('test-api-key'));
       expect(loaded, equals(settings));
     });
 
@@ -158,7 +191,10 @@ void main() {
           'veliq.settings.translationProvider': 'something-else',
         });
         final prefs = await SharedPreferences.getInstance();
-        final withUnknown = PrefsSettingsRepository(prefs: prefs);
+        final withUnknown = PrefsSettingsRepository(
+          prefs: prefs,
+          apiKeyStore: apiKeyStore,
+        );
 
         expect(
           (await withUnknown.load()).translationProvider,
@@ -168,8 +204,8 @@ void main() {
     );
 
     test('clears a stored key when the new settings have none', () async {
-      await repository.save(const AppSettings(googleApiKey: 'AIza-secret'));
-      expect((await repository.load()).googleApiKey, equals('AIza-secret'));
+      await repository.save(const AppSettings(googleApiKey: 'test-api-key'));
+      expect((await repository.load()).googleApiKey, equals('test-api-key'));
 
       await repository.save(const AppSettings());
 
@@ -181,5 +217,26 @@ void main() {
 
       expect((await repository.load()).googleApiKey, isNull);
     });
+
+    test(
+      'migrates a legacy key from shared_preferences to the KeyChain store',
+      () async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'veliq.settings.googleApiKey': 'legacy-key',
+        });
+        final prefs = await SharedPreferences.getInstance();
+        final withLegacy = PrefsSettingsRepository(
+          prefs: prefs,
+          apiKeyStore: apiKeyStore,
+        );
+
+        final settings = await withLegacy.load();
+
+        expect(settings.googleApiKey, equals('legacy-key'));
+        expect(apiKeyStore.value, equals('legacy-key'));
+        // Legacy key must be removed from shared_preferences after migration.
+        expect(prefs.getString('veliq.settings.googleApiKey'), isNull);
+      },
+    );
   });
 }
