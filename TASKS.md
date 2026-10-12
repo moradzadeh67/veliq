@@ -161,10 +161,7 @@ P9 iOS UI & storage ........ DOING
 - Status: DONE (2026-10-12) — path_provider promoted from transitive to direct dependency at ^2.1.5 (resolved 2.1.6). Plugin already registered; no other changes needed.
 
 ### T-121 · [S] Use getApplicationSupportDirectory for history file path
-- Files: lib/main.dart, lib/services/json_history_repository.dart
-- Do: Replace hardcoded ~/Library/Application Support path with getApplicationSupportDirectory() from path_provider. Remove defaultHistoryFilePath() function. JsonHistoryRepository() without an explicit File should throw (no correct construction path outside main.dart).
-- Done when: flutter analyze clean, 181/181 tests pass.
-- Status: TODO
+- Status: DONE (2026-10-12) — main() is now async, uses getApplicationSupportDirectory() from path_provider. defaultHistoryFilePath() deleted. JsonHistoryRepository() without an explicit File throws StateError. Verified: analyze clean, 181/181 tests pass, flutter build ios succeeds.
 
 ### T-122 · [S] Responsive navigation for iOS
 - Files: lib/features/home/home_shell.dart
