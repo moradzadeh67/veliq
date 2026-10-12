@@ -275,18 +275,7 @@ Goal: user picks a photo from the gallery or takes a photo with the camera, app 
 
 ### T-111 · [S] Define ImageSourceApi in pigeons/messages.dart
 - Files: pigeons/messages.dart
-- Do: Add a new @HostApi at top level:
-  @HostApi()
-  abstract class ImageSourceApi {
-  @async
-  Uint8List? pickImageFromGallery();
-  @async
-  Uint8List? takePhotoWithCamera();
-  }
-- Don't: do not rename or remove any existing class or method.
-- Ctx: AGENTS.md, AGENTS.PROJECT.md, pigeons/messages.dart
-- Done when: `dart analyze pigeons/messages.dart` has no new errors.
-- Status: TODO
+- Status: DONE (2026-10-12) — Defined ImageSourceApi with pickImageFromGallery and takePhotoWithCamera. dart analyze clean.
 
 ### T-112 · [S] Regenerate Pigeon outputs for iOS
 - Files: lib/pigeon/messages.g.dart, ios/Runner/Messages.g.swift, macos/Runner/Messages.g.swift (all regenerated)

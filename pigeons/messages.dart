@@ -61,3 +61,14 @@ abstract class TranslationApi {
     String targetLanguage,
   );
 }
+
+@HostApi()
+abstract class ImageSourceApi {
+  /// Returns JPEG bytes of the picked image, or null if the user cancelled.
+  @async
+  Uint8List? pickImageFromGallery();
+
+  /// Returns JPEG bytes of the captured photo, or null if the user cancelled.
+  @async
+  Uint8List? takePhotoWithCamera();
+}
