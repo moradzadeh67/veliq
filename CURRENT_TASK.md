@@ -138,7 +138,7 @@
   - `flutter build ios --no-codesign` succeeds.
   - ImageSourceHandler.swift is added to Runner target in Xcode (manual step — user confirms).
 
-- Status: TODO
+- Status: DONE
 
 ## Handover
 - Step 1 writes a new Swift file. It MUST be added to Runner target in Xcode.
