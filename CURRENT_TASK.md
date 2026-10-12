@@ -31,4 +31,4 @@
   - dart analyze pigeons/messages.dart has no new errors
   - The file still contains all previously existing classes
 
-- Status: TODO
+- Status: DONE
