@@ -270,14 +270,7 @@ Goal: user picks a photo from the gallery or takes a photo with the camera, app 
 
 ### T-110 · [S] Add iOS Info.plist privacy usage descriptions
 - Files: ios/Runner/Info.plist
-- Do: Add these keys inside the top-level <dict>:
-  <key>NSPhotoLibraryUsageDescription</key>
-  <string>Veliq reads text from an image you pick, to translate it. Photos never leave your device.</string>
-  <key>NSCameraUsageDescription</key>
-  <string>Veliq reads text from a photo you take, to translate it. Photos never leave your device.</string>
-- Don't: no other key, no other file, do not reorder existing keys.
-- Ctx: AGENTS.md, AGENTS.PROJECT.md, ios/Runner/Info.plist
-- Done when: `plutil -lint ios/Runner/Info.plist` prints "OK"
+- Status: DONE (2026-10-12) — Added NSCameraUsageDescription. (NSPhotoLibraryUsageDescription omitted per D-012 as PHPickerViewController is out-of-process).
 - Status: TODO
 
 ### T-111 · [S] Define ImageSourceApi in pigeons/messages.dart

@@ -10,4 +10,4 @@
 - Don't: no other key, no other file, do not reorder existing keys.
 - Ctx: AGENTS.md, AGENTS.PROJECT.md, ios/Runner/Info.plist, docs/ARCHITECTURE.md (row D-012 only)
 - Done when: `plutil -lint ios/Runner/Info.plist` prints "OK"
-- Status: TODO
+- Status: DONE
