@@ -167,10 +167,7 @@ P9 iOS UI & storage ........ DOING
 - Status: DONE (2026-10-12) — Added `bool get _isIOS` instance getter in _HomeShellState. On iOS: Scaffold with NavigationBar at bottom + SafeArea body. On macOS: existing NavigationRail layout unchanged. Verified: analyze clean, 181/181 tests pass, flutter build ios succeeds.
 
 ### T-123 · [S] SafeArea + mobile padding
-- Files: lib/features/translation/translate_view.dart (and possibly other views)
-- Do: Wrap top-level content with SafeArea. Adjust padding for iPhone notch and home indicator.
-- Done when: widget tests pass, manual check on simulator.
-- Status: TODO
+- Status: DONE (2026-10-12) — Wrapped Scaffold body in SafeArea(top: false, ...). _IdleState button Row → Wrap(alignment: center, spacing: 12, runSpacing: 8) for narrow iPhones. macOS behavior unchanged. Verified: analyze clean, 181/181 tests pass, flutter build ios succeeds.
 
 ### T-124 · [L] Manual review on iOS simulator
 - Files: (none — manual task)

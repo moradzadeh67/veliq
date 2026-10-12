@@ -103,14 +103,17 @@ class _TranslateViewState extends State<TranslateView> {
             ),
         ],
       ),
-      body: StreamBuilder<TranslateFlowState>(
-        stream: widget.bloc.stateStream,
-        initialData: widget.bloc.currentState,
-        builder: (context, snapshot) {
-          final state = snapshot.data ?? const TranslateFlowIdle();
+      body: SafeArea(
+        top: false,
+        child: StreamBuilder<TranslateFlowState>(
+          stream: widget.bloc.stateStream,
+          initialData: widget.bloc.currentState,
+          builder: (context, snapshot) {
+            final state = snapshot.data ?? const TranslateFlowIdle();
 
-          return _buildBody(state);
-        },
+            return _buildBody(state);
+          },
+        ),
       ),
     );
   }
@@ -193,15 +196,16 @@ class _IdleState extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           if (onPickImage != null || onTakePhoto != null)
-            Row(
-              mainAxisSize: MainAxisSize.min,
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 12,
+              runSpacing: 8,
               children: [
                 FilledButton.icon(
                   onPressed: onPickImage,
                   icon: const Icon(Icons.photo_library),
                   label: const Text('Pick image'),
                 ),
-                const SizedBox(width: 12),
                 FilledButton.icon(
                   onPressed: onTakePhoto,
                   icon: const Icon(Icons.photo_camera),
