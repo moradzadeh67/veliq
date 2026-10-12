@@ -4,13 +4,6 @@ import 'dart:io';
 import '../models/translation_entry.dart';
 import 'history_repository.dart';
 
-/// Default location of the history file: the app's folder inside
-/// `~/Library/Application Support`, which is local-only and not synced.
-String defaultHistoryFilePath() {
-  final home = Platform.environment['HOME'] ?? Directory.systemTemp.path;
-  return '$home/Library/Application Support/veliq/history.json';
-}
-
 /// A [HistoryRepository] that persists entries as a JSON array on disk.
 ///
 /// Stored newest-first. The backing file is injectable so tests can point at a
@@ -20,7 +13,7 @@ class JsonHistoryRepository implements HistoryRepository {
   final File _file;
 
   JsonHistoryRepository({File? file})
-    : _file = file ?? File(defaultHistoryFilePath());
+    : _file = file ?? File(_fallbackHistoryPath());
 
   /// The backing file, exposed for diagnostics/tests.
   File get file => _file;
@@ -94,4 +87,11 @@ class JsonHistoryRepository implements HistoryRepository {
     final payload = jsonEncode(entries.map((e) => e.toJson()).toList());
     await _file.writeAsString(payload, flush: true);
   }
+}
+
+String _fallbackHistoryPath() {
+  throw StateError(
+    'JsonHistoryRepository requires an explicit File on this platform. '
+    'Construct it with JsonHistoryRepository(file: ...) — see lib/main.dart.',
+  );
 }

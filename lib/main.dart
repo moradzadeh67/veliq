@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'features/history/bloc/history_bloc.dart';
 import 'features/home/home_shell.dart';
@@ -18,11 +21,13 @@ import 'services/prefs_settings_repository.dart';
 import 'services/selection_service.dart';
 import 'services/switching_translation_service.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Persistence.
-  final historyRepository = JsonHistoryRepository();
+  final appSupportDir = await getApplicationSupportDirectory();
+  final historyFile = File('${appSupportDir.path}/history.json');
+  final historyRepository = JsonHistoryRepository(file: historyFile);
   final settingsRepository = PrefsSettingsRepository();
 
   // Feature state holders.
