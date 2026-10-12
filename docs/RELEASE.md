@@ -23,8 +23,8 @@ License: MIT (see LICENSE). The repository is public.
 2. Secrets scan of the working tree AND full git history (e.g. gitleaks). Any hit = stop;
    deleting the file later does not remove it from history.
 3. `grep -rniE "api[_-]?key|secret|token|password|/Users/" .` reviewed by hand (excluding build/ and .dart_tool/).
-4. No real API keys in source. Keys are entered by the user at runtime and stored in the macOS Keychain
-   or an equivalent secure store (mechanism decided in T-012).
+4. No real API keys in source. Keys are entered by the user at runtime and stored in the Keychain
+   (macOS, via `flutter_secure_storage`, D-009) or an equivalent secure store (mechanism decided in T-012).
 5. Git author email is a GitHub noreply address, not a private one.
 6. LICENSE has the correct copyright holder name.
 7. README documents required permissions (macOS Screen Recording, iOS camera).

@@ -28,7 +28,7 @@ SafeArea-aware layout and Application Support storage are implemented, but it is
 - Translation with Google Gemini using **your own API key**
 - Right-to-left, justified Persian result view; copy the original or the translation
 - Local, deletable translation history
-- API key stored in the macOS Keychain
+- API key stored in the Keychain
 
 ## How it works
 
@@ -73,7 +73,7 @@ See [docs/MACOS_PERMISSIONS.md](docs/MACOS_PERMISSIONS.md).
 - Only the recognized **text** is sent to Google's Gemini API, with your own key. On the free tier Google may use
   that text to improve its products, and human reviewers may read it; users in the EEA, Switzerland and the UK are
   covered by the paid-tier terms. Terms change: check Google's current Gemini API terms.
-- Your API key is stored in the macOS Keychain, not in plain-text preferences.
+- Your API key is stored in the Keychain, not in plain-text preferences.
 - Translation history lives in the app's Application Support directory
   (`getApplicationSupportDirectory()`), i.e. `~/Library/Application Support/com.moradzadeh67.veliq/history.json`
   on macOS, and can be cleared from the History screen.
