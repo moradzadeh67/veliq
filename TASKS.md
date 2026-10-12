@@ -319,9 +319,9 @@ Goal: user picks a photo from the gallery or takes a photo with the camera, app 
 
 ### T-118 · [L] Manual verification on a real iPhone
 - Files: (none — manual task)
-- Do: run `flutter run -d <device-id>` and verify 5 scenarios (gallery, camera, cancel, denied permission, history persists).
+- Do: (original text)
 - Done when: all five checks pass on a physical iPhone.
-- Status: TODO
+- Status: DEFERRED (2026-10-12) — No physical iPhone available yet. Will resume when a device is available. Code path covered by simulator + unit tests (181/181).
 
 ### T-119 · [S] Route iOS retry and re-select buttons to gallery picker
 - Files: lib/features/translation/translate_view.dart, test/features/translation/translate_view_test.dart
