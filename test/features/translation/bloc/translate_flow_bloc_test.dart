@@ -8,6 +8,7 @@ import 'package:veliq/features/translation/bloc/translation_bloc.dart';
 import 'package:veliq/models/translation_entry.dart';
 import 'package:veliq/services/capture_service.dart';
 import 'package:veliq/services/history_repository.dart';
+import 'package:veliq/services/image_source_service.dart';
 import 'package:veliq/services/ocr_service.dart';
 import 'package:veliq/services/settings_repository.dart';
 import 'package:veliq/services/translation_service.dart';
@@ -28,6 +29,17 @@ class _FakeCaptureService implements CaptureService {
     if (error != null) throw error!;
     return result;
   }
+}
+
+class _FakeImageSourceService implements ImageSourceService {
+  Uint8List? galleryBytes;
+  Uint8List? cameraBytes;
+
+  @override
+  Future<Uint8List?> pickFromGallery() async => galleryBytes;
+
+  @override
+  Future<Uint8List?> takePhoto() async => cameraBytes;
 }
 
 class _FakeOcrService implements OcrService {
@@ -266,6 +278,80 @@ void main() {
       await run();
 
       expect(flowBloc.currentState, isA<TranslateFlowSuccess>());
+    });
+
+    test('pickFromGallery happy path ends in success', () async {
+      final imageSourceService = _FakeImageSourceService()
+        ..galleryBytes = Uint8List.fromList([1, 2, 3]);
+
+      final localBloc = TranslateFlowBloc(
+        captureService: captureService,
+        imageSourceService: imageSourceService,
+        ocrBloc: ocrBloc,
+        translationBloc: translationBloc,
+        historyRepository: historyRepository,
+        settingsRepository: settingsRepository,
+      );
+
+      await localBloc.pickFromGallery();
+
+      expect(localBloc.currentState, isA<TranslateFlowSuccess>());
+      localBloc.dispose();
+    });
+
+    test('pickFromGallery null bytes returns to idle', () async {
+      final imageSourceService = _FakeImageSourceService();
+
+      final localBloc = TranslateFlowBloc(
+        captureService: captureService,
+        imageSourceService: imageSourceService,
+        ocrBloc: ocrBloc,
+        translationBloc: translationBloc,
+        historyRepository: historyRepository,
+        settingsRepository: settingsRepository,
+      );
+
+      await localBloc.pickFromGallery();
+
+      expect(localBloc.currentState, isA<TranslateFlowIdle>());
+      localBloc.dispose();
+    });
+
+    test('takePhoto happy path ends in success', () async {
+      final imageSourceService = _FakeImageSourceService()
+        ..cameraBytes = Uint8List.fromList([4, 5, 6]);
+
+      final localBloc = TranslateFlowBloc(
+        captureService: captureService,
+        imageSourceService: imageSourceService,
+        ocrBloc: ocrBloc,
+        translationBloc: translationBloc,
+        historyRepository: historyRepository,
+        settingsRepository: settingsRepository,
+      );
+
+      await localBloc.takePhoto();
+
+      expect(localBloc.currentState, isA<TranslateFlowSuccess>());
+      localBloc.dispose();
+    });
+
+    test('takePhoto null bytes returns to idle', () async {
+      final imageSourceService = _FakeImageSourceService();
+
+      final localBloc = TranslateFlowBloc(
+        captureService: captureService,
+        imageSourceService: imageSourceService,
+        ocrBloc: ocrBloc,
+        translationBloc: translationBloc,
+        historyRepository: historyRepository,
+        settingsRepository: settingsRepository,
+      );
+
+      await localBloc.takePhoto();
+
+      expect(localBloc.currentState, isA<TranslateFlowIdle>());
+      localBloc.dispose();
     });
   });
 }

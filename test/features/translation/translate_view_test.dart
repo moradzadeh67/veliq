@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:veliq/features/ocr/bloc/ocr_bloc.dart';
@@ -11,6 +11,7 @@ import 'package:veliq/models/screen_region.dart';
 import 'package:veliq/models/translation_entry.dart';
 import 'package:veliq/services/capture_service.dart';
 import 'package:veliq/services/history_repository.dart';
+import 'package:veliq/services/image_source_service.dart';
 import 'package:veliq/services/ocr_service.dart';
 import 'package:veliq/services/selection_service.dart';
 import 'package:veliq/services/settings_repository.dart';
@@ -37,6 +38,17 @@ class _FakeCaptureService implements CaptureService {
     lastHeight = height;
     return result;
   }
+}
+
+class _FakeImageSourceService implements ImageSourceService {
+  Uint8List? galleryBytes;
+  Uint8List? cameraBytes;
+
+  @override
+  Future<Uint8List?> pickFromGallery() async => galleryBytes;
+
+  @override
+  Future<Uint8List?> takePhoto() async => cameraBytes;
 }
 
 class _FakeOcrService implements OcrService {
@@ -309,5 +321,97 @@ void main() {
 
       expect(find.textContaining('Saved to history'), findsOneWidget);
     });
+  });
+
+  group('TranslateView iOS Widget Tests', () {
+    late _FakeImageSourceService imageSourceService;
+    late OcrBloc ocrBloc;
+    late TranslationBloc translationBloc;
+    late _FakeSelectionService selectionService;
+    late TranslateFlowBloc flowBloc;
+
+    setUp(() {
+      imageSourceService = _FakeImageSourceService()
+        ..galleryBytes = Uint8List.fromList([1, 2, 3])
+        ..cameraBytes = Uint8List.fromList([4, 5, 6]);
+      selectionService = _FakeSelectionService();
+      ocrBloc = OcrBloc(ocrService: _FakeOcrService());
+      translationBloc = TranslationBloc(
+        translationService: _FakeTranslationService(),
+      );
+      flowBloc = TranslateFlowBloc(
+        captureService: _FakeCaptureService(),
+        imageSourceService: imageSourceService,
+        ocrBloc: ocrBloc,
+        translationBloc: translationBloc,
+        historyRepository: _FakeHistoryRepository(),
+        settingsRepository: _FakeSettingsRepository(),
+      );
+    });
+
+    tearDown(() {
+      flowBloc.dispose();
+      ocrBloc.dispose();
+      translationBloc.dispose();
+    });
+
+    /// Pumps the view under the current (variant-provided) platform.
+    ///
+    /// iOS is simulated with
+    /// [TargetPlatformVariant.only], which sets and restores
+    /// `debugDefaultTargetPlatformOverride` itself — doing it by hand in
+    /// `setUp`/`tearDown` trips Flutter's "debug variable was changed"
+    /// invariant assertion.
+    Future<void> pump(WidgetTester tester) => tester.pumpWidget(
+      MaterialApp(
+        home: TranslateView(bloc: flowBloc, selectionService: selectionService),
+      ),
+    );
+
+    testWidgets('shows Pick image and Take photo on iOS', (tester) async {
+      await pump(tester);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Pick image'), findsOneWidget);
+      expect(find.text('Take photo'), findsOneWidget);
+      expect(find.text('Select region'), findsNothing);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
+
+    testWidgets('Pick image runs the pipeline with gallery bytes', (
+      tester,
+    ) async {
+      await pump(tester);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Pick image'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('سلام دنیا'), findsOneWidget);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
+
+    testWidgets('Take photo runs the pipeline with camera bytes', (
+      tester,
+    ) async {
+      await pump(tester);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Take photo'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('سلام دنیا'), findsOneWidget);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
+
+    testWidgets('a cancelled pick returns to the idle state', (tester) async {
+      imageSourceService.galleryBytes = null;
+
+      await pump(tester);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Pick image'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Pick image'), findsOneWidget);
+      expect(find.text('Take photo'), findsOneWidget);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
   });
 }
