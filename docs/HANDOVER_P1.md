@@ -5,8 +5,8 @@
 - **D-002 (Bridge)**: Pigeon (verified via T-014 PoC)
 - **D-003 (Capture API)**: ScreenCaptureKit (`SCScreenshotManager`) for macOS 14+
 - **D-004 (Global Shortcut)**: DEFERRED (T-011)
-- **D-005 (Translation)**: Apple Translation framework (on-device, macOS 15+) via `TranslationService` abstraction
-- **D-006 (Local Storage)**: `shared_preferences` for settings; SQLite / local files for history
+- **D-005 (Translation)**: CHANGED after P5 — Gemini API via `GeminiTranslationService` (text only); Apple Translation kept as on-device option (macOS 26+). See ARCHITECTURE.md.
+- **D-006 (Local Storage)**: `shared_preferences` for settings; JSON file (`JsonHistoryRepository`) for history. (Earlier text said SQLite; the implemented choice is JSON.)
 - **D-007 (OCR)**: Apple Vision (`VNRecognizeTextRequest`, local)
 - **D-008 (IDE)**: Android Studio / Xcode
 

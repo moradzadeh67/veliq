@@ -1,6 +1,6 @@
 # TASKS.md
-Legend: [S] Qwen 4B can do it · [L] needs a strong model
-Status: TODO | DOING | DONE | BLOCKED
+Legend: [S] small local model ok · [L] needs a strong model
+Status: TODO | DOING | DONE | BLOCKED | DEFERRED
 
 ## Phases
 P0 Scaffold ................ DONE
@@ -9,9 +9,9 @@ P2 Capture MVP ............. DONE
 P3 OCR ..................... DONE
 P4 Translation ............. DONE
 P5 History & settings ...... DONE
-P6 Polish & release ........ DOING (T-063 open)
+P6 Polish & release ........ DOING (open: T-071)
 
-## P0 — Scaffold (current)
+## P0 — Scaffold
 Folders, .gitkeep and feature placeholder files are created by the setup script (not a task).
 
 ### T-001 · [S] Replace lib/main.dart with a clean placeholder
@@ -39,26 +39,26 @@ void main() {
 - Done when: `flutter test test/widget_test.dart` passes + `flutter analyze` clean
 - Status: DONE
 
-## P1 — Research & decisions (all [L]; not started)
+## P1 — Research & decisions (all [L])
 Each task ends with: findings written to docs/ARCHITECTURE.md (decision table) and
 marked VERIFIED or UNVERIFIED. No production code.
 
 ### T-010 · [L] Choose screen capture API
 - Do: Verify with authoritative Apple docs + a small local test whether
-      CGWindowListCreateImage is still usable on target macOS versions, or whether
-      ScreenCaptureKit is required. Define Retina / multi-display coordinate rules.
+  CGWindowListCreateImage is still usable on target macOS versions, or whether
+  ScreenCaptureKit is required. Define Retina / multi-display coordinate rules.
 - Done when: D-003 in ARCHITECTURE.md is decided, with a reproducible test note.
 - Status: DONE
 
 ### T-011 · [L] Choose global shortcut approach
 - Do: Compare native API vs maintained Flutter plugin; test foreground/background,
-      conflicts, sleep/wake, and whether Accessibility permission is needed.
+  conflicts, sleep/wake, and whether Accessibility permission is needed.
 - Done when: D-004 decided; docs/MACOS_PERMISSIONS.md updated.
 - Status: DEFERRED
 
 ### T-012 · [L] Choose translation provider
 - Do: Pick provider(s) for text-only translation to Persian; document cost, limits,
-      privacy policy, and how API keys are stored.
+  privacy policy, and how API keys are stored.
 - Done when: D-005 decided; docs/PRIVACY.md updated.
 - Status: DONE
 
@@ -75,7 +75,7 @@ marked VERIFIED or UNVERIFIED. No production code.
 ## Phase handover
 After P1: Architect writes docs/HANDOVER_P1.md and splits P2 into [S]/[L] tasks. (DONE)
 
-## P2 — Capture MVP (current)
+## P2 — Capture MVP
 
 ### T-020 · [S] Capture Service Interface & Pigeon API
 - Files: pigeons/messages.dart, lib/services/capture_service.dart, lib/services/pigeon_capture_service.dart, test/services/capture_service_test.dart
@@ -93,7 +93,7 @@ After P1: Architect writes docs/HANDOVER_P1.md and splits P2 into [S]/[L] tasks.
 - Do: Implement ScreenCaptureApi in Swift using ScreenCaptureKit for region screenshot.
 - Status: DONE
 
-## P3 — OCR (current)
+## P3 — OCR
 
 ### T-030 · [S] OCR Service Interface & Pigeon Definition
 - Files: pigeons/messages.dart, lib/services/ocr_service.dart, lib/services/pigeon_ocr_service.dart, test/services/ocr_service_test.dart
@@ -111,7 +111,8 @@ After P1: Architect writes docs/HANDOVER_P1.md and splits P2 into [S]/[L] tasks.
 - Do: Implement OCR BLoC/state management for handling image-to-text workflow and states.
 - Status: DONE
 
-## P4 — Translation (current)
+## P4 — Translation
+Note: the provider was later migrated to Gemini (commit 6f4d048) without its own task; D-005 in ARCHITECTURE.md is the current truth (see T-064, T-070).
 
 ### T-040 · [S] Translation Service Interface & Pigeon Definition
 - Files: pigeons/messages.dart, lib/services/translation_service.dart, lib/services/pigeon_translation_service.dart, test/services/translation_service_test.dart
@@ -130,7 +131,7 @@ After P1: Architect writes docs/HANDOVER_P1.md and splits P2 into [S]/[L] tasks.
 - Do: Implement Translation BLoC/state management for handling text translation workflow.
 - Status: DONE
 
-## P5 — History & settings (current)
+## P5 — History & settings
 
 ### T-050 · [S] History Model & Repository
 - Files: lib/models/translation_entry.dart, lib/services/history_repository.dart, lib/services/json_history_repository.dart, test/services/json_history_repository_test.dart
@@ -177,10 +178,72 @@ still `TranslatePlaceholder`). T-060/T-061 close that gap.
 - Files: macos/Runner/MainFlutterWindow.swift, macos/Runner/*.swift (coordinate helpers), test/ (Dart-side tests if the conversion is mirrored)
 - Ctx: docs/MACOS_PERMISSIONS.md ("Current implementation status: INCOMPLETE"), PROJECT_SPEC.md MVP acceptance
 - Do: Convert the Flutter logical-pixel selection rect into the correct ScreenCaptureKit coordinate space before capture:
-  1. Pick the display containing the selection instead of always `displays.first`.
-  2. Convert logical points to that display's backing-store pixels (`backingScaleFactor`).
-  3. Apply the display's origin offset so secondary/negative-origin displays capture correctly.
-  4. Account for the origin difference: Flutter's `Rect` is top-left based, ScreenCaptureKit's `sourceRect` is display-local and bottom-left based.
+    1. Pick the display containing the selection instead of always `displays.first`.
+    2. Convert logical points to that display's backing-store pixels (`backingScaleFactor`).
+    3. Apply the display's origin offset so secondary/negative-origin displays capture correctly.
+    4. Account for the origin difference: Flutter's `Rect` is top-left based, ScreenCaptureKit's `sourceRect` is display-local and bottom-left based.
 - Done when: Verified manually on (a) a Retina display and (b) a second display with a non-zero/negative origin, plus `flutter test` and `flutter analyze` still pass.
 - Blocker note: this task requires the user's physical hardware for the final manual verification step; do not mark DONE from code inspection alone.
+- Verified 2026-10-11 on the user's hardware: Retina 2x (`838x432 pt -> 1676x864 px`) and a second
+  display with origin x=1728 (correct 760x126 pt capture; the pre-fix code clipped the same region
+  to an 18 pt sliver). Root cause: `SCDisplay.frame` is in the Quartz global top-left space, but the
+  code flipped it as if it were AppKit bottom-left. Fix: plain origin subtraction. Negative display
+  origins not reproducible in this arrangement, but the formula is sign-agnostic (UNVERIFIED for y<0).
+- Status: DONE
+
+### T-064 · [S] Documentation sync after the Gemini migration
+- Files: docs/ARCHITECTURE.md (D-005, D-009), HANDOVER_P1.md (D-005, D-006), TASKS.md (headings, new tasks)
+- Do: record Gemini as the translation provider, the key-storage decision as OPEN, fix the D-006 inconsistency, remove stale "(current)" labels.
+- Status: DONE
+
+### T-065 · [L] Research: where to store the user's Google API key (D-009)
+- Do: Confirm in code where the key is stored now. Compare macOS Keychain options for Flutter desktop (maintained plugin vs native Keychain via Pigeon) with authoritative sources; mark UNVERIFIED items; no production code.
+- Done when: D-009 is DECIDED or UNVERIFIED with source URLs in docs/ARCHITECTURE.md.
+- Status: DONE
+
+### T-066 · [L] Move the Google API key to the Keychain
+Needs a strong model (platform security behavior). Decision D-009 in docs/ARCHITECTURE.md.
+
+- Files: pubspec.yaml, lib/services/prefs_settings_repository.dart, lib/services/settings_repository.dart,
+  a new small key-store file under lib/services/, and the matching tests.
+- Ctx: AGENTS.md, AGENTS.PROJECT.md, the files above, docs/ARCHITECTURE.md (D-009 row only).
+- Approval given: add the `flutter_secure_storage` package.
+- Do:
+    1. Store/read/delete the Google API key through FlutterSecureStorage configured for macOS with
+       MacOsOptions(usesDataProtectionKeychain: false).
+    2. Do NOT add keychain-access-groups to any .entitlements file. (network.client and app-sandbox stay as they are.)
+    3. One-time migration: if an old key exists in shared_preferences, copy it to the Keychain, then delete the old value.
+    4. Never log or print the key. Keep it out of toString of settings objects.
+    5. Put the key store behind an interface so tests can use a fake in-memory store.
+- Don't: no other packages, no Swift changes, no UI changes.
+- Done when: `flutter analyze` clean, `flutter test` passes (fake store), and I confirm the manual checks below.
+- Manual checks (I do these): (1) save key, restart app, key still works; (2) the app's preferences plist no longer
+  contains the key; (3) rebuild and run again, note whether a Keychain password prompt appears (UNVERIFIED);
+  (4) `flutter build macos --release` build reads the key; (5) migration from an old stored key works.
+- Status: DONE
+
+### T-067 · [L] Privacy notice for Gemini (UI + README + docs/PRIVACY.md)
+- Do: Next to the provider choice, say clearly that extracted text (not the screenshot) is sent to Google, and that free-tier content may be used by Google to improve its products (EEA/CH/UK differ). Add the same to README and docs/PRIVACY.md. Re-read https://ai.google.dev/gemini-api/terms first.
+- Status: DONE
+
+### T-068 · [S] Neutral fake keys in tests
+- Files: test files that use fake keys starting with the real key prefix (settings_bloc_test, settings_view_test, gemini_translation_service_test, prefs_settings_repository_test)
+- Do: replace fake keys with a neutral string such as 'test-api-key'; keep behavior. If a test depends on the key shape, stop and report BLOCKED.
+- Done when: `flutter test` passes and `git grep -n "AIza"` shows only the UI hint text.
+- Status: DONE
+
+### T-069 · [L] Remove the PingApi proof of concept
+- Files: pigeons/messages.dart (+ regenerated Dart/Swift outputs, native handler registration)
+- Do: remove PingApi everywhere and regenerate Pigeon outputs; app still builds and runs.
+- Done when: `dart run pigeon --input pigeons/messages.dart`, `flutter analyze`, `flutter test`, `flutter run -d macos` all fine.
+- Status: DONE
+
+### T-070 · [L] Verify Gemini model id and quota claims
+- Do: Check with official Google docs that the configured model id is available, and whether the quota numbers in the commit message are current. Do not hard-code quota numbers in UI/README without a source.
+- Done when: D-005 notes updated (VERIFIED / UNVERIFIED with URLs).
+- Status: DONE (2026-10-12) — D-005 updated: model ids VERIFIED (2.5 family access-limited to prior users → explains the per-run HTTP 404), quota numbers UNVERIFIED (official rate-limits page → AI Studio). Follow-up approved and applied: `defaultModel` → `gemini-3.5-flash-lite`, fallbacks → `gemini-3.8-flash`/`gemini-2.0-flash`, unverified 1500 RPD comment removed (`flutter analyze` clean, 167/167 tests).
+
+### T-071 · [L] Real README and release checklist
+- Do: README with description, features, status, build instructions, required permissions, privacy (incl. Gemini note), license. Run the checklist in docs/RELEASE.md (gitleaks on full history, author email, About/Topics).
 - Status: TODO
+
