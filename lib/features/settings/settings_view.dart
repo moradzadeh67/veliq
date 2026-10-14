@@ -215,9 +215,9 @@ class _ProviderDropdown extends StatelessWidget {
 
 /// Obscured text field for the Google AI (Gemini) API key, with a live check.
 ///
-/// The value is stored on submit, when focus leaves the field, or when the
-/// "Save & test" button is pressed — so a half-typed key is never persisted,
-/// and the button both sets the key and reports whether it actually works.
+/// Enter and the "Save & test" button both store the key and run the live
+/// check (T-129); clicking away stores the raw text without testing, so a
+/// half-typed key is never lost and the verdict is never stale.
 class _GoogleApiKeyField extends StatefulWidget {
   final String? apiKey;
   final ValueChanged<String?> onChanged;
@@ -316,7 +316,7 @@ class _GoogleApiKeyFieldState extends State<_GoogleApiKeyField> {
                   obscureText: _obscured,
                   autocorrect: false,
                   enableSuggestions: false,
-                  onSubmitted: (_) => _commit(),
+                  onSubmitted: (_) => _saveAndTest(),
                   // A stale verdict is worse than none.
                   onChanged: (_) {
                     if (_result != null) {

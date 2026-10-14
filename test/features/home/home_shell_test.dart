@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:veliq/features/history/bloc/history_bloc.dart';
 import 'package:veliq/features/home/home_shell.dart';
@@ -120,6 +121,71 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Translate placeholder'), findsOneWidget);
+    });
+
+    testWidgets('Cmd+1/2/3 switch tabs without the mouse (T-129)', (
+      tester,
+    ) async {
+      Future<void> pressCmd(LogicalKeyboardKey key) async {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+        await tester.sendKeyDownEvent(key);
+        await tester.sendKeyUpEvent(key);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+        await tester.pumpAndSettle();
+      }
+
+      await pumpShell(tester);
+      await tester.pumpAndSettle();
+
+      await pressCmd(LogicalKeyboardKey.digit2);
+      expect(find.text('No history yet'), findsOneWidget);
+
+      await pressCmd(LogicalKeyboardKey.digit3);
+      expect(find.text('Keep screenshots'), findsOneWidget);
+
+      await pressCmd(LogicalKeyboardKey.digit1);
+      expect(find.text('Translate placeholder'), findsOneWidget);
+    });
+
+    testWidgets('tab shortcuts survive a translate view that focuses itself', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1000, 1800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: HomeShell(
+            historyBloc: historyBloc,
+            settingsBloc: settingsBloc,
+            // Mimics the real app, where TranslateView nests inside HomeShell
+            // and brings its own focus + shortcuts.
+            translateView: CallbackShortcuts(
+              bindings: <ShortcutActivator, VoidCallback>{
+                const SingleActivator(LogicalKeyboardKey.keyR, meta: true):
+                    () {},
+              },
+              child: const Focus(
+                autofocus: true,
+                child: Center(child: Text('Translate placeholder')),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.digit2);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.digit2);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+      await tester.pumpAndSettle();
+
+      expect(find.text('No history yet'), findsOneWidget);
     });
   });
 }

@@ -78,41 +78,79 @@ class _TranslateViewState extends State<TranslateView> {
     );
   }
 
+  /// Cmd+R: start a capture (macOS region, iOS gallery), when idle or done.
+  void _startCapture() {
+    final state = widget.bloc.currentState;
+    if (state is TranslateFlowIdle ||
+        state is TranslateFlowSuccess ||
+        state is TranslateFlowFailure) {
+      _isIOS ? _pickFromGallery() : _startSelection();
+    }
+  }
+
+  /// Esc: start over from the result or failure screen.
+  void _startOver() {
+    final state = widget.bloc.currentState;
+    if (state is TranslateFlowSuccess || state is TranslateFlowFailure) {
+      _retryOrSelect();
+    }
+  }
+
+  /// Cmd+C: copy the translation from the result screen.
+  void _copyTranslation() {
+    final state = widget.bloc.currentState;
+    if (state is TranslateFlowSuccess) {
+      _copy(state.translatedText);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Translate'),
-        actions: [
-          if (_isIOS) ...[
-            IconButton(
-              tooltip: 'Pick image',
-              onPressed: _pickFromGallery,
-              icon: const Icon(Icons.photo_library),
-            ),
-            IconButton(
-              tooltip: 'Take photo',
-              onPressed: _takePhoto,
-              icon: const Icon(Icons.photo_camera),
-            ),
-          ] else
-            IconButton(
-              tooltip: 'Select a region',
-              onPressed: _selecting ? null : _startSelection,
-              icon: const Icon(Icons.crop_free),
-            ),
-        ],
-      ),
-      body: SafeArea(
-        top: false,
-        child: StreamBuilder<TranslateFlowState>(
-          stream: widget.bloc.stateStream,
-          initialData: widget.bloc.currentState,
-          builder: (context, snapshot) {
-            final state = snapshot.data ?? const TranslateFlowIdle();
+    return CallbackShortcuts(
+      bindings: <ShortcutActivator, VoidCallback>{
+        const SingleActivator(LogicalKeyboardKey.keyR, meta: true):
+            _startCapture,
+        const SingleActivator(LogicalKeyboardKey.escape): _startOver,
+        const SingleActivator(LogicalKeyboardKey.keyC, meta: true):
+            _copyTranslation,
+      },
+      child: Focus(
+        autofocus: true,
+        child: Scaffold(
+          appBar: AppBar(
+            title: const Text('Translate'),
+            actions: [
+              if (_isIOS) ...[
+                IconButton(
+                  tooltip: 'Pick image',
+                  onPressed: _pickFromGallery,
+                  icon: const Icon(Icons.photo_library),
+                ),
+                IconButton(
+                  tooltip: 'Take photo',
+                  onPressed: _takePhoto,
+                  icon: const Icon(Icons.photo_camera),
+                ),
+              ] else
+                IconButton(
+                  tooltip: 'Select a region',
+                  onPressed: _selecting ? null : _startSelection,
+                  icon: const Icon(Icons.crop_free),
+                ),
+            ],
+          ),
+          body: SafeArea(
+            top: false,
+            child: StreamBuilder<TranslateFlowState>(
+              stream: widget.bloc.stateStream,
+              initialData: widget.bloc.currentState,
+              builder: (context, snapshot) {
+                final state = snapshot.data ?? const TranslateFlowIdle();
 
-            return _buildBody(state);
-          },
+                return _buildBody(state);
+              },
+            ),
+          ),
         ),
       ),
     );

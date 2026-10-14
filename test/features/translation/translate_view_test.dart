@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:veliq/features/ocr/bloc/ocr_bloc.dart';
 import 'package:veliq/features/translation/bloc/translate_flow_bloc.dart';
@@ -326,6 +326,65 @@ void main() {
 
       expect(find.textContaining('Saved to history'), findsOneWidget);
     });
+
+    testWidgets('Cmd+R asks the native picker to open (T-129)', (tester) async {
+      await pump(tester);
+      await tester.pumpAndSettle();
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.keyR);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.keyR);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+      await tester.pumpAndSettle();
+
+      expect(selectionService.calls, equals(1));
+      expect(find.textContaining('Drag anywhere on screen'), findsOneWidget);
+    });
+
+    testWidgets('Cmd+C copies the translated text (T-129)', (tester) async {
+      String? copied;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (MethodCall call) async {
+          if (call.method == 'Clipboard.setData') {
+            copied = (call.arguments as Map)['text'] as String?;
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+
+      await openPicker(tester);
+      await closePicker(tester, region);
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.keyC);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.keyC);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+      await tester.pump();
+
+      expect(copied, equals('سلام دنیا'));
+      expect(find.text('Copied to clipboard'), findsOneWidget);
+      // Let the snackbar dismiss so its timer does not leak past the test.
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('Esc on the result screen starts over (T-129)', (tester) async {
+      await openPicker(tester);
+      await closePicker(tester, region);
+      expect(selectionService.calls, equals(1));
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+
+      expect(selectionService.calls, equals(2));
+      expect(find.textContaining('Drag anywhere on screen'), findsOneWidget);
+    });
   });
 
   group('TranslateView iOS Widget Tests', () {
@@ -456,6 +515,22 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(imageSourceService.galleryCalls, equals(2));
+    }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
+
+    testWidgets('Cmd+R opens the gallery picker on iOS (T-129)', (
+      tester,
+    ) async {
+      await pump(tester);
+      await tester.pumpAndSettle();
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.keyR);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.keyR);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+      await tester.pumpAndSettle();
+
+      expect(imageSourceService.galleryCalls, equals(1));
+      expect(find.text('سلام دنیا'), findsOneWidget);
     }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
   });
 }

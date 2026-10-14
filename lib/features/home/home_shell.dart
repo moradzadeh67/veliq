@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../history/bloc/history_bloc.dart';
 import '../history/history_view.dart';
@@ -51,8 +52,9 @@ class _HomeShellState extends State<HomeShell> {
       ),
     ];
 
+    final Widget scaffold;
     if (_isIOS) {
-      return Scaffold(
+      scaffold = Scaffold(
         body: SafeArea(child: destinations[_index].view),
         bottomNavigationBar: NavigationBar(
           selectedIndex: _index,
@@ -66,27 +68,39 @@ class _HomeShellState extends State<HomeShell> {
           ],
         ),
       );
+    } else {
+      scaffold = Scaffold(
+        body: Row(
+          children: [
+            NavigationRail(
+              selectedIndex: _index,
+              onDestinationSelected: (index) => setState(() => _index = index),
+              labelType: NavigationRailLabelType.all,
+              destinations: [
+                for (final destination in destinations)
+                  NavigationRailDestination(
+                    icon: Icon(destination.icon),
+                    label: Text(destination.label),
+                  ),
+              ],
+            ),
+            const VerticalDivider(width: 1),
+            Expanded(child: destinations[_index].view),
+          ],
+        ),
+      );
     }
 
-    return Scaffold(
-      body: Row(
-        children: [
-          NavigationRail(
-            selectedIndex: _index,
-            onDestinationSelected: (index) => setState(() => _index = index),
-            labelType: NavigationRailLabelType.all,
-            destinations: [
-              for (final destination in destinations)
-                NavigationRailDestination(
-                  icon: Icon(destination.icon),
-                  label: Text(destination.label),
-                ),
-            ],
-          ),
-          const VerticalDivider(width: 1),
-          Expanded(child: destinations[_index].view),
-        ],
-      ),
+    return CallbackShortcuts(
+      bindings: <ShortcutActivator, VoidCallback>{
+        const SingleActivator(LogicalKeyboardKey.digit1, meta: true): () =>
+            setState(() => _index = 0),
+        const SingleActivator(LogicalKeyboardKey.digit2, meta: true): () =>
+            setState(() => _index = 1),
+        const SingleActivator(LogicalKeyboardKey.digit3, meta: true): () =>
+            setState(() => _index = 2),
+      },
+      child: Focus(autofocus: true, child: scaffold),
     );
   }
 }

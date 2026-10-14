@@ -182,7 +182,9 @@ void main() {
       expect(find.text('No API key yet'), findsNothing);
     });
 
-    testWidgets('entering an API key persists it on submit', (tester) async {
+    testWidgets('Enter in the API key field saves and tests (T-129)', (
+      tester,
+    ) async {
       await _pumpView(tester, bloc);
       await tester.pumpAndSettle();
 
@@ -191,6 +193,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(repository.stored.googleApiKey, equals('test-api-key'));
+      expect(verifiedKeys, equals(['test-api-key']));
+      expect(find.text('Connected. The API key works.'), findsOneWidget);
     });
 
     testWidgets('Save & test stores the key and reports success', (
