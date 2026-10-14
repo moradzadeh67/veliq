@@ -62,6 +62,7 @@ credentials.*
 # --- Misc ---
 *.bak
 *.orig
+directory-tree.txt
 
 # --- Local agent/IDE session artifacts (must never be committed) ---
 *.artifact.md

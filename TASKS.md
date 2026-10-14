@@ -14,6 +14,7 @@ P7 iOS Research ............ DONE
 P8 iOS Image acquisition ... DONE
 P9 iOS UI & storage ........ DOING
 P10 Branding & icons ....... DONE
+P11 Keyboard affordances .... DOING
 
 ---
 
@@ -203,3 +204,19 @@ P10 Branding & icons ....... DONE
 - Do: Replace the raster master pipeline with the user-approved 4-line vector design: assets/branding/logo.svg becomes the single source of truth; generate_icons.sh renders every size with rsvg-convert (macOS keeps the squircle clip → transparent surround; iOS strips the clip → full-bleed opaque, no alpha). Deliver the branding set (logo-1024.png, social-preview.png, readme-banner.png, favicon.ico, github-avatar.png, about-logo.png). Drop the stale .gitignore line for the deliberately tracked .icns.
 - Done when: script regenerates all icons byte-stable; both Contents.json untouched; user approves the design.
 - Status: DONE (2026-10-14) — executed by a second agent with user design approval (two-phase preview → final). 7 macOS + 15 iOS PNGs + veliq.icns + 7 branding assets; D-015 updated (REWORKED); re-run of generate_icons.sh exits 0 with no new diffs (reproducible). The stale .gitignore line for assets/app_icon/veliq.icns was removed — the .icns stays deliberately tracked as the distributable artifact. Follow-up (same day): assets/branding/generate_branding.py + assets/branding/README.md committed to the repo (the branding pipeline now lives in-repo, no /tmp dependency; byte-identical outputs verified), and the readme banner was linked at the top of README.md.
+
+---
+
+## P11 — Keyboard affordances (macOS) (DOING)
+
+### T-129 · [M] In-app keyboard shortcuts
+- Files: lib/features/home/home_shell.dart, lib/features/translation/translate_view.dart, lib/features/settings/ (save flow), matching tests
+- Do: Flutter Shortcuts/Actions (no packages): Cmd+1/2/3 switch tabs; Cmd+R starts capture (macOS region selection, iOS gallery picker); Esc on the result/failure screen = Start over; Enter in the Settings API-key field = Save & test; Cmd+C on the result screen copies the translation. Existing Esc-cancel of the selection overlay stays as is.
+- Done when: flutter analyze clean and the new widget tests pass alongside the existing suite.
+- Status: DONE (2026-10-14) — implemented with CallbackShortcuts + Focus(autofocus) (no packages); state-guarded Cmd+R/Esc/Cmd+C in TranslateView, Cmd+1/2/3 in HomeShell, Enter-to-save-and-test in the settings key field. flutter analyze clean, 187/187 tests pass. Verified live on the macOS build (Cmd+2 switched to History; raw Cmd+R/Cmd+C/digit key events confirmed reaching the framework).
+
+### T-130 · [L] System-wide capture hotkey (closes D-004 / T-011)
+- Files: macos/Runner (RegisterEventHotKey), pigeons/messages.dart, lib wiring
+- Do: Register a system-wide hotkey with RegisterEventHotKey (no Accessibility permission required, unlike global monitors). Open decisions: default key combo (Option+Space vs Cmd+Shift+V) and behavior when the app is not running (launch straight into capture vs bring to front).
+- Done when: pressing the hotkey anywhere on macOS starts the region selection; user verifies on the MacBook.
+- Status: TODO — blocked on the two open decisions (user input needed)
