@@ -1,5 +1,7 @@
 # Veliq
 
+![Veliq](assets/branding/readme-banner.png)
+
 Select any region of your screen, extract its text locally, and translate it to Persian.
 
 <!-- TODO: add a 15-30 s demo GIF at docs/demo.gif (clean history, no personal content) and uncomment:
@@ -16,7 +18,7 @@ sent to the translation provider.
 Works end to end on **macOS 14.6+** for personal use: region select -> on-device OCR -> Gemini translation ->
 local history. The **iOS port** (P7-P9) is in progress — photo-library and camera input, bottom navigation,
 SafeArea-aware layout and Application Support storage are implemented, but it is **not device-verified yet**
-(T-118 deferred, T-124 open). Builds are unsigned; the public-release checklist lives in
+(most of T-124 simulator-verified; no physical device in scope). Builds are unsigned; the public-release checklist lives in
 [docs/RELEASE.md](docs/RELEASE.md).
 
 ## Features
@@ -41,8 +43,7 @@ iOS:   pick photo / take photo (Swift) -> OCR (Vision, on-device)
 
 ## Requirements
 
-- macOS 14.6 or later (the Xcode deployment target), or iOS 16.0 or later (intended floor — the iOS
-  Xcode target still says 15.0, see the open items in [TASKS.md](TASKS.md))
+- macOS 14.6 or later (the Xcode deployment target), or iOS 16.0 or later (the iOS Xcode target)
 - **Screen Recording** permission on macOS (required to capture the selected region)
 - **Camera** permission on iOS, and only if you take a photo; the photo library needs no permission
 - A Google Gemini API key (create one in [Google AI Studio](https://aistudio.google.com/apikey))
@@ -122,7 +123,8 @@ lib/models/                   data models
 lib/pigeon/                   generated Pigeon bindings (do not edit)
 macos/                        Swift native code (capture, OCR, selection overlay)
 ios/                          Swift native code (image source: photo picker + camera)
-assets/app_icon/              icon master + generator script (not bundled)
+assets/app_icon/              icon generator script + veliq.icns output (not bundled)
+assets/branding/               logo.svg master + social/readme branding assets (not bundled)
 pigeons/                      Pigeon definitions
 test/                         mirrors lib/
 ```
@@ -132,7 +134,7 @@ test/                         mirrors lib/
 - Displays placed **above** the main one (negative-coordinate layouts) were not reproducible to test; Retina and a side-by-side second display are verified (T-063).
 - Builds are unsigned; see "Getting started" for first launch.
 - Global shortcut is deferred.
-- **iOS is not device-verified yet**: no physical iPhone was available (T-118 deferred) and the simulator review (T-124) is still open. The iOS Xcode target also still carries the template bundle id `com.example.veliq` and a 15.0 deployment target.
+- **iOS camera is never simulator-testable**: the simulator has no camera (T-118 dropped — no device in scope). Everything else in the iOS review (T-124) is verified on the simulator; a short remainder checklist stays open.
 - On iOS there is no region selection: you pick an existing photo or take a new one.
 
 ## How this project was built

@@ -13,7 +13,6 @@ import UIKit
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
     let messenger = engineBridge.applicationRegistrar.messenger()
-    let rootVC = self.window?.rootViewController ?? UIViewController()
-    ImageSourceApiSetup.setUp(binaryMessenger: messenger, api: ImageSourceHandler(viewController: rootVC))
+    ImageSourceApiSetup.setUp(binaryMessenger: messenger, api: ImageSourceHandler())
   }
 }

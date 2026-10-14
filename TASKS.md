@@ -1,6 +1,6 @@
 # TASKS.md
 Legend: [S] small local model ok · [L] needs a strong model
-Status: TODO | DOING | DONE | BLOCKED | DEFERRED
+Status: TODO | DOING | DONE | BLOCKED | DEFERRED | DROPPED
 
 ## Phases
 P0 Scaffold ................ DONE
@@ -143,7 +143,7 @@ P10 Branding & icons ....... DONE
 - Files: (none — manual task)
 - Do: Verify 5 scenarios (gallery, camera, cancel, denied permission, history persists) on physical iPhone.
 - Done when: all five checks pass on a physical iPhone.
-- Status: DEFERRED (2026-10-12) — No physical iPhone available yet. Will resume when a device is available. Code path covered by simulator + unit tests (181/181).
+- Status: DROPPED (2026-10-14) — no physical iPhone in scope; only the simulator and this MacBook are available. The scenarios are folded into T-124 wherever the simulator allows; an actual camera capture is the only device-only check.
 
 ### T-119 · [S] Route iOS retry and re-select buttons to gallery picker
 - Files: lib/features/translation/translate_view.dart, test/features/translation/translate_view_test.dart
@@ -172,9 +172,21 @@ P10 Branding & icons ....... DONE
 
 ### T-124 · [L] Manual review on iOS simulator
 - Files: (none — manual task)
-- Do: Run flutter run -d "iPhone 15" and verify: navigation bar at bottom, three main screens work, RTL Persian result displays correctly, history persists across app restart.
+- Do: Run the app on an iPhone simulator (`flutter run -d "iPhone 17 Pro Max"`) and verify: navigation bar at the bottom; the three main screens work; the RTL Persian result displays correctly; picking a photo from the gallery works; cancelling the picker returns cleanly; a revoked camera permission surfaces a clear message (toggle with `xcrun simctl privacy booted revoke camera com.moradzadeh67.veliq` / `grant`); history persists across an app restart. Absorbs T-118's scenarios where the simulator allows — the simulator has no camera, so an actual photo capture stays device-only (out of scope, no device).
 - Done when: all checks pass on simulator.
-- Status: TODO
+- Status: TODO — progress 2026-10-14: navigation bar, the three screens, Settings (API key + connect) and the gallery picker verified working by the user on the iPhone 17 Pro Max simulator (after T-127). Remaining: cancel path, revoked-permission message, history persistence across restart.
+
+### T-126 · [S] Apply D-013: iOS deployment target 16.0 + real bundle id
+- Files: ios/Runner.xcodeproj/project.pbxproj, ios/Podfile
+- Do: Set IPHONEOS_DEPLOYMENT_TARGET to 16.0 in all three configs, replace the template bundle id com.example.veliq (app + RunnerTests) with com.moradzadeh67.veliq, uncomment `platform :ios, '16.0'` in ios/Podfile.
+- Done when: `flutter build ios --no-codesign` succeeds.
+- Status: DONE (2026-10-14) — build log now reads "Building com.moradzadeh67.veliq"; pod install ran with the new platform. Verified: analyze clean, 181/181 tests.
+
+### T-127 · [M] Fix iOS gallery/camera pickers (tap did nothing)
+- Files: ios/Runner/AppDelegate.swift, ios/Runner/ImageSourceHandler.swift, lib/main.dart
+- Do: Two independent locks: (1) with the scene-based lifecycle self.window is nil when the engine starts, so the handler held an orphan UIViewController and present() showed nothing — resolve the host view controller lazily at call time; (2) main.dart never passed imageSourceService to TranslateFlowBloc, so the bloc's null-guard turned both buttons into silent no-ops — wire PigeonImageSourceService.
+- Done when: tapping Pick image on the simulator opens PHPicker; analyze + tests pass.
+- Status: DONE (2026-10-14) — user verified the gallery flow works on the simulator. Verified: analyze clean, 181/181 tests, flutter build ios --simulator succeeds. Take photo stays meaningless on the simulator (no camera hardware).
 
 ---
 
@@ -184,16 +196,10 @@ P10 Branding & icons ....... DONE
 - Files: assets/app_icon/source/{icon_master.png,generate_icons.sh,README.md}, assets/app_icon/veliq.icns, macos/Runner/Assets.xcassets/AppIcon.appiconset/*.png, ios/Runner/Assets.xcassets/AppIcon.appiconset/*.png
 - Do: Generate every required icon size from the Concept B master. macOS keeps a transparent surround; iOS is flattened onto #2B1F5C with no alpha channel.
 - Done when: flutter analyze lib/ clean, flutter test passes, flutter build macos --debug and flutter build ios --no-codesign succeed.
-- Status: DONE (2026-10-12) — 7 macOS + 15 iOS PNGs regenerated in place; file names were kept, so neither Contents.json needed an edit (both are byte-identical to before, confirmed with git status). Pipeline: key the master's black surround out → crop the ~1% empty margin → Lanczos resize → flatten for iOS. Also fixed a dark edge halo (a 256 px edge pixel was #0f0d38 at 42% alpha, now #2b15b5 at 100%). Source of truth: assets/app_icon/source/. Verified: analyze clean, 181/181 tests, both builds pass. Committed as c1ca1cd (source + script) and 3fdf23d (regenerated PNGs); pushed to origin/main.
+- Status: DONE (2026-10-12) — 7 macOS + 15 iOS PNGs regenerated in place; file names were kept, so neither Contents.json needed an edit (both are byte-identical to before, confirmed with git status). Pipeline: key the master's black surround out → crop the ~1% empty margin → Lanczos resize → flatten for iOS. Also fixed a dark edge halo (a 256 px edge pixel was #0f0d38 at 42% alpha, now #2b15b5 at 100%). Source of truth: assets/app_icon/source/. Verified: analyze clean, 181/181 tests, both builds pass. Committed as c1ca1cd (source + script) and 3fdf23d (regenerated PNGs); pushed to origin/main. **Reworked by T-128 on 2026-10-14** — the raster master pipeline is gone, see D-015.
 
----
-
-## Open items found during the 2026-10-12 documentation sync (no task yet)
-
-1. `ios/Runner.xcodeproj/project.pbxproj` still carries the Flutter template defaults:
-   `IPHONEOS_DEPLOYMENT_TARGET = 15.0` (D-013 chose 16.0, so the decision is NOT applied)
-   and `PRODUCT_BUNDLE_IDENTIFIER = com.example.veliq` (macOS uses com.moradzadeh67.veliq).
-   Both need an explicit task before any iOS release.
-2. `assets/app_icon/veliq.icns` is a build output but is tracked (committed in `c1ca1cd`), and it
-   is also now listed in `.gitignore`. Ignore rules never apply to tracked files — either run
-   `git rm --cached assets/app_icon/veliq.icns` to untrack it, or drop the `.gitignore` line.
+### T-128 · [M] Branding redesign: SVG master + full asset set (D-015 rework)
+- Files: assets/branding/* (new), assets/app_icon/source/{generate_icons.sh,README.md}, assets/app_icon/source/icon_master.png (deleted), assets/app_icon/veliq.icns, macos/Runner/Assets.xcassets/AppIcon.appiconset/*.png, ios/Runner/Assets.xcassets/AppIcon.appiconset/*.png, .gitignore
+- Do: Replace the raster master pipeline with the user-approved 4-line vector design: assets/branding/logo.svg becomes the single source of truth; generate_icons.sh renders every size with rsvg-convert (macOS keeps the squircle clip → transparent surround; iOS strips the clip → full-bleed opaque, no alpha). Deliver the branding set (logo-1024.png, social-preview.png, readme-banner.png, favicon.ico, github-avatar.png, about-logo.png). Drop the stale .gitignore line for the deliberately tracked .icns.
+- Done when: script regenerates all icons byte-stable; both Contents.json untouched; user approves the design.
+- Status: DONE (2026-10-14) — executed by a second agent with user design approval (two-phase preview → final). 7 macOS + 15 iOS PNGs + veliq.icns + 7 branding assets; D-015 updated (REWORKED); re-run of generate_icons.sh exits 0 with no new diffs (reproducible). The stale .gitignore line for assets/app_icon/veliq.icns was removed — the .icns stays deliberately tracked as the distributable artifact. Follow-up (same day): assets/branding/generate_branding.py + assets/branding/README.md committed to the repo (the branding pipeline now lives in-repo, no /tmp dependency; byte-identical outputs verified), and the readme banner was linked at the top of README.md.

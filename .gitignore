@@ -70,8 +70,3 @@ credentials.*
 coverage/
 macos/Pods/
 **/Pods/
-
-# Generated macOS icon bundle. Regenerate with assets/app_icon/source/generate_icons.sh
-# (note: gitignore has no trailing comments - a comment must be on its own line,
-#  otherwise the whole line becomes the pattern and nothing is ignored)
-assets/app_icon/veliq.icns

@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <clipPath id="squircle-clip"><path id="squircle" d="M 512.00 256.00 C 512.00 268.58 512.03 281.17 511.98 293.75 C 511.93 306.33 511.98 318.92 511.69 331.50 C 511.39 344.08 511.20 356.69 510.19 369.22 C 509.19 381.74 508.20 394.41 505.65 406.67 C 503.09 418.93 500.15 431.55 494.86 442.76 C 489.56 453.96 482.57 465.20 473.89 473.89 C 465.20 482.57 453.96 489.56 442.76 494.86 C 431.55 500.15 418.93 503.09 406.67 505.65 C 394.41 508.20 381.74 509.19 369.22 510.19 C 356.69 511.20 344.08 511.39 331.50 511.69 C 318.92 511.98 306.33 511.93 293.75 511.98 C 281.17 512.03 268.58 512.00 256.00 512.00 C 243.42 512.00 230.83 512.03 218.25 511.98 C 205.67 511.93 193.08 511.98 180.50 511.69 C 167.92 511.39 155.31 511.20 142.78 510.19 C 130.26 509.19 117.59 508.20 105.33 505.65 C 93.07 503.09 80.45 500.15 69.24 494.86 C 58.04 489.56 46.80 482.57 38.11 473.89 C 29.43 465.20 22.44 453.96 17.14 442.76 C 11.85 431.55 8.91 418.93 6.35 406.67 C 3.80 394.41 2.81 381.74 1.81 369.22 C 0.80 356.69 0.61 344.08 0.31 331.50 C 0.02 318.92 0.07 306.33 0.02 293.75 C -0.03 281.17 0.00 268.58 0.00 256.00 C 0.00 243.42 -0.03 230.83 0.02 218.25 C 0.07 205.67 0.02 193.08 0.31 180.50 C 0.61 167.92 0.80 155.31 1.81 142.78 C 2.81 130.26 3.80 117.59 6.35 105.33 C 8.91 93.07 11.85 80.45 17.14 69.24 C 22.44 58.04 29.43 46.80 38.11 38.11 C 46.80 29.43 58.04 22.44 69.24 17.14 C 80.45 11.85 93.07 8.91 105.33 6.35 C 117.59 3.80 130.26 2.81 142.78 1.81 C 155.31 0.80 167.92 0.61 180.50 0.31 C 193.08 0.02 205.67 0.07 218.25 0.02 C 230.83 -0.03 243.42 0.00 256.00 0.00 C 268.58 0.00 281.17 -0.03 293.75 0.02 C 306.33 0.07 318.92 0.02 331.50 0.31 C 344.08 0.61 356.69 0.80 369.22 1.81 C 381.74 2.81 394.41 3.80 406.67 6.35 C 418.93 8.91 431.55 11.85 442.76 17.14 C 453.96 22.44 465.20 29.43 473.89 38.11 C 482.57 46.80 489.56 58.04 494.86 69.24 C 500.15 80.45 503.09 93.07 505.65 105.33 C 508.20 117.59 509.19 130.26 510.19 142.78 C 511.20 155.31 511.39 167.92 511.69 180.50 C 511.98 193.08 511.93 205.67 511.98 218.25 C 512.03 230.83 512.00 243.42 512.00 256.00 Z"/></clipPath>
+    <linearGradient id="bg-gradient" x1="0.08" y1="1" x2="0.92" y2="0">
+      <stop offset="0" stop-color="#241A85"/>
+      <stop offset="0.35" stop-color="#3B2FBF"/>
+      <stop offset="0.72" stop-color="#5737DA"/>
+      <stop offset="1" stop-color="#6E3FE0"/>
+    </linearGradient>
+    <radialGradient id="bg-vignette" cx="0.5" cy="0.66" r="0.78">
+      <stop offset="0" stop-color="#05073A" stop-opacity="0"/>
+      <stop offset="0.55" stop-color="#05073A" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#04052E" stop-opacity="0.62"/>
+    </radialGradient>
+    <radialGradient id="bg-highlight" cx="0.70" cy="0.13" r="0.62">
+      <stop offset="0" stop-color="#A78BFA" stop-opacity="0.62"/>
+      <stop offset="0.42" stop-color="#8B5CF6" stop-opacity="0.34"/>
+      <stop offset="1" stop-color="#8B5CF6" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bracket-fill" x1="0.15" y1="0" x2="0.75" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.6" stop-color="#FCFCFF"/>
+      <stop offset="1" stop-color="#EFEFF8"/>
+    </linearGradient>
+    <linearGradient id="bar-fill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFE7A6"/>
+      <stop offset="0.5" stop-color="#FFD27E"/>
+      <stop offset="1" stop-color="#FEB84D"/>
+    </linearGradient>
+    <filter id="drop-shadow" x="-45%" y="-45%" width="190%" height="190%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#080442" flood-opacity="0.30"/>
+    </filter>
+    <filter id="bar-shadow" x="-60%" y="-60%" width="220%" height="220%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="5" stdDeviation="9" flood-color="#1A0E52" flood-opacity="0.34"/>
+    </filter>
+  </defs>
+  <g id="background" clip-path="url(#squircle-clip)">
+    <rect width="512" height="512" fill="url(#bg-gradient)"/>
+    <rect width="512" height="512" fill="url(#bg-vignette)"/>
+    <rect width="512" height="512" fill="url(#bg-highlight)"/>
+  </g>
+  <g id="brackets" fill="none" stroke="url(#bracket-fill)" stroke-width="35.0"
+     stroke-linecap="round" stroke-linejoin="round" filter="url(#drop-shadow)">
+      <path d="M 127.90 92.30 L 68.90 92.30 L 68.90 153.30"/>
+      <path d="M 384.10 92.30 L 443.10 92.30 L 443.10 153.30"/>
+      <path d="M 127.90 419.70 L 68.90 419.70 L 68.90 358.70"/>
+      <path d="M 384.10 419.70 L 443.10 419.70 L 443.10 358.70"/>
+  </g>
+  <g id="bars" fill="url(#bar-fill)" filter="url(#bar-shadow)">
+      <rect id="bar-1" x="153.5" y="182.0" width="205.0" height="27.0" rx="13.5"/>
+      <rect id="bar-2" x="181.0" y="223.0" width="150.0" height="26.0" rx="13.0"/>
+      <rect id="bar-3" x="153.5" y="263.0" width="205.0" height="27.0" rx="13.5"/>
+      <rect id="bar-4" x="201.0" y="304.0" width="110.0" height="26.0" rx="13.0"/>
+  </g>
+</svg>

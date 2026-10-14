@@ -1,29 +1,23 @@
 #!/usr/bin/env bash
 #
-# Regenerates every Veliq app-icon size for macOS and iOS from icon_master.png.
+# Regenerates every VelIQ app-icon size for macOS and iOS from logo.svg.
 #
-# Single source of truth: assets/app_icon/source/icon_master.png
+# Single source of truth: assets/branding/logo.svg  (pure vector, 4-line design)
 # Outputs:
 #   macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_<N>.png   (7 files)
-#   ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-*.png      (15 files)
+#   ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-*.png       (15 files)
 #   assets/app_icon/veliq.icns
+#   assets/branding/AppIcon.icns
 #
-# Pipeline, per size:
-#   1. key the master's opaque black surround OUT (transparent).
-#   2. crop away the empty margin so the artwork fills the canvas edge to edge.
-#   3. resize. Because step 2 removes the transparent border band, the resampler no
-#      longer blends transparent black into the icon edge, so the downscaled sizes
-#      do not pick up a dark halo. (ffmpeg's premultiply/unpremultiply filters are
-#      two-input filters in this build, so they cannot be used in a simple -vf
-#      graph; ImageMagick, when present, resizes alpha-aware on its own.)
-#   4. macOS keeps the alpha; iOS is flattened onto the palette background,
-#      fully opaque, because Apple rejects icons with an alpha channel.
+# Two renders per size, both straight from the vector source:
+#   macOS keeps the squircle clip  -> transparent surround (macOS draws no mask).
+#   iOS drops the clip             -> full-bleed opaque square. The OS applies its
+#      own rounded mask, and App Store Connect rejects icons that carry alpha.
 #
 # Engines:
-#   sips                             - pixel-size inspection
-#   ImageMagick ("magick"/"convert") - preferred engine (alpha-aware resize)
-#   ffmpeg                           - fallback engine
-#   iconutil                         - packs veliq.icns
+#   rsvg-convert (librsvg) - SVG -> PNG at the exact pixel size (alpha-aware)
+#   sips                   - asserts the iOS PNGs carry no alpha channel
+#   iconutil               - packs the .icns bundles (ships with macOS)
 # No Python, Node or Flutter tooling is used.
 
 set -euo pipefail
@@ -31,80 +25,39 @@ set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$HERE/../../.." && pwd)"
 
-MASTER="$HERE/icon_master.png"
+SVG="$ROOT/assets/branding/logo.svg"
 MAC_DIR="$ROOT/macos/Runner/Assets.xcassets/AppIcon.appiconset"
 IOS_DIR="$ROOT/ios/Runner/Assets.xcassets/AppIcon.appiconset"
-ICNS_OUT="$ROOT/assets/app_icon/veliq.icns"
+ICNS_APP="$ROOT/assets/app_icon/veliq.icns"
+ICNS_BRANDING="$ROOT/assets/branding/AppIcon.icns"
 
-# The master is 1024x1024 and its artwork does NOT reach the canvas edges:
-# opaque pixels start at x=11 / y=7 and end at x=1012 / y=1015. Cropping with the
-# smallest of those insets (7) makes the artwork span the canvas with no clipping
-# at all, instead of leaving a ~1% empty band around it.
-# Re-measure after replacing the master:
-#   ffmpeg -i icon_master.png -vf cropdetect -f null -
-CROP_INSET=7
-CROP_SIZE=1010 # 1024 - 2 * CROP_INSET
+# Only the background group is clipped; iOS must fill the whole square.
+CLIP_ATTR=' clip-path="url(#squircle-clip)"'
 
-# Palette background used for the iOS surround (Concept B).
-IOS_BG_HEX="2B1F5C"
-# Black-key tuning for the ffmpeg engine.
-KEY_SIM=0.20
-KEY_BLEND=0.08
-# Black-key tolerance for the ImageMagick flood fill.
-MAGICK_FUZZ="12%"
-
-if [[ ! -f "$MASTER" ]]; then
-  echo "error: master icon not found: $MASTER" >&2
+if [[ ! -f "$SVG" ]]; then
+  echo "error: master vector not found: $SVG" >&2
   exit 1
 fi
 
-MAGICK=""
-for candidate in magick convert; do
-  if command -v "$candidate" >/dev/null 2>&1; then
-    MAGICK="$candidate"
-    break
-  fi
-done
-HAS_FFMPEG=0
-command -v ffmpeg >/dev/null 2>&1 && HAS_FFMPEG=1
-
-if [[ -z "$MAGICK" && "$HAS_FFMPEG" -eq 0 ]]; then
-  echo "error: need ImageMagick (magick) or ffmpeg to key the surround" >&2
+if ! command -v rsvg-convert >/dev/null 2>&1; then
+  echo "error: rsvg-convert not found. Install it with: brew install librsvg" >&2
   exit 1
 fi
 
-# macOS variant: transparent surround.
-mac_png() { # $1 = pixel size, $2 = output path
-  if [[ -n "$MAGICK" ]]; then
-    "$MAGICK" "$MASTER" -alpha set -fuzz "$MAGICK_FUZZ" -fill none \
-      -floodfill +0+0 black \
-      -crop "${CROP_SIZE}x${CROP_SIZE}+${CROP_INSET}+${CROP_INSET}" +repage \
-      -resize "${1}x${1}" -strip "$2"
-  else
-    ffmpeg -v error -y -i "$MASTER" \
-      -vf "format=rgba,colorkey=0x000000:${KEY_SIM}:${KEY_BLEND},crop=${CROP_SIZE}:${CROP_SIZE}:${CROP_INSET}:${CROP_INSET},scale=${1}:${1}:flags=lanczos" \
-      -frames:v 1 "$2"
-  fi
-}
+WORKDIR="$(mktemp -d)"
+trap 'rm -rf "$WORKDIR"' EXIT
+FULL_BLEED="$WORKDIR/logo-full-bleed.svg"
+sed "s/$CLIP_ATTR//" "$SVG" > "$FULL_BLEED"
 
-# iOS variant: opaque square, surround flattened onto the palette background.
-ios_png() { # $1 = pixel size, $2 = output path
-  if [[ -n "$MAGICK" ]]; then
-    "$MAGICK" "$MASTER" -alpha set -fuzz "$MAGICK_FUZZ" -fill none \
-      -floodfill +0+0 black \
-      -crop "${CROP_SIZE}x${CROP_SIZE}+${CROP_INSET}+${CROP_INSET}" +repage \
-      -background "#${IOS_BG_HEX}" -alpha remove -alpha off \
-      -resize "${1}x${1}" -strip "$2"
-  else
-    ffmpeg -v error -y -f lavfi -i "color=c=0x${IOS_BG_HEX}:s=${1}x${1}" -i "$MASTER" \
-      -filter_complex "[1]format=rgba,colorkey=0x000000:${KEY_SIM}:${KEY_BLEND},crop=${CROP_SIZE}:${CROP_SIZE}:${CROP_INSET}:${CROP_INSET},scale=${1}:${1}:flags=lanczos[k];[0][k]overlay=format=auto,format=rgb24" \
-      -frames:v 1 "$2"
-  fi
-}
+if grep -q 'clip-path' "$FULL_BLEED"; then
+  echo "error: failed to strip the squircle clip for the iOS variant" >&2
+  exit 1
+fi
 
+# macOS: squircle kept, transparent surround.
 mac_count=0
 for size in 16 32 64 128 256 512 1024; do
-  mac_png "$size" "$MAC_DIR/app_icon_${size}.png"
+  rsvg-convert -w "$size" -h "$size" -o "$MAC_DIR/app_icon_${size}.png" "$SVG"
   mac_count=$((mac_count + 1))
 done
 
@@ -130,27 +83,32 @@ Icon-App-1024x1024@1x.png 1024
 ios_count=0
 while read -r name size; do
   [[ -z "$name" ]] && continue
-  ios_png "$size" "$IOS_DIR/$name"
+  rsvg-convert -w "$size" -h "$size" -o "$IOS_DIR/$name" "$FULL_BLEED"
   ios_count=$((ios_count + 1))
 done <<< "$ios_sizes"
 
-# --- veliq.icns: iconutil needs the 10 canonical names inside a *.iconset ---
-TMP_ICONSET="$(mktemp -d)/veliq.iconset"
-mkdir -p "$TMP_ICONSET"
-trap 'rm -rf "$(dirname "$TMP_ICONSET")"' EXIT
+# Apple rejects icons that carry an alpha channel; assert the flattening held.
+if sips -g hasAlpha "$IOS_DIR/Icon-App-1024x1024@1x.png" | grep -q "hasAlpha: yes"; then
+  echo "error: iOS 1024 icon still carries an alpha channel" >&2
+  exit 1
+fi
 
-cp "$MAC_DIR/app_icon_16.png"   "$TMP_ICONSET/icon_16x16.png"
-cp "$MAC_DIR/app_icon_32.png"   "$TMP_ICONSET/icon_16x16@2x.png"
-cp "$MAC_DIR/app_icon_32.png"   "$TMP_ICONSET/icon_32x32.png"
-cp "$MAC_DIR/app_icon_64.png"   "$TMP_ICONSET/icon_32x32@2x.png"
-cp "$MAC_DIR/app_icon_128.png"  "$TMP_ICONSET/icon_128x128.png"
-cp "$MAC_DIR/app_icon_256.png"  "$TMP_ICONSET/icon_128x128@2x.png"
-cp "$MAC_DIR/app_icon_256.png"  "$TMP_ICONSET/icon_256x256.png"
-cp "$MAC_DIR/app_icon_512.png"  "$TMP_ICONSET/icon_256x256@2x.png"
-cp "$MAC_DIR/app_icon_512.png"  "$TMP_ICONSET/icon_512x512.png"
-cp "$MAC_DIR/app_icon_1024.png" "$TMP_ICONSET/icon_512x512@2x.png"
+# --- .icns: iconutil needs the 10 canonical names inside a *.iconset ---
+ICONSET="$WORKDIR/AppIcon.iconset"
+mkdir -p "$ICONSET"
 
-mkdir -p "$(dirname "$ICNS_OUT")"
-iconutil -c icns "$TMP_ICONSET" -o "$ICNS_OUT"
+cp "$MAC_DIR/app_icon_16.png"   "$ICONSET/icon_16x16.png"
+cp "$MAC_DIR/app_icon_32.png"   "$ICONSET/icon_16x16@2x.png"
+cp "$MAC_DIR/app_icon_32.png"   "$ICONSET/icon_32x32.png"
+cp "$MAC_DIR/app_icon_64.png"   "$ICONSET/icon_32x32@2x.png"
+cp "$MAC_DIR/app_icon_128.png"  "$ICONSET/icon_128x128.png"
+cp "$MAC_DIR/app_icon_256.png"  "$ICONSET/icon_128x128@2x.png"
+cp "$MAC_DIR/app_icon_256.png"  "$ICONSET/icon_256x256.png"
+cp "$MAC_DIR/app_icon_512.png"  "$ICONSET/icon_256x256@2x.png"
+cp "$MAC_DIR/app_icon_512.png"  "$ICONSET/icon_512x512.png"
+cp "$MAC_DIR/app_icon_1024.png" "$ICONSET/icon_512x512@2x.png"
 
-echo "generated ${mac_count} macOS PNGs, ${ios_count} iOS PNGs and 1 .icns"
+iconutil -c icns "$ICONSET" -o "$ICNS_APP"
+iconutil -c icns "$ICONSET" -o "$ICNS_BRANDING"
+
+echo "generated ${mac_count} macOS PNGs, ${ios_count} iOS PNGs and 2 .icns bundles"

@@ -4,16 +4,20 @@ import PhotosUI
 
 final class ImageSourceHandler: NSObject, ImageSourceApi {
 
-  private weak var viewController: UIViewController?
-
-  init(viewController: UIViewController) {
-    self.viewController = viewController
-    super.init()
+  private var hostViewController: UIViewController? {
+    let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+    let windowScene = scenes.first { $0.activationState == .foregroundActive } ?? scenes.first
+    var top = windowScene?.windows.first { $0.isKeyWindow }?.rootViewController
+      ?? windowScene?.windows.first?.rootViewController
+    while let presented = top?.presentedViewController {
+      top = presented
+    }
+    return top
   }
 
   @MainActor
   func pickImageFromGallery() async throws -> FlutterStandardTypedData? {
-    guard let root = viewController else {
+    guard let root = hostViewController else {
       return nil
     }
     return await withCheckedContinuation { continuation in
@@ -32,7 +36,7 @@ final class ImageSourceHandler: NSObject, ImageSourceApi {
 
   @MainActor
   func takePhotoWithCamera() async throws -> FlutterStandardTypedData? {
-    guard let root = viewController, UIImagePickerController.isSourceTypeAvailable(.camera) else {
+    guard let root = hostViewController, UIImagePickerController.isSourceTypeAvailable(.camera) else {
       return nil
     }
     return await withCheckedContinuation { continuation in

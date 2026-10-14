@@ -30,7 +30,7 @@ The iOS build acquires an image instead of capturing the screen.
 - Denial handling: the camera sheet cannot be presented when the permission is denied; the
   failure path must surface a clear message and must not crash or request in a loop.
 - Implementation: `ios/Runner/ImageSourceHandler.swift`, registered in `AppDelegate.swift` (T-113).
-- **NOT device-verified yet** (T-118 deferred, T-124 open).
+- **Simulator-verified 2026-10-14** (T-127 fix): navigation, screens and the gallery picker work on the iPhone simulator. Remaining T-124 checks: cancel path, revoked-permission message, history across restart. No physical iPhone (T-118 dropped), so an actual camera capture cannot be exercised anywhere in scope.
 
 ## Accessibility
 NOT assumed. It may be needed depending on how Veliq implements global shortcuts,

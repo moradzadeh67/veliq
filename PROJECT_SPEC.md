@@ -44,7 +44,7 @@ iOS was added as a second target after the macOS MVP shipped.
   handling and a wrapping button row for narrow screens (T-122, T-123).
 - **Storage**: history lives in the app's Application Support directory via `path_provider`
   (`getApplicationSupportDirectory()`, T-120/T-121).
-- **Status**: T-110..T-117 and T-119..T-123 DONE; T-118 (physical iPhone) DEFERRED;
-  T-124 (simulator review) TODO.
-- **Open**: the iOS Xcode target still uses the template bundle id `com.example.veliq` and
-  `IPHONEOS_DEPLOYMENT_TARGET = 15.0`, while D-013 chose iOS 16.0. Neither is applied yet.
+- **Status**: T-110..T-117 and T-119..T-123 DONE; T-118 (physical iPhone) DROPPED — no device
+  in scope, its scenarios folded into T-124; T-124 (simulator review) mostly verified 2026-10-14
+  (gallery picker works after T-127; short remainder checklist open); T-126 (iOS 16.0 floor
+  + real bundle id `com.moradzadeh67.veliq`) and T-127 (picker fix) DONE.

@@ -65,9 +65,9 @@ device; no analytics. See docs/PRIVACY.md.
 | D-010 | iOS image source (gallery) | `PHPickerViewController` (PhotosUI framework). Runs out-of-process, requires NO photo-library permission. Available since iOS 14.0. Apple's recommended picker for new apps. | DECIDED (source: https://developer.apple.com/documentation/photokit/phpickerviewcontroller) |
 | D-011 | iOS image source (camera) | `UIImagePickerController` with `sourceType = .camera`, `mediaTypes = ["public.image"]`. Still Apple's standard camera modal for capturing a single photo. Available since iOS 2.0. | DECIDED (source: https://developer.apple.com/documentation/uikit/uiimagepickercontroller) |
 | D-012 | iOS Info.plist privacy keys | Only `NSCameraUsageDescription` is required (for the camera). `NSPhotoLibraryUsageDescription` is NOT required because `PHPickerViewController` is out-of-process. `NSPhotoLibraryAddUsageDescription` is NOT required because Veliq never writes to the photo library. | DECIDED (source: https://developer.apple.com/documentation/bundleresources/information-property-list/nscamerausagedescription) |
-| D-013 | iOS minimum deployment target | iOS 16.0. Rationale: (1) aligns with the existing macOS 14.6 baseline's modernity; (2) `PHPickerViewController` comfortably available; (3) modern Swift concurrency available without `#available` guards; (4) VNRecognizeTextRequest stable. | DECIDED — **NOT APPLIED**: `ios/Runner.xcodeproj/project.pbxproj` still has `IPHONEOS_DEPLOYMENT_TARGET = 15.0` and `ios/Podfile` still has the platform line commented out (checked 2026-10-12). Needs a task. (source: https://developer.apple.com/documentation/photokit/phpickerviewcontroller — "Availability: iOS 14.0+"; we choose 16.0 as a stricter, still-compatible floor) |
+| D-013 | iOS minimum deployment target | iOS 16.0. Rationale: (1) aligns with the existing macOS 14.6 baseline's modernity; (2) `PHPickerViewController` comfortably available; (3) modern Swift concurrency available without `#available` guards; (4) VNRecognizeTextRequest stable. | DECIDED, APPLIED (T-126, 2026-10-14): `IPHONEOS_DEPLOYMENT_TARGET = 16.0` in ios/Runner.xcodeproj (all three configs) and `platform :ios, '16.0'` in ios/Podfile. (source: https://developer.apple.com/documentation/photokit/phpickerviewcontroller — "Availability: iOS 14.0+"; 16.0 is a stricter, still-compatible floor) |
 | D-014 | Pigeon bridge and image bytes | Dart `Uint8List` maps to Swift `FlutterStandardTypedData` via the standard codec. Sizes of 2–5 MB JPEG are within Flutter's standard channel limits (no fragmentation API needed). No platform-specific workaround required. | DECIDED (source: https://docs.flutter.dev/platform-integration/platform-channels) |
-| D-015 | App icon source of truth | One master PNG at `assets/app_icon/source/icon_master.png`, turned into every required size by `assets/app_icon/source/generate_icons.sh` (key the black surround out → crop the empty margin → Lanczos resize → flatten for iOS). macOS icons keep a **transparent** surround; iOS icons are **opaque** on `#2B1F5C` because Apple rejects icons carrying an alpha channel. File names are unchanged from the Flutter templates, so neither `Contents.json` needed an edit. | DECIDED, IMPLEMENTED (T-125) |
+| D-015 | App icon source of truth | One master vector at `assets/branding/logo.svg` (512×512 squircle, four white brackets pushed 20 % outward, four gold text bars), turned into every required size by `assets/app_icon/source/generate_icons.sh` with `rsvg-convert` at the exact target pixel size — no intermediate raster, so no keying/crop/resize tuning. macOS renders keep the squircle clip and therefore a **transparent** surround; iOS renders strip the clip attribute and are **full-bleed opaque** (no alpha channel, asserted by `sips -g hasAlpha`) because Apple rejects icons carrying alpha and the OS applies its own mask. The former raster master `icon_master.png` was deleted (2026-10-14). File names are unchanged from the Flutter templates, so neither `Contents.json` needed an edit. | DECIDED, IMPLEMENTED (T-125); REWORKED (2026-10-14): master is now the vector `assets/branding/logo.svg` |
 
 An OPEN decision must not be implemented until its task is DONE.
 
@@ -77,7 +77,8 @@ ImageSourceService (abstract interfaces); HistoryRepository, SettingsRepository;
 Pigeon APIs in lib/pigeon.
 Swift (macos/Runner): screen capture, Vision OCR, permission manager, shortcut manager (if native).
 Swift (ios/Runner): ImageSourceHandler.swift (PHPickerViewController + UIImagePickerController),
-registered in AppDelegate via ImageSourceApiSetup. iOS reuses the same generated Pigeon Swift
+registered in AppDelegate via ImageSourceApiSetup; the host view controller is resolved lazily at
+call time because the scene-based lifecycle has no window when the engine starts (T-127). iOS reuses the same generated Pigeon Swift
 file as macOS — it carries `#if os(iOS)` / `#elseif os(macOS)` import guards (T-112).
 Translation implementations: GeminiTranslationService (network, user key), PigeonTranslationService (Apple, macOS 26+),
 SwitchingTranslationService (chooses between them from settings).
@@ -94,7 +95,8 @@ lib/
   pigeon/      Pigeon definition + generated Dart
 macos/Runner/  Swift native code (+ generated Pigeon Swift)
 ios/Runner/    Swift native code (+ the same generated Pigeon Swift)
-assets/app_icon/  icon master + generator script (not bundled: no pubspec assets entry)
+assets/app_icon/  icon generator script + veliq.icns output (not bundled: no pubspec assets entry)
+assets/branding/  logo.svg master + social/readme branding assets (not bundled)
 test/          mirrors lib/
 docs/  references/
 ```
