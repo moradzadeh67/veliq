@@ -2,10 +2,10 @@
 
 ![Veliq](assets/branding/readme-banner.png)
 
-Select any region of your screen, extract its text on-device, and read it in Persian.
+Select any region of your screen — or pick / take a photo — extract its text on-device, and read it in Persian.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
-[![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20iOS-black?style=flat-square&logo=apple)](https://flutter.dev/platforms)
+[![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20iOS%20%7C%20Android-black?style=flat-square&logo=flutter)](https://flutter.dev/platforms)
 [![Flutter](https://img.shields.io/badge/Flutter-3.47.2-02569B?style=flat-square&logo=flutter)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.13.2-0175C2?style=flat-square&logo=dart&logoColor=white)](https://dart.dev)
 
@@ -16,8 +16,11 @@ Select any region of your screen, extract its text on-device, and read it in Per
 Works end to end on **macOS 14.6+** for personal use: region select → on-device OCR → Gemini translation →
 local history. The **iOS port** (P7–P9) is nearly there — photo-library and camera input, bottom navigation,
 SafeArea-aware layout and Application Support storage are implemented and simulator-verified, but it is
-**not device-verified** (no physical device in scope; the camera can never be simulator-tested). Builds are
-unsigned; the public-release checklist lives in [docs/RELEASE.md](docs/RELEASE.md).
+**not device-verified** (no physical device in scope; the camera can never be simulator-tested).
+**Android v1 (P12)** is done: Photo Picker + camera input, on-device ML Kit OCR (Latin script only),
+Gemini-only translation and the Veliq launcher icon — all verified on an emulator (Pixel 10 Pro XL AVD),
+**not on a physical device**. Builds are unsigned; the public-release checklist lives in
+[docs/RELEASE.md](docs/RELEASE.md).
 
 ## 💡 Why I Built This
 
@@ -48,21 +51,31 @@ unsigned; the public-release checklist lives in [docs/RELEASE.md](docs/RELEASE.m
 - Same on-device OCR (Vision), same translation path
 - No region selection is possible on iOS — you choose an existing or a new photo
 
+### 🤖 Photos (Android)
+
+- Pick a photo with the system **Photo Picker** (no permission required) or take one with the camera
+  (CAMERA permission asked once; the temporary file is deleted right after reading)
+- On-device OCR with the bundled **ML Kit** Latin recognizer — **Latin script only** for now
+- **Gemini is the only translation provider on Android** (Apple Translation does not exist there)
+- Same history and settings as the other platforms; no region selection
+
 ### 🔍 OCR and translation
 
-- On-device OCR (Apple Vision) on both platforms
-- Translation with **Google Gemini** using **your own API key**
+- On-device OCR: Apple Vision on macOS/iOS, bundled ML Kit on Android
+- Translation with **Google Gemini** using **your own API key** (the only provider on Android)
 - Right-to-left, justified Persian result view; copy the original or the translation
 
 ### 📚 History and settings
 
-- Local, deletable translation history (`history.json` in Application Support)
-- API key stored in the **macOS Keychain** — never in plain-text preferences
+- Local, deletable translation history (`history.json` in Application Support on Apple platforms,
+  the app-private files dir on Android)
+- API key stored in the **macOS Keychain** / an **Android Keystore-backed encrypted store** —
+  never in plain-text preferences
 - Language pair and provider settings in `shared_preferences`
 
 ### 📱 Navigation
 
-- `NavigationRail` on macOS, bottom `NavigationBar` + `SafeArea` on iOS
+- `NavigationRail` on macOS, bottom `NavigationBar` + `SafeArea` on iOS and Android
 
 ### ⌨️ Keyboard shortcuts (macOS, T-129)
 
@@ -74,18 +87,20 @@ unsigned; the public-release checklist lives in [docs/RELEASE.md](docs/RELEASE.m
 
 ## 🛠️ Tech Stack
 
-- **Framework:** Flutter 3.47.2 — one codebase for macOS and iOS
-- **Language:** Dart 3.13.2+
-- **Native layer:** Swift — ScreenCaptureKit + Vision + selection window (macOS), Vision + PHPicker + camera (iOS)
-- **Bridge:** [Pigeon](https://pub.dev/packages/pigeon) 29 — type-safe Dart ↔ Swift, generated code
+- **Framework:** Flutter 3.47.2 — one codebase for macOS, iOS and Android
+- **Language:** Dart 3.13.2+ (app layer), Kotlin (Android native)
+- **Native layer:** Swift — ScreenCaptureKit + Vision + selection window (macOS), Vision + PHPicker + camera (iOS);
+  Kotlin — Photo Picker + camera + ML Kit OCR (Android)
+- **Bridge:** [Pigeon](https://pub.dev/packages/pigeon) 29 — type-safe Dart ↔ Swift/Kotlin, generated code
 - **State management:** hand-written BLoC (`TranslateFlowBloc`, `OcrBloc`, `HistoryBloc`, `SettingsBloc` — no
   `bloc` package)
 - **Settings:** [`shared_preferences`](https://pub.dev/packages/shared_preferences)
 - **API key:** [`flutter_secure_storage`](https://pub.dev/packages/flutter_secure_storage) → macOS Keychain
-  (legacy keychain, so it works without a paid Apple developer account)
+  (legacy keychain, so it works without a paid Apple developer account); Android-Keystore-encrypted
+  store on Android
 - **HTTP:** [`http`](https://pub.dev/packages/http) — Gemini REST calls
 - **Paths:** [`path_provider`](https://pub.dev/packages/path_provider) — `getApplicationSupportDirectory()`
-- **Architecture:** feature-first — Dart owns UI, state, orchestration and storage; Swift owns native capability
+- **Architecture:** feature-first — Dart owns UI, state, orchestration and storage; Swift/Kotlin own native capability
 
 ## ✅ Testing
 
@@ -96,16 +111,19 @@ no permission prompt, no screen capture, no Gemini call and no API key are invol
 # Static analysis must report zero issues
 flutter analyze
 
-# Unit + widget tests (187)
+# Unit + widget tests (199)
 flutter test
 
 # iOS build check (no signing needed)
 flutter build ios --no-codesign
+
+# Android build check (debug APK)
+flutter build apk --debug
 ```
 
 ## 🏗️ Architecture
 
-Dart owns the UI, state, orchestration and storage; Swift owns the native capabilities. The two sides talk over
+Dart owns the UI, state, orchestration and storage; Swift (Apple) and Kotlin (Android) own the native capabilities. The two sides talk over
 a small, Pigeon-generated interface. Decisions and their status (with sources for platform claims) are recorded
 in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
@@ -116,6 +134,8 @@ macOS: select region (Swift overlay) -> capture (ScreenCaptureKit) -> OCR (Visio
          -> extracted text -> Gemini API (text only) -> result view + local history
 iOS:   pick photo / take photo (Swift) -> OCR (Vision, on-device)
          -> extracted text -> Gemini API (text only) -> result view + local history
+Android: pick photo (Photo Picker) / take photo (Kotlin, ACTION_IMAGE_CAPTURE) -> OCR (ML Kit, on-device, Latin)
+         -> extracted text -> Gemini API (text only; the only provider on Android) -> result view + local history
 ```
 
 ### Project Structure
@@ -155,6 +175,7 @@ lib/
 
 macos/Runner/                          Swift: SelectionOverlayWindow, ScreenCaptureKit capture, Vision OCR
 ios/Runner/                            Swift: ImageSourceHandler (PHPicker + camera)
+android/app/                           Kotlin: Photo Picker + camera (FileProvider), ML Kit OCR — Pigeon hosts
 pigeons/messages.dart                  Pigeon definitions
 test/                                  mirrors lib/ (service interfaces faked)
 ```
@@ -164,10 +185,11 @@ test/                                  mirrors lib/ (service interfaces faked)
 | Topic | Choice | Why |
 |---|---|---|
 | State management | BLoC pattern (hand-written, no `bloc` package) | testable, UI-independent state |
-| Dart ↔ Swift | Pigeon | type-safe bridge, generated code |
+| Dart ↔ Swift/Kotlin | Pigeon | type-safe bridge, generated code |
 | Screen capture | ScreenCaptureKit | `CGWindowListCreateImage` is obsoleted in the macOS 15 SDK |
-| OCR | Apple Vision | on-device, no network |
+| OCR | Apple Vision (macOS/iOS), bundled ML Kit Latin (Android) | on-device, no network |
 | Translation | Gemini API via a `TranslationService` interface | Apple's Translation framework does not cover Persian |
+| Android input | Photo Picker intents + `ACTION_IMAGE_CAPTURE` | `FlutterActivity` is not a `ComponentActivity`, so the ActivityResult contracts do not apply |
 | API key storage | Keychain via `flutter_secure_storage` (legacy keychain) | works without a paid Apple developer account |
 
 ## 📱 Platform Support
@@ -178,7 +200,7 @@ test/                                  mirrors lib/ (service interfaces faked)
 | 📱 iOS | 🔜 In progress | P7–P9; simulator-verified (iPhone 17 Pro Max), not device-verified |
 | 🪟 Windows | ❌ Out of scope | see [PROJECT_SPEC.md](PROJECT_SPEC.md) — "Out of scope" |
 | 🐧 Linux | ❌ Out of scope | as above |
-| 🤖 Android | ❌ Out of scope | as above |
+| 🤖 Android | ✅ v1 done (P12) | photo input + ML Kit OCR (Latin) + Gemini only; emulator-verified, not device-verified |
 
 ## 🔐 Permissions
 
@@ -188,20 +210,26 @@ On macOS, Veliq asks for **Screen Recording** only. If you dismissed the prompt,
 
 Fully quit and reopen Veliq after changing this setting. Veliq does **not** request Accessibility, Full Disk
 Access, or any other permission. On iOS, Veliq asks for the **Camera** only when you tap *Take photo*; picking
-from the photo library uses `PHPickerViewController`, which needs no permission at all.
-See [docs/MACOS_PERMISSIONS.md](docs/MACOS_PERMISSIONS.md).
+from the photo library uses `PHPickerViewController`, which needs no permission at all. On Android it is the
+same story: the **Camera** runtime permission only when you tap *Take photo* — the Photo Picker needs no
+permission, and v1 has no screen-capture permission.
+See [docs/MACOS_PERMISSIONS.md](docs/MACOS_PERMISSIONS.md) (Apple platforms).
 
 ## 🔒 Privacy
 
-- Capture and OCR are entirely on-device; screenshots and picked photos are held in memory and discarded.
+- Capture and OCR are entirely on-device; screenshots and picked photos are held in memory and discarded
+  (on Android a camera shot briefly sits in a cache file that is deleted right after OCR).
 - Only the recognized **text** is sent to Google's Gemini API, with your own key. On the free tier Google may use
   that text to improve its products, and human reviewers may read it; users in the EEA, Switzerland and the UK are
   covered by the paid-tier terms. Terms change: check Google's current Gemini API terms.
-- Your API key is stored in the Keychain, not in plain-text preferences.
+- Your API key is stored in the macOS Keychain (an Android-Keystore-encrypted store on Android), not in
+  plain-text preferences.
+- On Android every translation goes through Gemini (cloud, text only) — Apple Translation does not exist there.
 - Translation history lives in the app's Application Support directory
   (`getApplicationSupportDirectory()`), i.e.
   `~/Library/Containers/com.moradzadeh67.veliq/Data/Library/Application Support/veliq/history.json` on macOS
-  (the app is sandboxed), and can be cleared from the History screen.
+  (the app is sandboxed) — `/data/data/com.moradzadeh67.veliq/files/history.json` on Android —
+  and can be cleared from the History screen.
 - No account, no analytics, no backend.
 
 Details: [docs/PRIVACY.md](docs/PRIVACY.md).
@@ -223,28 +251,33 @@ cd veliq
 # Install dependencies
 flutter pub get
 
-# Run (macOS or the iOS simulator)
+# Run (macOS, the iOS simulator, or an Android device / emulator)
 flutter run -d macos
 flutter run -d "iPhone 17 Pro Max"
+flutter run -d <android-device-id>   # `flutter devices` lists it
 
 # Build a release bundle
 flutter build macos --release
+
+# Android: build check with a debug APK (no release signing configured yet)
+flutter build apk --debug
 ```
 
 **First run**
 
-1. Open **Settings**, paste your API key, and press **Save & test**.
+1. Open **Settings**, paste your API key, and press **Save & test** (the same key works on Android).
 2. Grant **Screen Recording** when macOS asks (see [Permissions](#-permissions)).
 3. Open **Translate**, click **Select region**, and drag over the text.
+4. Android: when you tap **Take photo**, grant the camera permission once.
 
 First launch of an unsigned build: macOS may refuse to open it by double-click. Right-click the app and choose
 **Open** once. <!-- TODO: verify the exact prompts on a clean Mac / second user account -->
 
 ### System requirements
 
-- macOS 14.6 or later (the Xcode deployment target), or iOS 16.0 or later
+- macOS 14.6+ (the Xcode deployment target), iOS 16.0+, or Android 7.0+ (API 24, the Flutter minSdk)
 - Flutter 3.47.2 / Dart 3.13.2+ — only to build from source
-- **Screen Recording** permission on macOS; **Camera** on iOS (only for *Take photo*)
+- **Screen Recording** on macOS; **Camera** on iOS/Android (only for *Take photo*)
 - A Google Gemini API key (create one in [Google AI Studio](https://aistudio.google.com/apikey))
 
 ## 💻 Development Environment
@@ -261,8 +294,9 @@ Actively developed and tested on:
 ### Requirements
 
 - Dart SDK `^3.13.2`
-- macOS 14.6+ or iOS 16.0+
-- An iPhone 17 Pro Max simulator for the iOS side (no physical device in scope)
+- macOS 14.6+, iOS 16.0+ or Android 7.0+
+- An iPhone 17 Pro Max simulator for the iOS side, an Android emulator/device for the Android side
+  (no physical device in scope for either)
 
 ## 🗺️ Roadmap
 
@@ -279,6 +313,7 @@ Actively developed and tested on:
 - [x] P10 — Branding & icons
 - [ ] P11 — Keyboard affordances *(in progress — in-app shortcuts done, system-wide hotkey open)*
 - [ ] System-wide capture hotkey (T-130) — blocked on two open decisions
+- [x] P12 — Android v1: photo input, ML Kit OCR, Gemini-only, launcher icon (T-131..T-139)
 - [ ] First public release — [docs/RELEASE.md](docs/RELEASE.md)
 
 The canonical phase and task list lives in [TASKS.md](TASKS.md).
@@ -292,6 +327,10 @@ The canonical phase and task list lives in [TASKS.md](TASKS.md).
 - **iOS camera is never simulator-testable**: the simulator has no camera (T-118 dropped — no device in scope).
   Everything else in the iOS review (T-124) is verified on the simulator; a short remainder checklist stays open.
 - On iOS there is no region selection: you pick an existing photo or take a new one.
+- **Android OCR is Latin-script only** (bundled ML Kit): Persian/Arabic/Urdu text is not recognized —
+  a separate ML Kit model is a future task, not scheduled.
+- Android is verified on an **emulator only** (Pixel 10 Pro XL AVD); no physical Android device is in scope.
+- On Android every translation is cloud (Gemini); there is no on-device provider there.
 
 ## 🤖 Development Approach
 
@@ -312,6 +351,7 @@ Built on [Flutter](https://flutter.dev), [Dart](https://dart.dev),
 [Pigeon](https://pub.dev/packages/pigeon),
 [Apple Vision](https://developer.apple.com/documentation/vision),
 [ScreenCaptureKit](https://developer.apple.com/documentation/screencapturekit),
+[ML Kit Text Recognition](https://developers.google.com/ml-kit/vision/text-recognition/v2),
 [`flutter_secure_storage`](https://pub.dev/packages/flutter_secure_storage), and the
 [Gemini API](https://ai.google.dev/).
 

@@ -30,7 +30,11 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   int _index = 0;
 
-  bool get _isIOS => defaultTargetPlatform == TargetPlatform.iOS;
+  /// Bottom navigation is used on the mobile targets (iOS and Android);
+  /// desktop keeps the NavigationRail.
+  bool get _isMobile =>
+      defaultTargetPlatform == TargetPlatform.iOS ||
+      defaultTargetPlatform == TargetPlatform.android;
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +57,7 @@ class _HomeShellState extends State<HomeShell> {
     ];
 
     final Widget scaffold;
-    if (_isIOS) {
+    if (_isMobile) {
       scaffold = Scaffold(
         body: SafeArea(child: destinations[_index].view),
         bottomNavigationBar: NavigationBar(

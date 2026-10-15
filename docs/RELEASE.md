@@ -10,9 +10,12 @@ License: MIT (see LICENSE). The repository is public.
 - iOS is **not distributed yet** (only `flutter build ios --no-codesign` is run, as a build check).
   The Xcode target now carries the real bundle id `com.moradzadeh67.veliq` and the D-013 iOS 16.0
   floor (T-126, 2026-10-14).
+- Android is **not distributed yet**: only a local debug APK (`flutter build apk --debug`, verified
+  in T-139 on 2026-10-15). No release signing and no store listing exist.
 
 ## Future (nothing decided)
 - Code signing and notarization for Gatekeeper.
+- Android: release signing (keystore / AAB) and store distribution — nothing decided.
 - Mac App Store consideration: do a fresh privacy and entitlement review against
   Apple's requirements at that time. Do not assume today's configuration is suitable.
 
@@ -26,7 +29,7 @@ License: MIT (see LICENSE). The repository is public.
    (macOS, via `flutter_secure_storage`, D-009) or an equivalent secure store (mechanism decided in T-012).
 5. Git author email is a GitHub noreply address, not a private one.
 6. LICENSE has the correct copyright holder name.
-7. README documents required permissions (macOS Screen Recording, iOS camera).
+7. README documents required permissions (macOS Screen Recording, iOS camera, Android camera).
 8. Verify permission flows on a clean machine or a separate macOS user account.
 
 ## Hygiene review — 2026 (T-062)

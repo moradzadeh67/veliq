@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Temporary full-quality captures (T-135). The file lives in the app
+         cache and is deleted right after the bytes are handed to Flutter. -->
+    <cache-path name="photos" path="photos/" />
+</paths>

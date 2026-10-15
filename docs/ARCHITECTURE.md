@@ -1,9 +1,9 @@
 # Veliq — Architecture
 
 ## Overview
-macOS and iOS utility: Flutter/Dart for the app layer, Swift for native integration
-(`macos/Runner`, `ios/Runner`). Local-first and privacy-focused: captured content stays
-on the device whenever possible.
+macOS, iOS and Android (v1) utility: Flutter/Dart for the app layer, Swift for the Apple
+integrations (`macos/Runner`, `ios/Runner`) and Kotlin for Android (`android/app`). Local-first
+and privacy-focused: captured content stays on the device whenever possible.
 
 ## Layers
 ```
@@ -18,12 +18,12 @@ on the device whenever possible.
 +--------------------------------------------------+
                       |
 +--------------------------------------------------+
-| Native bridge: Pigeon (type-safe Dart <-> Swift) |
+| Native bridge: Pigeon (Dart <-> Swift/Kotlin)    |
 +--------------------------------------------------+
                       |
 +--------------------------------------------------+
-| Native (Swift): screen capture, Vision OCR,      |
-| permission checks, shortcuts (if native)         |
+| Native (Swift/Kotlin): capture and Vision/ML Kit |
+| OCR, permissions, shortcuts (if native)          |
 +--------------------------------------------------+
 ```
 
@@ -47,6 +47,13 @@ Pick image / Take photo (Dart) -> Swift ImageSourceHandler (PHPickerViewControll
 UIImagePickerController) -> image bytes -> Swift Vision OCR (local) -> extracted text
 -> Dart -> translation provider (TEXT ONLY) -> result panel
 ```
+Android (no region selection; translation is Gemini only):
+```
+pick photo (Photo Picker intents, no permission) or take photo (Kotlin, ACTION_IMAGE_CAPTURE +
+FileProvider cache file, deleted after reading) -> Kotlin ImageSourceApi -> bytes ->
+Kotlin ML Kit OCR (local, Latin script) -> extracted text -> Dart -> Gemini (TEXT ONLY)
+-> result panel + local history
+```
 Rules: captured content stays local; image data released after OCR; only text leaves the
 device; no analytics. See docs/PRIVACY.md.
 
@@ -68,6 +75,7 @@ device; no analytics. See docs/PRIVACY.md.
 | D-013 | iOS minimum deployment target | iOS 16.0. Rationale: (1) aligns with the existing macOS 14.6 baseline's modernity; (2) `PHPickerViewController` comfortably available; (3) modern Swift concurrency available without `#available` guards; (4) VNRecognizeTextRequest stable. | DECIDED, APPLIED (T-126, 2026-10-14): `IPHONEOS_DEPLOYMENT_TARGET = 16.0` in ios/Runner.xcodeproj (all three configs) and `platform :ios, '16.0'` in ios/Podfile. (source: https://developer.apple.com/documentation/photokit/phpickerviewcontroller — "Availability: iOS 14.0+"; 16.0 is a stricter, still-compatible floor) |
 | D-014 | Pigeon bridge and image bytes | Dart `Uint8List` maps to Swift `FlutterStandardTypedData` via the standard codec. Sizes of 2–5 MB JPEG are within Flutter's standard channel limits (no fragmentation API needed). No platform-specific workaround required. | DECIDED (source: https://docs.flutter.dev/platform-integration/platform-channels) |
 | D-015 | App icon source of truth | One master vector at `assets/branding/logo.svg` (512×512 squircle, four white brackets pushed 20 % outward, four gold text bars), turned into every required size by `assets/app_icon/source/generate_icons.sh` with `rsvg-convert` at the exact target pixel size — no intermediate raster, so no keying/crop/resize tuning. macOS renders keep the squircle clip and therefore a **transparent** surround; iOS renders strip the clip attribute and are **full-bleed opaque** (no alpha channel, asserted by `sips -g hasAlpha`) because Apple rejects icons carrying alpha and the OS applies its own mask. The former raster master `icon_master.png` was deleted (2026-10-14). File names are unchanged from the Flutter templates, so neither `Contents.json` needed an edit. | DECIDED, IMPLEMENTED (T-125); REWORKED (2026-10-14): master is now the vector `assets/branding/logo.svg` |
+| D-016 | Android v1 scope and native stack | Android v1 (P12) is **photo input only**: gallery via the Android **Photo Picker** intents (`ACTION_PICK_IMAGES` on API 33+, `ACTION_GET_CONTENT` fallback, no storage permission) and camera via `ACTION_IMAGE_CAPTURE` + `EXTRA_OUTPUT` + a `FileProvider` cache file deleted right after reading (CAMERA runtime permission; `<uses-feature camera required="false">`). `ActivityResultContracts.TakePicture` was not usable because `FlutterActivity` is not a `ComponentActivity` (deviation from the original plan, T-135). OCR is the **bundled ML Kit Latin** recognizer `com.google.mlkit:text-recognition:16.0.1` (Latin script only) implemented **directly in Kotlin behind Pigeon** — no Flutter ML Kit package, so the Dart layer stays untouched; `minSdk = flutter.minSdkVersion` (24 with Flutter 3.47). Only `ImageSourceApi` and `OcrApi` are registered on the Android Pigeon host; `SelectionApi`, `ScreenCaptureApi` and `TranslationApi` are never registered there because no Android UI calls them. Region selection and screen capture (MediaProjection + foreground service) are explicitly out of v1, and Apple Translation is unavailable on Android — translation is Gemini only. | DECIDED (user-approved 2026-10-14); IMPLEMENTED — T-131..T-139 DONE 2026-10-15, emulator-verified (T-139) |
 
 An OPEN decision must not be implemented until its task is DONE.
 
@@ -80,6 +88,11 @@ Swift (ios/Runner): ImageSourceHandler.swift (PHPickerViewController + UIImagePi
 registered in AppDelegate via ImageSourceApiSetup; the host view controller is resolved lazily at
 call time because the scene-based lifecycle has no window when the engine starts (T-127). iOS reuses the same generated Pigeon Swift
 file as macOS — it carries `#if os(iOS)` / `#elseif os(macOS)` import guards (T-112).
+Kotlin (android/app, P12 DONE T-131..T-139): hosts `ImageSourceApi` (Photo Picker intents,
+`ACTION_IMAGE_CAPTURE` via a FileProvider cache file deleted after reading, CAMERA runtime
+permission) and `MlKitOcrApi` (bundled ML Kit Latin) only — `SelectionApi`, `ScreenCaptureApi`
+and `TranslationApi` are not registered on Android; everything is wired in
+`MainActivity.configureFlutterEngine` (T-133).
 Translation implementations: GeminiTranslationService (network, user key), PigeonTranslationService (Apple, macOS 26+),
 SwitchingTranslationService (chooses between them from settings).
 Native selection overlay: macos/Runner/SelectionOverlayWindow.swift (SelectionApi).
@@ -95,6 +108,7 @@ lib/
   pigeon/      Pigeon definition + generated Dart
 macos/Runner/  Swift native code (+ generated Pigeon Swift)
 ios/Runner/    Swift native code (+ the same generated Pigeon Swift)
+android/app/   Kotlin native code: Photo Picker + camera + ML Kit OCR (own generated Pigeon Kotlin)
 assets/app_icon/  icon generator script + veliq.icns output (not bundled: no pubspec assets entry)
 assets/branding/  logo.svg master + social/readme branding assets (not bundled)
 test/          mirrors lib/
@@ -106,12 +120,16 @@ Subfolders inside a feature (e.g. bloc/, view/) are decided when the first featu
 macOS: Screen Recording expected; Accessibility NOT assumed.
 iOS: camera only (`NSCameraUsageDescription`); the photo library needs no permission because
 `PHPickerViewController` runs out-of-process (D-012).
-See docs/MACOS_PERMISSIONS.md.
+Android: camera runtime permission only (*Take photo*); the Photo Picker needs no permission
+(D-016).
+See docs/MACOS_PERMISSIONS.md (Apple platforms).
 
 ## Testing
 - Dart: unit tests for blocs/services, widget tests for UI, mocks for native services.
 - Native: manual verification (capture, OCR accuracy, permissions, Retina/non-Retina,
   single/multi-monitor, several macOS versions).
+- Android: manual verification on the emulator (Pixel_10_Pro_XL AVD); no physical device is in
+  scope (T-139, 2026-10-15).
 - Privacy: checklist verification before release.
 
 ## Principles

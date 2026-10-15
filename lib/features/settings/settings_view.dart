@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../services/settings_repository.dart';
@@ -99,8 +100,15 @@ class _SettingsForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final usesGoogle =
-        settings.translationProvider == TranslationProvider.google;
+    // Android ships Gemini only (T-137): Apple's Translation framework does not
+    // exist there, so a stored Apple choice is surfaced as a fixable notice
+    // rather than silently kept.
+    final isAndroid = defaultTargetPlatform == TargetPlatform.android;
+    final storedProvider = settings.translationProvider;
+    final provider = isAndroid ? TranslationProvider.google : storedProvider;
+    final usesGoogle = provider == TranslationProvider.google;
+    final appleNeedsFix =
+        isAndroid && storedProvider == TranslationProvider.apple;
 
     return ListView(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -108,15 +116,27 @@ class _SettingsForm extends StatelessWidget {
         const _SectionHeader('Translation'),
         ListTile(
           title: const Text('Provider'),
-          subtitle: Text(
-            kTranslationProviderLabels[settings.translationProvider] ??
-                settings.translationProvider.name,
-          ),
-          trailing: _ProviderDropdown(
-            value: settings.translationProvider,
-            onChanged: onProviderChanged,
-          ),
+          subtitle: Text(kTranslationProviderLabels[provider] ?? provider.name),
+          trailing: isAndroid
+              ? null
+              : _ProviderDropdown(
+                  value: provider,
+                  onChanged: onProviderChanged,
+                ),
         ),
+        if (appleNeedsFix)
+          ListTile(
+            leading: Icon(Icons.info_outline, color: theme.colorScheme.primary),
+            title: const Text('Android supports Google Gemini only'),
+            subtitle: const Text(
+              "Apple's on-device engine isn't available on Android, so Veliq "
+              'is using Google Gemini. Your stored choice was Apple.',
+            ),
+            trailing: TextButton(
+              onPressed: () => onProviderChanged(TranslationProvider.google),
+              child: const Text('Use Gemini'),
+            ),
+          ),
         ListTile(
           title: const Text('From'),
           subtitle: Text(
@@ -173,9 +193,12 @@ class _SettingsForm extends StatelessWidget {
         const _SectionHeader('Privacy'),
         SwitchListTile(
           title: const Text('Keep screenshots'),
-          subtitle: const Text(
-            'Off by default. Screenshots stay on this Mac and are never '
-            'uploaded (see docs/PRIVACY.md).',
+          subtitle: Text(
+            isAndroid
+                ? 'Off by default. Screenshots stay on this device and are '
+                      'never uploaded (see docs/PRIVACY.md).'
+                : 'Off by default. Screenshots stay on this Mac and are '
+                      'never uploaded (see docs/PRIVACY.md).',
           ),
           value: settings.saveScreenshots,
           onChanged: onSaveScreenshotsChanged,
@@ -395,7 +418,11 @@ class _GoogleApiKeyFieldState extends State<_GoogleApiKeyField> {
             )
           else
             Text(
-              "Stored locally in this Mac's app preferences.",
+              // Android keeps the key in flutter_secure_storage (encrypted),
+              // not in the platform preferences (T-138).
+              defaultTargetPlatform == TargetPlatform.android
+                  ? 'Stored securely in an encrypted store on this device.'
+                  : "Stored locally in this Mac's app preferences.",
               style: theme.textTheme.bodySmall,
             ),
         ],

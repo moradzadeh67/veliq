@@ -15,6 +15,7 @@ P8 iOS Image acquisition ... DONE
 P9 iOS UI & storage ........ DOING
 P10 Branding & icons ....... DONE
 P11 Keyboard affordances .... DOING
+P12 Android v1 .............. TODO
 
 ---
 
@@ -220,3 +221,71 @@ P11 Keyboard affordances .... DOING
 - Do: Register a system-wide hotkey with RegisterEventHotKey (no Accessibility permission required, unlike global monitors). Open decisions: default key combo (Option+Space vs Cmd+Shift+V) and behavior when the app is not running (launch straight into capture vs bring to front).
 - Done when: pressing the hotkey anywhere on macOS starts the region selection; user verifies on the MacBook.
 - Status: TODO — blocked on the two open decisions (user input needed)
+
+---
+
+## P12 — Android v1: photo input + local OCR (TODO)
+
+Scope approved by the user 2026-10-14 (decision D-016): gallery + camera only -> on-device OCR (ML
+Kit) -> Gemini with the user's own key -> existing History/Settings unchanged. Region selection and
+screen capture are NOT part of Android v1 (complex and a poor fit for Android's model); Apple
+Translation is not available on Android. In Kotlin only `ImageSourceApi` and `OcrApi` are implemented
+and registered — `SelectionApi`, `ScreenCaptureApi` and `TranslationApi` are never registered on
+Android because no Android UI ever calls them. ML Kit is added in Kotlin/Gradle directly, not as a
+Flutter package, so the Dart layer stays untouched. Rules: no API keys / .env changes; never edit
+generated Pigeon files by hand (regenerate from pigeons/messages.dart); one task at a time with
+analyze/test after each.
+
+### T-131 · [S] Android scaffold
+- Files: android/** (new)
+- Do: From the repo root run `flutter create --platforms=android .`; verify the applicationId matches the existing bundle id `com.moradzadeh67.veliq`; do not add any new native capability yet.
+- Done when: `flutter run -d <android-emulator>` launches the current app UI unchanged.
+- Status: TODO
+
+### T-132 · [S] Android UI (mobile layout)
+- Files: lib/features/home/home_shell.dart, lib/features/translation/translate_view.dart, test/features/home/home_shell_test.dart, test/features/translation/translate_view_test.dart
+- Do: Treat Android like iOS (`_isIOS` -> `_isMobile`): bottom `NavigationBar` instead of `NavigationRail`; "Pick image" and "Take photo" buttons; no "Select region" button or text on Android. Cmd/Meta shortcuts stay macOS-only and must not be the only path on Android.
+- Done when: existing suite green; new widget test asserts Android shows gallery + camera buttons and hides "Select region"; analyze clean.
+- Status: DONE (analyze 0, tests 192/192, APK installed + bottom NavigationBar / Pick image / Take photo verified on emulator-5554; default host-platform tests pinned to macOS via testWidgetsMac variant)
+
+### T-133 · [S] Pigeon Kotlin output
+- Files: pigeons/messages.dart, android/app/src/main/kotlin/** (generated)
+- Do: Add a `kotlinOut` target under `android/app/src/main/kotlin/...` whose package exactly matches the Android app package; regenerate Pigeon. Do not edit generated files by hand; implement/register only `ImageSourceApi` and `OcrApi` on the Android host. `SelectionApi`, `ScreenCaptureApi` and `TranslationApi` must NOT be registered on Android. Dart and Swift bindings must stay byte-identical.
+- Done when: the generated Kotlin file exists, `git diff` on lib/pigeon/messages.g.dart and macos/Runner/Messages.g.swift is empty, analyze + tests green.
+- Status: DONE (Messages.g.kt generated, Dart/Swift hashes byte-identical, only ImageSourceApi+OcrApi registered in MainActivity.kt with cancel-safe stubs; analyze 0, tests 192/192, APK on emulator taps Pick image without crash)
+
+### T-134 · [S] Gallery (Android Photo Picker)
+- Files: android/app/src/main/kotlin/** (ImageSource handler)
+- Do: `pickImageFromGallery()` uses the Android Photo Picker (`ActivityResultContracts.PickVisualMedia`); no broad storage permission may be requested. Cancelling returns null. Returns JPEG bytes.
+- Done when: on the emulator the picker opens and returns an image to the existing flow; cancel returns null and the UI goes back to Idle; analyze + tests green.
+- Status: DONE (Photo Picker ACTION_PICK_IMAGES/API33+ + ACTION_GET_CONTENT fallback, JPEG bytes via ContentResolver, no storage permission; emulator verified: picker -> image -> flow -> OCR stub "No text found", Try again reopens picker, Back cancels to Idle; analyze 0, tests 192/192)
+
+### T-135 · [M] Camera (CAMERA permission + TakePicture + FileProvider)
+- Files: android/app/src/main/kotlin/**, android/app/src/main/AndroidManifest.xml, android/app/src/main/res/xml/file_paths.xml
+- Do: `takePhotoWithCamera()` requests the CAMERA runtime permission first; if denied return null so Flutter returns to Idle. Use `ActivityResultContracts.TakePicture` with a temporary file exposed through a FileProvider so the full-quality photo is returned. Cancelling returns null. Declare the camera as optional in the Manifest (`<uses-feature android:name="android.hardware.camera" android:required="false"/>`) so camera-less devices can still install the app.
+- Done when: camera flow returns full-quality bytes on a device/emulator with a camera; deny + cancel both return null without a crash; analyze + tests green.
+- Status: DONE (CAMERA runtime permission via requestPermissions/onRequestPermissionsResult + suspendCancellableCoroutine; ACTION_IMAGE_CAPTURE + EXTRA_OUTPUT via FileProvider (cache/photos, res/xml/file_paths.xml); Manifest CAMERA permission + uses-feature required=false; emulator verified: deny->Idle, grant->camera->shutter->confirm->bytes->flow->OCR stub; analyze 0, tests 192/192)
+
+### T-136 · [M] On-device OCR (ML Kit, bundled)
+- Files: android/app/build.gradle(.kts), android/app/src/main/kotlin/** (Ocr handler)
+- Do: Add the bundled ML Kit Latin OCR dependency `com.google.mlkit:text-recognition` to the app module Gradle file; raise minSdk to 23 to match ML Kit. Build an OCR handler that turns JPEG bytes into a `Bitmap`, feeds it through `InputImage` + `TextRecognition.getClient(...)`, returns null for empty text, and converts decode/ML Kit errors into a comprehensible Pigeon error. OCR must not write the image to disk, logs or the network.
+- Done when: an English-text image produces recognized text through the existing Dart flow; an image without text returns null (UI shows the existing empty/failure state); analyze + tests green.
+- Status: DONE (com.google.mlkit:text-recognition:16.0.1 bundled added to build.gradle.kts; MlKitOcrApi: bytes->Bitmap->InputImage->TextRecognition, null for empty text, readable Pigeon errors, no disk/log/network writes; minSdk already 24 so no change; emulator verified: English image -> text -> translation step ("No API key" as expected), blank image -> "No text found"; analyze 0, tests 192/192)
+
+### T-137 · [S] Gemini-only on Android
+- Files: lib/features/settings/settings_view.dart (and settings bloc if needed), matching tests
+- Do: On Android show only the Google Gemini provider in Settings (hide or disable the Apple option). If a stored setting still points at Apple, show a clear message that Android supports Gemini only — never crash. The Gemini key stays in `flutter_secure_storage`; never write the key into Gradle, the Manifest, source or logs. Only OCR text is sent to Gemini, never the image.
+- Done when: on Android Settings offers Gemini only; a stored Apple selection shows the message and stays usable; analyze + tests green.
+- Status: DONE (settings_view.dart: isAndroid -> provider forced to Gemini, dropdown removed on Android, stored-Apple shows "Android supports Google Gemini only" notice with "Use Gemini" fix button; key stays in flutter_secure_storage, only OCR text to Gemini; macOS tests pinned via testWidgetsMac, new Android test group x4; analyze 0, tests 196/196; emulator verified: Gemini-only Settings)
+
+### T-138 · [S] App icon and metadata
+- Files: android/app/src/main/res/**
+- Do: App name "Veliq"; use the project's existing icon asset for the Android adaptive icon. Do not change `version: 1.0.0+1` in pubspec.yaml unless the project owner asks for a new version.
+- Done when: the launcher shows the Veliq icon and the name Veliq on the emulator; pubspec version untouched.
+- Status: DONE (adaptive icon from assets/branding/logo.svg: background = brand gradient vector, foreground = artwork-only PNGs at 108/162/216/324/432 fitted to the 66dp safe zone; legacy PNGs regenerated 48-192; strings.xml app_name=Veliq + manifest label; version 1.0.0+1 untouched; macOS-only copy ("this Mac", "Try selecting a region...", "Select another region") made platform-aware with 3 new tests; analyze 0, tests 199/199; emulator drawer + recents show the Veliq icon and the name Veliq)
+
+### T-139 · [S] Acceptance (analyze / test / apk + manual checklist)
+- Files: — (verification only)
+- Do: `flutter analyze`, `flutter test`, `flutter build apk --debug`. Manual on the emulator: (1) cancel gallery, (2) cancel camera, (3) deny Camera permission, (4) image without text, (5) image with English text, (6) missing Gemini key, (7) successful Gemini translation, (8) history survives an app restart.
+- Done when: all three commands green; the checklist is executed on the emulator and the report lists changed files, the three command outputs and what was verified on a device.
+- Status: DONE (2026-10-15). Commands green: analyze 0, tests 199/199, apk built and installed. Emulator checklist, all 8 items verified: (1) cancel gallery -> Idle, (2) cancel camera -> Idle, (3) deny camera permission -> app alive + Idle, (4) blank image -> "No text found" + Android guidance, (5) English image -> OCR succeeded, (6) missing key -> "No Google AI API key is configured. Add one in Settings.", (7) after the owner entered the key in Settings ("Connected. The API key works."), a real Gemini translation succeeded: en->fa RTL output + "Saved to history", (8) History entry survived am force-stop + relaunch. (Items 7-8 were first deferred with the owner's note "needs the user's key", then executed on 2026-10-15 once the key was in place.)

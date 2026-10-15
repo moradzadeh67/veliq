@@ -1,0 +1,4 @@
+<resources>
+    <!-- Launcher label. Single source of truth for the app name (T-138). -->
+    <string name="app_name">Veliq</string>
+</resources>

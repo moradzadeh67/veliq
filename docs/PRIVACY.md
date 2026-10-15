@@ -6,12 +6,14 @@ If the implementation differs from it, the implementation must not be described 
 compliant until the difference is resolved.
 
 ## Principle
-Veliq is a local-first macOS and iOS utility. Captured content stays on the device as long
-as possible.
+Veliq is a local-first macOS, iOS and Android utility. Captured content stays on the device
+as long as possible.
 
 Target flow:
-macOS: screen region -> local capture -> local OCR -> extracted text -> translation provider (text only) -> result
-iOS:   picked/taken photo -> local OCR -> extracted text -> translation provider (text only) -> result
+macOS:   screen region -> local capture -> local OCR -> extracted text -> translation provider (text only) -> result
+iOS:     picked/taken photo -> local OCR -> extracted text -> translation provider (text only) -> result
+Android: picked/taken photo -> local OCR (ML Kit, Latin script) -> extracted text -> Gemini (text only) -> result
+         (Android v1 has Gemini only — the text always leaves the device when translating)
 
 ## Screen content
 A selected region may contain sensitive information.
@@ -32,8 +34,22 @@ On iOS the user supplies the image instead of selecting a screen region.
   They are never written to disk and never uploaded. Veliq never writes to the photo library.
 - The macOS rule still applies: only the recognized **text** may leave the device.
 
+## Image sources (Android)
+On Android v1 the user supplies the image; there is no region selection.
+- **Photo Picker**: the system picker intents (`ACTION_PICK_IMAGES` on API 33+,
+  `ACTION_GET_CONTENT` fallback) run out-of-process. No storage permission is requested or
+  needed (D-016).
+- **Camera**: `ACTION_IMAGE_CAPTURE` with an `EXTRA_OUTPUT` FileProvider URI. The photo is
+  written to a temporary file in the app's cache (`cacheDir/photos/`), read back as JPEG
+  bytes, and the file is **deleted immediately afterwards**, success or not (verified in
+  MainActivity, 2026-10-15). The app needs the CAMERA runtime permission and nothing else.
+- Picked/captured image bytes are held in memory for OCR and then released (same rule as
+  iOS). The macOS rule still applies: only the recognized **text** may leave the device.
+
 ## OCR
 - Preferred: Apple Vision, local processing, no network for the OCR stage.
+- Android: the bundled ML Kit Latin recognizer (`com.google.mlkit:text-recognition`), also
+  local processing with no network for the OCR stage (D-016). Latin script only for now.
 - The OCR service returns text and relevant metadata and does not retain the source image unnecessarily.
 
 ## Translation
@@ -55,6 +71,8 @@ is the only thing that decides whether text leaves the machine.
 - **Privacy**: The extracted text **is sent to Google** for translation. This is a
   deliberate, user-selected exception to the local-first principle:
   screenshots are still never uploaded — only the recognized text.
+- **Android v1**: Gemini is the **only** provider there (Apple Translation does not exist on
+  Android; the provider selector is hidden), so every translation on Android sends text to Google.
 - **Requirements**: A user-supplied Google AI (Gemini) API key, created at
   https://aistudio.google.com/apikey.
 - **Data Flow**: The recognized text travels inside a single prompt, with
@@ -76,7 +94,9 @@ is the only thing that decides whether text leaves the machine.
 ### Shared rules
 - **Data Flow**: Send extracted text only (never screenshots).
 - **Logging & Security**: Do not log full user text in production. The API key is
-  stored only in the device Keychain (`flutter_secure_storage`, D-009) and must never be
+  stored only in a device-local secure store — the macOS Keychain on Apple platforms, an
+  Android-Keystore-encrypted store on Android (same `flutter_secure_storage` plugin, D-009/D-016)
+  — and must never be
   committed (see "Security rules"). Error messages surfaced to the UI must not contain the
   key or the translated text.
 - **Extensibility**: The pluggable `TranslationService` interface allows further
@@ -84,6 +104,9 @@ is the only thing that decides whether text leaves the machine.
 
 ## Local history (if enabled)
 - Store only what the history feature needs.
+- Location: `history.json` inside `getApplicationSupportDirectory()` — the sandbox container on
+  macOS, the app-private files dir on Android (`/data/data/com.moradzadeh67.veliq/files/history.json`,
+  verified on the emulator 2026-10-15).
 - Deletion must be possible, with a clear way to clear history.
 - No silent cloud sync. No account-based sync without explicit product approval.
 
@@ -100,6 +123,8 @@ Any future telemetry needs an explicit product decision and updated documentatio
 - **macOS**: screen capture, and possibly global input/shortcuts.
 - **iOS**: camera only (`NSCameraUsageDescription`). The photo library needs no permission
   because `PHPickerViewController` is out-of-process.
+- **Android**: camera runtime permission only (*Take photo*); the Photo Picker needs no
+  permission.
 Permissions must be documented, requested only when necessary, and handled gracefully when
 denied. See docs/MACOS_PERMISSIONS.md.
 

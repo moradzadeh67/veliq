@@ -4,6 +4,9 @@ import 'package:pigeon/pigeon.dart';
   PigeonOptions(
     dartOut: 'lib/pigeon/messages.g.dart',
     swiftOut: 'macos/Runner/Messages.g.swift',
+    kotlinOut:
+        'android/app/src/main/kotlin/com/moradzadeh67/veliq/Messages.g.kt',
+    kotlinOptions: KotlinOptions(package: 'com.moradzadeh67.veliq'),
   ),
 )
 /// A rectangle in **global screen points** with a top-left origin, expressed

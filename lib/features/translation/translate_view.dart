@@ -53,8 +53,14 @@ class _TranslateViewState extends State<TranslateView> {
     );
   }
 
-  /// True on iOS/iPadOS, where there is no native screen-region overlay.
-  bool get _isIOS => defaultTargetPlatform == TargetPlatform.iOS;
+  /// True on the mobile targets (iOS/iPadOS and Android), where there is no
+  /// native screen-region overlay: photos are the only input.
+  bool get _isMobile =>
+      defaultTargetPlatform == TargetPlatform.iOS ||
+      defaultTargetPlatform == TargetPlatform.android;
+
+  /// True on Android, which never offers the region flow (D-016).
+  bool get _isAndroid => defaultTargetPlatform == TargetPlatform.android;
 
   Future<void> _pickFromGallery() => widget.bloc.pickImageFromGallery();
 
@@ -62,10 +68,10 @@ class _TranslateViewState extends State<TranslateView> {
 
   /// "Start over" action for the failure and result screens.
   ///
-  /// iOS has no native region overlay, so it falls back to the gallery
-  /// picker; macOS keeps the region selector.
+  /// iOS/Android have no native region overlay, so they fall back to the
+  /// gallery picker; macOS keeps the region selector.
   Future<void> _retryOrSelect() =>
-      _isIOS ? _pickFromGallery() : _startSelection();
+      _isMobile ? _pickFromGallery() : _startSelection();
 
   Future<void> _copy(String text) async {
     await Clipboard.setData(ClipboardData(text: text));
@@ -78,13 +84,13 @@ class _TranslateViewState extends State<TranslateView> {
     );
   }
 
-  /// Cmd+R: start a capture (macOS region, iOS gallery), when idle or done.
+  /// Cmd+R: start a capture (macOS region, iOS/Android gallery), when idle or done.
   void _startCapture() {
     final state = widget.bloc.currentState;
     if (state is TranslateFlowIdle ||
         state is TranslateFlowSuccess ||
         state is TranslateFlowFailure) {
-      _isIOS ? _pickFromGallery() : _startSelection();
+      _isMobile ? _pickFromGallery() : _startSelection();
     }
   }
 
@@ -120,7 +126,7 @@ class _TranslateViewState extends State<TranslateView> {
           appBar: AppBar(
             title: const Text('Translate'),
             actions: [
-              if (_isIOS) ...[
+              if (_isMobile) ...[
                 IconButton(
                   tooltip: 'Pick image',
                   onPressed: _pickFromGallery,
@@ -159,9 +165,10 @@ class _TranslateViewState extends State<TranslateView> {
   Widget _buildBody(TranslateFlowState state) {
     return switch (state) {
       TranslateFlowIdle() => _IdleState(
-        onSelect: _startSelection,
-        onPickImage: _isIOS ? _pickFromGallery : null,
-        onTakePhoto: _isIOS ? _takePhoto : null,
+        onSelect: _isMobile ? null : _startSelection,
+        onPickImage: _isMobile ? _pickFromGallery : null,
+        onTakePhoto: _isMobile ? _takePhoto : null,
+        hint: _isAndroid ? _IdleState.mobileHint : null,
       ),
       TranslateFlowSelecting() => const _IdleState(
         hint:
@@ -208,13 +215,21 @@ class _IdleState extends StatelessWidget {
   final VoidCallback? onSelect;
   final VoidCallback? onPickImage;
   final VoidCallback? onTakePhoto;
-  final String hint;
+  final String? hint;
+
+  /// macOS wording: the region-selection flow.
+  static const String macHint =
+      'Select a region of the screen to read and translate its text.';
+
+  /// Android wording: photos only, no region selection (D-016).
+  static const String mobileHint =
+      'Pick a photo or take one to read and translate its text.';
 
   const _IdleState({
     this.onSelect,
     this.onPickImage,
     this.onTakePhoto,
-    this.hint = 'Select a region of the screen to read and translate its text.',
+    this.hint,
   });
 
   @override
@@ -228,7 +243,7 @@ class _IdleState extends StatelessWidget {
           Icon(Icons.crop_free, size: 56, color: theme.colorScheme.primary),
           const SizedBox(height: 16),
           Text(
-            hint,
+            hint ?? macHint,
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium,
           ),
@@ -316,8 +331,13 @@ class _FailureState extends StatelessWidget {
     required this.onRetry,
   });
 
+  /// True on Android: the wording below must never mention the macOS-only
+  /// flows (region capture, Screen Recording, Application Support) (T-138).
+  bool get _isAndroid => defaultTargetPlatform == TargetPlatform.android;
+
   String get _title => switch (stage) {
-    TranslateFlowStage.capture => 'Could not capture the screen',
+    TranslateFlowStage.capture =>
+      _isAndroid ? 'Could not open the photo' : 'Could not capture the screen',
     TranslateFlowStage.recognize => 'No text found',
     TranslateFlowStage.translate => 'Translation failed',
     TranslateFlowStage.save => 'Could not save to history',
@@ -325,16 +345,27 @@ class _FailureState extends StatelessWidget {
 
   String get _guidance => switch (stage) {
     TranslateFlowStage.capture =>
-      'Open System Settings > Privacy & Security > Screen Recording '
-          'and enable Veliq, then restart the app.',
+      _isAndroid
+          ? 'The photo could not be opened. Pick another image or retake the '
+                'photo.'
+          : 'Open System Settings > Privacy & Security > Screen Recording '
+                'and enable Veliq, then restart the app.',
     TranslateFlowStage.recognize =>
-      'Try selecting a region that contains printed, clearly readable text.',
+      _isAndroid
+          ? 'Try a photo with printed, clearly readable text.'
+          : 'Try selecting a region that contains printed, clearly readable '
+                'text.',
     TranslateFlowStage.translate =>
-      'Check the translation provider and language pair in Settings. '
-          "Apple's on-device engine needs macOS 26 or later and doesn't "
-          'support Persian; Google Gemini needs a valid API key.',
+      _isAndroid
+          ? 'Check the language pair in Settings and make sure a valid '
+                'Google Gemini API key is set.'
+          : 'Check the translation provider and language pair in Settings. '
+                "Apple's on-device engine needs macOS 26 or later and doesn't "
+                'support Persian; Google Gemini needs a valid API key.',
     TranslateFlowStage.save =>
-      'Check that Veliq can write to your Application Support folder.',
+      _isAndroid
+          ? 'Check that Veliq can write to its local storage.'
+          : 'Check that Veliq can write to your Application Support folder.',
   };
 
   @override
@@ -412,6 +443,10 @@ class _ResultState extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    // On Android the "again" action reopens the gallery, so the label must
+    // not mention the macOS region overlay (T-138).
+    final isAndroid = defaultTargetPlatform == TargetPlatform.android;
+
     return Column(
       children: [
         Expanded(
@@ -446,8 +481,16 @@ class _ResultState extends StatelessWidget {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: onAgain,
-                    icon: const Icon(Icons.crop_free),
-                    label: const Text('Select another region'),
+                    icon: Icon(
+                      isAndroid
+                          ? Icons.photo_library_outlined
+                          : Icons.crop_free,
+                    ),
+                    label: Text(
+                      isAndroid
+                          ? 'Choose another photo'
+                          : 'Select another region',
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),

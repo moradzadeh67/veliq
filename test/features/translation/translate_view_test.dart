@@ -130,6 +130,16 @@ class _FakeSelectionService implements SelectionService {
   }
 }
 
+/// [testWidgets] pinned to macOS: on a desktop test host the default target
+/// platform is Android, but this suite exercises the desktop flow (T-132).
+void testWidgetsMac(String description, WidgetTesterCallback body) {
+  testWidgets(
+    description,
+    body,
+    variant: TargetPlatformVariant.only(TargetPlatform.macOS),
+  );
+}
+
 void main() {
   group('TranslateView Widget Tests', () {
     late _FakeCaptureService captureService;
@@ -190,7 +200,9 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('shows the idle prompt with a select action', (tester) async {
+    testWidgetsMac('shows the idle prompt with a select action', (
+      tester,
+    ) async {
       await pump(tester);
       await tester.pumpAndSettle();
 
@@ -198,7 +210,7 @@ void main() {
       expect(find.textContaining('Select a region of the screen'), findsOne);
     });
 
-    testWidgets('tapping Select region asks the native picker to open', (
+    testWidgetsMac('tapping Select region asks the native picker to open', (
       tester,
     ) async {
       await pump(tester);
@@ -214,19 +226,22 @@ void main() {
       expect(find.textContaining('Drag anywhere on screen'), findsOneWidget);
     });
 
-    testWidgets('the screen-space region is forwarded to the capture service', (
+    testWidgetsMac(
+      'the screen-space region is forwarded to the capture service',
+      (tester) async {
+        await openPicker(tester);
+        await closePicker(tester, region);
+
+        expect(captureService.lastX, equals(100));
+        expect(captureService.lastY, equals(200));
+        expect(captureService.lastWidth, equals(300));
+        expect(captureService.lastHeight, equals(150));
+      },
+    );
+
+    testWidgetsMac('completing a selection shows the translation', (
       tester,
     ) async {
-      await openPicker(tester);
-      await closePicker(tester, region);
-
-      expect(captureService.lastX, equals(100));
-      expect(captureService.lastY, equals(200));
-      expect(captureService.lastWidth, equals(300));
-      expect(captureService.lastHeight, equals(150));
-    });
-
-    testWidgets('completing a selection shows the translation', (tester) async {
       await openPicker(tester);
       await closePicker(tester, region);
 
@@ -234,7 +249,7 @@ void main() {
       expect(find.text('Hello world'), findsOneWidget);
     });
 
-    testWidgets('cancelling the picker returns to the idle state', (
+    testWidgetsMac('cancelling the picker returns to the idle state', (
       tester,
     ) async {
       await openPicker(tester);
@@ -244,7 +259,7 @@ void main() {
       expect(find.textContaining('Select a region of the screen'), findsOne);
     });
 
-    testWidgets('renders the translation right-to-left', (tester) async {
+    testWidgetsMac('renders the translation right-to-left', (tester) async {
       await openPicker(tester);
       await closePicker(tester, region);
 
@@ -259,7 +274,7 @@ void main() {
       expect(directionality.textDirection, TextDirection.rtl);
     });
 
-    testWidgets('an empty capture shows the permission guidance', (
+    testWidgetsMac('an empty capture shows the permission guidance', (
       tester,
     ) async {
       captureService.result = null;
@@ -271,7 +286,7 @@ void main() {
       expect(find.textContaining('Screen Recording'), findsWidgets);
     });
 
-    testWidgets('no OCR text shows the no-text guidance', (tester) async {
+    testWidgetsMac('no OCR text shows the no-text guidance', (tester) async {
       ocrService.text = null;
 
       await openPicker(tester);
@@ -280,7 +295,7 @@ void main() {
       expect(find.text('No text found'), findsOneWidget);
     });
 
-    testWidgets('a failed translation mentions the macOS requirement', (
+    testWidgetsMac('a failed translation mentions the macOS requirement', (
       tester,
     ) async {
       translationService.translated = null;
@@ -292,7 +307,7 @@ void main() {
       expect(find.textContaining('macOS 26'), findsOneWidget);
     });
 
-    testWidgets('the failure state offers a retry action', (tester) async {
+    testWidgetsMac('the failure state offers a retry action', (tester) async {
       ocrService.text = null;
 
       await openPicker(tester);
@@ -305,7 +320,7 @@ void main() {
       expect(find.textContaining('Drag anywhere on screen'), findsOneWidget);
     });
 
-    testWidgets('the result screen can start another selection', (
+    testWidgetsMac('the result screen can start another selection', (
       tester,
     ) async {
       await openPicker(tester);
@@ -318,7 +333,7 @@ void main() {
       expect(find.textContaining('Drag anywhere on screen'), findsOneWidget);
     });
 
-    testWidgets('the success state notes that the entry was saved', (
+    testWidgetsMac('the success state notes that the entry was saved', (
       tester,
     ) async {
       await openPicker(tester);
@@ -327,7 +342,9 @@ void main() {
       expect(find.textContaining('Saved to history'), findsOneWidget);
     });
 
-    testWidgets('Cmd+R asks the native picker to open (T-129)', (tester) async {
+    testWidgetsMac('Cmd+R asks the native picker to open (T-129)', (
+      tester,
+    ) async {
       await pump(tester);
       await tester.pumpAndSettle();
 
@@ -341,7 +358,7 @@ void main() {
       expect(find.textContaining('Drag anywhere on screen'), findsOneWidget);
     });
 
-    testWidgets('Cmd+C copies the translated text (T-129)', (tester) async {
+    testWidgetsMac('Cmd+C copies the translated text (T-129)', (tester) async {
       String? copied;
       tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
         SystemChannels.platform,
@@ -374,7 +391,9 @@ void main() {
       await tester.pumpAndSettle();
     });
 
-    testWidgets('Esc on the result screen starts over (T-129)', (tester) async {
+    testWidgetsMac('Esc on the result screen starts over (T-129)', (
+      tester,
+    ) async {
       await openPicker(tester);
       await closePicker(tester, region);
       expect(selectionService.calls, equals(1));
@@ -532,5 +551,127 @@ void main() {
       expect(imageSourceService.galleryCalls, equals(1));
       expect(find.text('سلام دنیا'), findsOneWidget);
     }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
+  });
+
+  group('TranslateView Android Widget Tests', () {
+    late _FakeImageSourceService imageSourceService;
+    late _FakeOcrService ocrService;
+    late OcrBloc ocrBloc;
+    late TranslationBloc translationBloc;
+    late _FakeSelectionService selectionService;
+    late TranslateFlowBloc flowBloc;
+
+    setUp(() {
+      imageSourceService = _FakeImageSourceService()
+        ..galleryBytes = Uint8List.fromList([1, 2, 3])
+        ..cameraBytes = Uint8List.fromList([4, 5, 6]);
+      selectionService = _FakeSelectionService();
+      ocrService = _FakeOcrService();
+      ocrBloc = OcrBloc(ocrService: ocrService);
+      translationBloc = TranslationBloc(
+        translationService: _FakeTranslationService(),
+      );
+      flowBloc = TranslateFlowBloc(
+        captureService: _FakeCaptureService(),
+        imageSourceService: imageSourceService,
+        ocrBloc: ocrBloc,
+        translationBloc: translationBloc,
+        historyRepository: _FakeHistoryRepository(),
+        settingsRepository: _FakeSettingsRepository(),
+      );
+    });
+
+    tearDown(() {
+      flowBloc.dispose();
+      ocrBloc.dispose();
+      translationBloc.dispose();
+    });
+
+    /// Pumps the view under the Android platform variant (T-132 / D-016:
+    /// Android is photo-input only, no region selection).
+    Future<void> pump(WidgetTester tester) => tester.pumpWidget(
+      MaterialApp(
+        home: TranslateView(bloc: flowBloc, selectionService: selectionService),
+      ),
+    );
+
+    testWidgets(
+      'shows Pick image and Take photo on Android, no Select region',
+      (tester) async {
+        await pump(tester);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Pick image'), findsOneWidget);
+        expect(find.text('Take photo'), findsOneWidget);
+        expect(find.text('Select region'), findsNothing);
+      },
+      variant: TargetPlatformVariant.only(TargetPlatform.android),
+    );
+
+    testWidgets('the idle prompt never mentions the region flow', (
+      tester,
+    ) async {
+      await pump(tester);
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Pick a photo or take one'), findsOneWidget);
+      expect(find.textContaining('Select a region'), findsNothing);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.android));
+
+    testWidgets('Pick image runs the pipeline with gallery bytes', (
+      tester,
+    ) async {
+      await pump(tester);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Pick image'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('سلام دنیا'), findsOneWidget);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.android));
+
+    testWidgets('Take photo runs the pipeline with camera bytes', (
+      tester,
+    ) async {
+      await pump(tester);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Take photo'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('سلام دنیا'), findsOneWidget);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.android));
+
+    testWidgets('the result screen says "Choose another photo" (T-138)', (
+      tester,
+    ) async {
+      await pump(tester);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Pick image'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('سلام دنیا'), findsOneWidget);
+      // The "again" action reopens the gallery, so no region wording.
+      expect(find.text('Choose another photo'), findsOneWidget);
+      expect(find.text('Select another region'), findsNothing);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.android));
+
+    testWidgets('the OCR failure guidance never mentions a region (T-138)', (
+      tester,
+    ) async {
+      // A null OCR result forces the "No text found" failure state.
+      ocrService.text = null;
+
+      await pump(tester);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Pick image'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Try again'), findsOneWidget);
+      expect(find.textContaining('Try a photo with printed'), findsOneWidget);
+      expect(find.textContaining('region'), findsNothing);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.android));
   });
 }

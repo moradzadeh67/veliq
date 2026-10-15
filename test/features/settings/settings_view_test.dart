@@ -4,6 +4,17 @@ import 'package:veliq/features/settings/bloc/settings_bloc.dart';
 import 'package:veliq/features/settings/settings_view.dart';
 import 'package:veliq/services/settings_repository.dart';
 
+/// [testWidgets] pinned to macOS: on a desktop test host the default target
+/// platform is Android, but this suite exercises the desktop Settings flow,
+/// which still offers Apple (T-137).
+void testWidgetsMac(String description, WidgetTesterCallback body) {
+  testWidgets(
+    description,
+    body,
+    variant: TargetPlatformVariant.only(TargetPlatform.macOS),
+  );
+}
+
 class FakeSettingsRepository implements SettingsRepository {
   AppSettings stored;
 
@@ -54,7 +65,9 @@ void main() {
       bloc.dispose();
     });
 
-    testWidgets('renders the translation and privacy sections', (tester) async {
+    testWidgetsMac('renders the translation and privacy sections', (
+      tester,
+    ) async {
       await _pumpView(tester, bloc);
       await tester.pumpAndSettle();
 
@@ -64,7 +77,7 @@ void main() {
       expect(find.text('Keep screenshots'), findsOneWidget);
     });
 
-    testWidgets('shows the persisted language names as subtitles', (
+    testWidgetsMac('shows the persisted language names as subtitles', (
       tester,
     ) async {
       repository.stored = const AppSettings(
@@ -79,7 +92,9 @@ void main() {
       expect(find.text('Persian (فارسی)'), findsOneWidget);
     });
 
-    testWidgets('screenshots switch reflects the stored value', (tester) async {
+    testWidgetsMac('screenshots switch reflects the stored value', (
+      tester,
+    ) async {
       repository.stored = const AppSettings(saveScreenshots: true);
 
       await _pumpView(tester, bloc);
@@ -91,7 +106,9 @@ void main() {
       expect(switchTile.value, isTrue);
     });
 
-    testWidgets('toggling the switch persists the new value', (tester) async {
+    testWidgetsMac('toggling the switch persists the new value', (
+      tester,
+    ) async {
       await _pumpView(tester, bloc);
       await tester.pumpAndSettle();
 
@@ -101,7 +118,7 @@ void main() {
       expect(repository.stored.saveScreenshots, isTrue);
     });
 
-    testWidgets('changing the target language persists it', (tester) async {
+    testWidgetsMac('changing the target language persists it', (tester) async {
       await _pumpView(tester, bloc);
       await tester.pumpAndSettle();
 
@@ -115,7 +132,7 @@ void main() {
       expect(repository.stored.targetLanguage, equals('de'));
     });
 
-    testWidgets('an unknown persisted language code does not crash', (
+    testWidgetsMac('an unknown persisted language code does not crash', (
       tester,
     ) async {
       repository.stored = const AppSettings(sourceLanguage: 'xx');
@@ -127,14 +144,16 @@ void main() {
       expect(find.text('From'), findsOneWidget);
     });
 
-    testWidgets('shows the Google provider by default', (tester) async {
+    testWidgetsMac('shows the Google provider by default', (tester) async {
       await _pumpView(tester, bloc);
       await tester.pumpAndSettle();
 
       expect(find.text('Google Gemini'), findsWidgets);
     });
 
-    testWidgets('switching the provider to Apple persists it', (tester) async {
+    testWidgetsMac('switching the provider to Apple persists it', (
+      tester,
+    ) async {
       await _pumpView(tester, bloc);
       await tester.pumpAndSettle();
 
@@ -149,7 +168,7 @@ void main() {
       );
     });
 
-    testWidgets('shows the API key field while Google is selected', (
+    testWidgetsMac('shows the API key field while Google is selected', (
       tester,
     ) async {
       await _pumpView(tester, bloc);
@@ -159,7 +178,7 @@ void main() {
       expect(find.text('No API key yet'), findsOneWidget);
     });
 
-    testWidgets('hides the API key field for the Apple provider', (
+    testWidgetsMac('hides the API key field for the Apple provider', (
       tester,
     ) async {
       repository.stored = const AppSettings(
@@ -173,7 +192,7 @@ void main() {
       expect(find.byType(TextField), findsNothing);
     });
 
-    testWidgets('hides the warning once a key is stored', (tester) async {
+    testWidgetsMac('hides the warning once a key is stored', (tester) async {
       repository.stored = const AppSettings(googleApiKey: 'test-api-key');
 
       await _pumpView(tester, bloc);
@@ -182,7 +201,7 @@ void main() {
       expect(find.text('No API key yet'), findsNothing);
     });
 
-    testWidgets('Enter in the API key field saves and tests (T-129)', (
+    testWidgetsMac('Enter in the API key field saves and tests (T-129)', (
       tester,
     ) async {
       await _pumpView(tester, bloc);
@@ -197,7 +216,7 @@ void main() {
       expect(find.text('Connected. The API key works.'), findsOneWidget);
     });
 
-    testWidgets('Save & test stores the key and reports success', (
+    testWidgetsMac('Save & test stores the key and reports success', (
       tester,
     ) async {
       await _pumpView(tester, bloc);
@@ -212,7 +231,7 @@ void main() {
       expect(find.text('Connected. The API key works.'), findsOneWidget);
     });
 
-    testWidgets('Save & test reports why Google rejected the key', (
+    testWidgetsMac('Save & test reports why Google rejected the key', (
       tester,
     ) async {
       verifyResult = 'The Generative Language API is not enabled.';
@@ -231,7 +250,7 @@ void main() {
       expect(find.text('Connected. The API key works.'), findsNothing);
     });
 
-    testWidgets('the verdict clears once the key is edited again', (
+    testWidgetsMac('the verdict clears once the key is edited again', (
       tester,
     ) async {
       await _pumpView(tester, bloc);
@@ -248,7 +267,9 @@ void main() {
       expect(find.text('Connected. The API key works.'), findsNothing);
     });
 
-    testWidgets('a successful test clears the no-key warning', (tester) async {
+    testWidgetsMac('a successful test clears the no-key warning', (
+      tester,
+    ) async {
       await _pumpView(tester, bloc);
       await tester.pumpAndSettle();
       expect(find.text('No API key yet'), findsOneWidget);
@@ -258,6 +279,106 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('No API key yet'), findsNothing);
+    });
+  });
+
+  group('SettingsView Android Widget Tests (T-137)', () {
+    late FakeSettingsRepository repository;
+    late SettingsBloc bloc;
+
+    setUp(() {
+      repository = FakeSettingsRepository();
+      bloc = SettingsBloc(settingsRepository: repository);
+    });
+
+    tearDown(() {
+      bloc.dispose();
+    });
+
+    Future<void> pumpAndroid(WidgetTester tester) async {
+      await _pumpView(tester, bloc);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('offers Gemini only: no Apple in the provider dropdown', (
+      tester,
+    ) async {
+      await pumpAndroid(tester);
+
+      // The provider row has no dropdown at all on Android.
+      expect(find.byType(DropdownButton<TranslationProvider>), findsNothing);
+      expect(find.text('Google Gemini'), findsWidgets);
+      expect(find.text('Apple (on-device)'), findsNothing);
+    });
+
+    testWidgets('a stored Apple choice shows the notice and stays usable', (
+      tester,
+    ) async {
+      repository.stored = const AppSettings(
+        translationProvider: TranslationProvider.apple,
+      );
+
+      await pumpAndroid(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Android supports Google Gemini only'), findsOneWidget);
+      // Gemini is still the effective provider, so the API key UI is shown.
+      expect(find.text('Google Gemini'), findsWidgets);
+      expect(find.text('Google AI API key'), findsOneWidget);
+    });
+
+    testWidgets('"Use Gemini" persists the switch and clears the notice', (
+      tester,
+    ) async {
+      repository.stored = const AppSettings(
+        translationProvider: TranslationProvider.apple,
+      );
+
+      await pumpAndroid(tester);
+      await tester.tap(find.text('Use Gemini'));
+      await tester.pumpAndSettle();
+
+      expect(
+        repository.stored.translationProvider,
+        equals(TranslationProvider.google),
+      );
+      expect(find.text('Android supports Google Gemini only'), findsNothing);
+    });
+
+    testWidgets('the notice is absent when Gemini is already stored', (
+      tester,
+    ) async {
+      await pumpAndroid(tester);
+
+      expect(find.text('Android supports Google Gemini only'), findsNothing);
+    });
+  });
+
+  group('SettingsView Android Copy Tests (T-138)', () {
+    late FakeSettingsRepository repository;
+    late SettingsBloc bloc;
+
+    setUp(() {
+      repository = FakeSettingsRepository();
+      bloc = SettingsBloc(settingsRepository: repository);
+    });
+
+    tearDown(() {
+      bloc.dispose();
+    });
+
+    testWidgets('privacy and key copy say "this device", not "this Mac"', (
+      tester,
+    ) async {
+      await _pumpView(tester, bloc);
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('stay on this device'), findsOneWidget);
+      expect(
+        find.textContaining('Stored securely in an encrypted store'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('this Mac'), findsNothing);
     });
   });
 }

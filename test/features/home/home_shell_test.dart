@@ -35,6 +35,16 @@ class _FakeSettingsRepository implements SettingsRepository {
   Future<void> save(AppSettings settings) async => stored = settings;
 }
 
+/// [testWidgets] pinned to macOS: on a desktop test host the default target
+/// platform is Android, but this suite exercises the desktop flow (T-132).
+void testWidgetsMac(String description, WidgetTesterCallback body) {
+  testWidgets(
+    description,
+    body,
+    variant: TargetPlatformVariant.only(TargetPlatform.macOS),
+  );
+}
+
 void main() {
   group('HomeShell Widget Tests', () {
     late HistoryBloc historyBloc;
@@ -73,7 +83,7 @@ void main() {
       );
     }
 
-    testWidgets('shows all three navigation destinations', (tester) async {
+    testWidgetsMac('shows all three navigation destinations', (tester) async {
       await pumpShell(tester);
       await tester.pumpAndSettle();
 
@@ -82,14 +92,14 @@ void main() {
       expect(find.text('Settings'), findsOneWidget);
     });
 
-    testWidgets('starts on the translate destination', (tester) async {
+    testWidgetsMac('starts on the translate destination', (tester) async {
       await pumpShell(tester);
       await tester.pumpAndSettle();
 
       expect(find.text('Translate placeholder'), findsOneWidget);
     });
 
-    testWidgets('tapping History opens the history view', (tester) async {
+    testWidgetsMac('tapping History opens the history view', (tester) async {
       await pumpShell(tester);
       await tester.pumpAndSettle();
 
@@ -99,7 +109,7 @@ void main() {
       expect(find.text('No history yet'), findsOneWidget);
     });
 
-    testWidgets('tapping Settings opens the settings view', (tester) async {
+    testWidgetsMac('tapping Settings opens the settings view', (tester) async {
       await pumpShell(tester);
       await tester.pumpAndSettle();
 
@@ -109,7 +119,7 @@ void main() {
       expect(find.text('Keep screenshots'), findsOneWidget);
     });
 
-    testWidgets('returning to Translate restores the workflow view', (
+    testWidgetsMac('returning to Translate restores the workflow view', (
       tester,
     ) async {
       await pumpShell(tester);
@@ -123,7 +133,7 @@ void main() {
       expect(find.text('Translate placeholder'), findsOneWidget);
     });
 
-    testWidgets('Cmd+1/2/3 switch tabs without the mouse (T-129)', (
+    testWidgetsMac('Cmd+1/2/3 switch tabs without the mouse (T-129)', (
       tester,
     ) async {
       Future<void> pressCmd(LogicalKeyboardKey key) async {
@@ -147,45 +157,56 @@ void main() {
       expect(find.text('Translate placeholder'), findsOneWidget);
     });
 
-    testWidgets('tab shortcuts survive a translate view that focuses itself', (
-      tester,
-    ) async {
-      tester.view.physicalSize = const Size(1000, 1800);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
+    testWidgetsMac(
+      'tab shortcuts survive a translate view that focuses itself',
+      (tester) async {
+        tester.view.physicalSize = const Size(1000, 1800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: HomeShell(
-            historyBloc: historyBloc,
-            settingsBloc: settingsBloc,
-            // Mimics the real app, where TranslateView nests inside HomeShell
-            // and brings its own focus + shortcuts.
-            translateView: CallbackShortcuts(
-              bindings: <ShortcutActivator, VoidCallback>{
-                const SingleActivator(LogicalKeyboardKey.keyR, meta: true):
-                    () {},
-              },
-              child: const Focus(
-                autofocus: true,
-                child: Center(child: Text('Translate placeholder')),
+        await tester.pumpWidget(
+          MaterialApp(
+            home: HomeShell(
+              historyBloc: historyBloc,
+              settingsBloc: settingsBloc,
+              // Mimics the real app, where TranslateView nests inside HomeShell
+              // and brings its own focus + shortcuts.
+              translateView: CallbackShortcuts(
+                bindings: <ShortcutActivator, VoidCallback>{
+                  const SingleActivator(LogicalKeyboardKey.keyR, meta: true):
+                      () {},
+                },
+                child: const Focus(
+                  autofocus: true,
+                  child: Center(child: Text('Translate placeholder')),
+                ),
               ),
             ),
           ),
-        ),
-      );
+        );
+        await tester.pumpAndSettle();
+
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.digit2);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.digit2);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+        await tester.pumpAndSettle();
+
+        expect(find.text('No history yet'), findsOneWidget);
+      },
+    );
+
+    testWidgets('Android uses the bottom NavigationBar, not the rail', (
+      tester,
+    ) async {
+      await pumpShell(tester);
       await tester.pumpAndSettle();
 
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.digit2);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.digit2);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
-      await tester.pumpAndSettle();
-
-      expect(find.text('No history yet'), findsOneWidget);
-    });
+      expect(find.byType(NavigationBar), findsOneWidget);
+      expect(find.byType(NavigationRail), findsNothing);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.android));
   });
 }

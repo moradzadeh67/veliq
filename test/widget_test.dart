@@ -1,5 +1,4 @@
-import 'dart:typed_data';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:veliq/features/history/bloc/history_bloc.dart';
 import 'package:veliq/features/ocr/bloc/ocr_bloc.dart';
@@ -108,8 +107,9 @@ void main() {
     await tester.pumpAndSettle();
 
     // The translate workflow is now the landing screen, not a placeholder.
+    // Pinned to macOS: the idle landing on Android offers the photo flow (T-132).
     expect(find.text('Select region'), findsOneWidget);
     expect(find.text('History'), findsOneWidget);
     expect(find.text('Settings'), findsOneWidget);
-  });
+  }, variant: TargetPlatformVariant.only(TargetPlatform.macOS));
 }
