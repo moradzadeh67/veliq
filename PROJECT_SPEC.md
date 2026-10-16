@@ -34,7 +34,8 @@ Apple Translation — see "Android scope (P12, v1)".
 - Do not design around App Store submission, but do not block it.
 - Distribution: GitHub first. Android releases are signed with the upload key `Veliq-upload.jks`
   (kept outside the repository; `android/key.properties` is git-ignored, with a debug fallback when
-  the file is absent). GitHub release `v1.0.0` (2026-10-16) ships the signed APK. No store listing:
+  the file is absent). GitHub releases `v1.0.0` (first release, 2026-10-16) and `v1.0.1`
+  (Android release-build hotfix, 2026-10-16) ship the signed APK. No store listing:
   Google Play was explicitly declined by the owner on 2026-10-16, and the public web presence is the
   GitHub Pages landing site under `docs/` (with robots.txt + sitemap.xml).
 - Privacy rules: docs/PRIVACY.md. Permissions: docs/MACOS_PERMISSIONS.md.
@@ -75,7 +76,12 @@ Android was added as a third target after the iOS port (decision D-016). v1 is p
 - **Not in v1**: region selection, screen capture (MediaProjection + foreground service), Apple
   Translation, any new feature.
 - **Identity**: app label "Veliq" (`res/values/strings.xml`), adaptive launcher icon derived from
-  `assets/branding/logo.svg` (D-015); version stays `1.0.0+1`.
+  `assets/branding/logo.svg` (D-015); version is `1.0.1+2`.
 - **Status**: P12 tasks T-131..T-139 all DONE (2026-10-15); verified end to end on the Android
   emulator (Pixel 10 Pro XL AVD), including a real Gemini translation and history surviving an app
-  restart (T-139). No physical Android device is in scope.
+  restart (T-139). No physical Android device is in scope. A post-release hotfix (T-141, shipped as
+  `v1.0.1`) fixed two **release-only** defects found after v1.0.0: the missing `INTERNET` manifest
+  permission (Flutter only declares it in debug/profile) and an R8 launch crash caused by ML Kit's
+  reflectively-loaded internals — the keep rules live in `android/app/proguard-rules.pro` and are
+  wired into the release build type (D-017). Debug builds never run R8, so release APKs must be
+  smoke-tested.

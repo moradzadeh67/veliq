@@ -216,7 +216,7 @@ test/                                  → Offline unit and widget test suite
 | Platform | Status | Notes |
 |---|:---:|---|
 | 🖥️ macOS | ✅ Works end to end | macOS 14.6+ — region select → Vision OCR → Gemini → history |
-| 🤖 Android | ✅ v1 Done (P12) | Photo Picker + ML Kit OCR (Latin) + Gemini; emulator-verified; signed APK published in [v1.0.0](https://github.com/moradzadeh67/veliq/releases/latest) |
+| 🤖 Android | ✅ v1 Done (P12) | Photo Picker + ML Kit OCR (Latin) + Gemini; emulator-verified; signed APK published in [the latest release](https://github.com/moradzadeh67/veliq/releases/latest) |
 | 📱 iOS | 🟡 Verification pending | P7–P9 code complete; UI simulator-verified (iPhone 17 Pro Max); manual checks outstanding |
 | 🪟 Windows | ❌ Out of scope | Desktop target limited to macOS |
 | 🐧 Linux | ❌ Out of scope | Out of scope |
