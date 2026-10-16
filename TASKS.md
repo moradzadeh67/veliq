@@ -15,7 +15,7 @@ P8 iOS Image acquisition ... DONE
 P9 iOS UI & storage ........ DOING
 P10 Branding & icons ....... DONE
 P11 Keyboard affordances .... DOING
-P12 Android v1 .............. TODO
+P12 Android v1 .............. DONE
 
 ---
 

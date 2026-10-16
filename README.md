@@ -1,15 +1,18 @@
-# 🌐 Veliq
-
 <p align="center">
-  <img src="assets/branding/readme-banner.png" width="100%" alt="Veliq Banner">
+  <a href="https://github.com/moradzadeh67/veliq">
+    <img src="assets/branding/readme-banner.png" width="100%" alt="Veliq Banner">
+  </a>
 </p>
 
 <p align="center">
-  <a href="https://opensource.org/licenses/MIT">
-    <img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge" alt="License MIT">
+  <a href="https://github.com/moradzadeh67/veliq/releases/latest">
+    <img src="https://img.shields.io/github/v/release/moradzadeh67/veliq?style=for-the-badge&color=2e7d32" alt="Latest Release">
   </a>
-  <a href="https://flutter.dev/platforms">
-    <img src="https://img.shields.io/badge/Platform-macOS%20%7C%20iOS%20%7C%20Android-black?style=for-the-badge&logo=flutter" alt="Platform Support">
+  <a href="https://opensource.org/licenses/MIT">
+    <img src="https://img.shields.io/badge/License-MIT-orange.svg?style=for-the-badge" alt="License MIT">
+  </a>
+  <a href="https://flutter.dev">
+    <img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Android%20%7C%20iOS-02569B?style=for-the-badge&logo=flutter" alt="Platform Support">
   </a>
   <a href="https://flutter.dev">
     <img src="https://img.shields.io/badge/Flutter-3.47.2-02569B?style=for-the-badge&logo=flutter" alt="Flutter">
@@ -17,14 +20,19 @@
   <a href="https://dart.dev">
     <img src="https://img.shields.io/badge/Dart-3.13.2-0175C2?style=for-the-badge&logo=dart&logoColor=white" alt="Dart">
   </a>
+  <a href="https://github.com/moradzadeh67/veliq/actions/workflows/ci.yml">
+    <img src="https://github.com/moradzadeh67/veliq/actions/workflows/ci.yml/badge.svg" alt="CI Status">
+  </a>
 </p>
 
 <p align="center">
-  <a href="#-installation"><b>🚀 Installation</b></a> •
-  <a href="#-demo"><b>🎬 Demo</b></a> •
-  <a href="#-screenshots"><b>📸 Screenshots</b></a> •
+  <a href="https://github.com/moradzadeh67/veliq/releases/latest"><b>📥 Download APK</b></a> •
+  <a href="https://moradzadeh67.github.io/veliq/"><b>🌐 Website</b></a> •
+  <a href="#-installation--running"><b>🚀 Build from Source</b></a> •
   <a href="#-features"><b>✨ Features</b></a> •
   <a href="#-architecture"><b>🏗️ Architecture</b></a> •
+  <a href="#-screenshots"><b>📸 Screenshots</b></a> •
+  <a href="#-demo"><b>🎬 Demo</b></a> •
   <a href="#-troubleshooting--faq"><b>❓ FAQ</b></a>
 </p>
 
@@ -32,36 +40,30 @@
 
 ## 🌍 What is Veliq?
 
-**Veliq** is a fast, local-first utility for **macOS, iOS, and Android** that allows you to select any region of your screen — or pick/take a photo — extract its text on-device using native OCR engines, and read the translation in Persian instantly.
+**Veliq** is a **free, open-source, local-first screen & photo translator** built with **Flutter**. It runs on **macOS, iOS and Android**.
 
-It combines native OS capabilities (**ScreenCaptureKit** and **Apple Vision** on macOS/iOS, **Photo Picker** and **ML Kit** on Android) with a clean Flutter interface, sending only extracted text to Google's **Gemini API** using your own API key.
+Select any region of your screen — or pick / take a photo — extract its text **on-device**, and read the translation in Persian.
 
-- ✅ **Local-first OCR** — screenshots and photos are held in memory and processed on-device (no cloud image uploads)
-- ✅ **Privacy-focused** — only clean extracted text goes to Gemini; your API key is encrypted in Keychain/Keystore
-- ✅ **Native OS Integration** — ScreenCaptureKit region selection on macOS, Photo Picker & Camera on iOS/Android
-- ✅ **RTL & Persian First** — justified Persian result layout, copyable original & translated text, persistent local history
-
----
+- ✅ **100% free** — no accounts, no ads, no tracking, no backend
+- ✅ **MIT licensed** — read it, fork it, ship it
+- ✅ **Local-first OCR** — screenshots and photos are held in memory and processed on-device (never uploaded)
+- ✅ **Bring your own key** — translation uses *your* Google Gemini API key, encrypted in the OS keychain/keystore
 
 ## 💡 Why I Built This
 
-As a developer working on macOS and mobile devices, I frequently encounter English text on my screen—whether in documents, code comments, design specs, or system dialogs—that I want to extract and translate to Persian instantly. Existing browser-based translation tools require leaving the current app context, manually cropping or uploading screenshots to third-party cloud services, or retyping text by hand.
+As a developer working on macOS and mobile devices, I frequently encounter English text on my screen — whether in documents, code comments, design specs, or system dialogs — that I want to extract and translate to Persian instantly. Existing browser-based translation tools require leaving the current app context, manually cropping or uploading screenshots to third-party cloud services, or retyping text by hand.
 
 I built Veliq to solve this with a fast, keyboard-driven, local-first workflow. By combining native screen capture (ScreenCaptureKit on macOS, Photo Picker & Camera on mobile) with on-device Optical Character Recognition (Apple Vision / ML Kit), Veliq extracts on-screen text instantly without writing temporary image files to disk.
 
 Only the clean extracted text is sent to the Gemini API using your own private API key, keeping your workflow private, efficient, and seamlessly integrated into macOS, iOS, and Android.
 
----
-
 ## 🎬 Demo
 
 <p align="center">
-  <img src="assets/demo/demo.gif" width="100%" alt="Veliq Demo: Drag-select region on macOS, instant on-device Vision OCR, and Persian Gemini translation">
+  <img src="assets/demo/demo.gif" width="560" alt="Veliq demo: select a screen region, on-device OCR, then a Persian translation rendered right-to-left and saved to history">
 </p>
 
-> 💡 **30-second workflow:** Select a region on macOS (or pick a photo on mobile) → Instant on-device OCR → Persian translation rendered in RTL layout → Saved to local history.
-
----
+A short tour of the macOS flow: start on the Translate tab, drag a region over the screen, watch the on-device OCR run, read the Persian result in an RTL layout, and find it saved in the local history.
 
 ## 📸 Screenshots
 
@@ -70,20 +72,17 @@ Only the clean extracted text is sent to the Gemini API using your own private A
 |:---:|:---:|:---:|:---:|
 | ![Overlay](assets/screenshots/macos/overlay.png) | ![Result](assets/screenshots/macos/result.png) | ![History](assets/screenshots/macos/history.png) | ![Settings](assets/screenshots/macos/settings.png) |
 
-### iOS (simulator-verified UI)
+### Android
+| Translate View | Photo Picker | Result View | History |
+|:---:|:---:|:---:|:---:|
+| ![Translate](assets/screenshots/android/translate.png) | ![Picker](assets/screenshots/android/picker.png) | ![Result](assets/screenshots/android/result.png) | ![History](assets/screenshots/android/history.png) |
 
+### iOS
 | Home / Translate |
 |:---:|
 | ![Home](assets/screenshots/ios/home.png) |
 
-> 🚧 Picker / Result / Settings screenshots will be added after the P9 physical-device pass.
-
-### Android
-| Translate View | Photo Picker & Camera | Result View | History |
-|:---:|:---:|:---:|:---:|
-| ![Translate](assets/screenshots/android/translate.png) | ![Picker](assets/screenshots/android/picker.png) | ![Result](assets/screenshots/android/result.png) | ![History](assets/screenshots/android/history.png) |
-
----
+> 💡 **Note:** Screenshots live in `assets/screenshots/`, organised by platform. Remaining iOS screenshots (picker, result, settings) will be added after the P9 manual-verification pass.
 
 ## ✨ Features
 
@@ -120,52 +119,71 @@ Only the clean extracted text is sent to the Gemini API using your own private A
 - `Cmd+C` — Copy translation text.
 - `Enter` — Save and test key in Settings.
 
----
-
 ## 🌐 Localization & Language Support
 
 Veliq is designed with first-class Persian (Farsi) localization:
 - **RTL Layout:** Fully adaptive Right-To-Left (RTL) text container with justified paragraph alignment for Persian text.
 - **Bi-directional Text Support:** Clean separation and side-by-side view for English source text and Persian translation.
 - **Font & Glyph Rendering:** Uses native system typography with fallback for Persian/Arabic glyphs to ensure crisp rendering across macOS, iOS, and Android.
+- **Translation Languages:** v1 ships **English → Persian**; additional source and target languages are on the roadmap.
 
----
+## 🗺️ Roadmap
 
-## 🛠️ Key Dependencies & Tech Stack
+- [x] **P0 — Scaffold:** Base Flutter project & directory structure
+- [x] **P1 — Research:** Native API & Pigeon channel feasibility
+- [x] **P2 — Capture MVP:** ScreenCaptureKit region selection on macOS
+- [x] **P3 — OCR:** Apple Vision integration on macOS
+- [x] **P4 — Translation:** Gemini REST client & RTL result rendering
+- [x] **P5 — History & Settings:** Keychain storage & local JSON history
+- [x] **P6 — Polish & Release Setup:** Shortcuts & error handling
+- [x] **P7 — iOS Research:** Mobile native capabilities
+- [x] **P8 — iOS Image Input:** PHPicker & Camera handlers
+- [ ] **P9 — iOS UI & Storage:** code complete (navigation bar, SafeArea, storage); remaining manual simulator checks (cancel path, revoked permission, history across restart)
+- [x] **P10 — Branding & Icons:** App icons & branding assets
+- [ ] **P11 — Shortcuts:** System-wide capture hotkey
+- [x] **P12 — Android v1:** Photo Picker, Camera, ML Kit OCR & Keystore
+- [ ] **More languages:** additional source and target languages beyond English → Persian
+- [ ] **Public Release:** Signed builds & GitHub Releases ([docs/RELEASE.md](docs/RELEASE.md))
+
+The active task list is tracked in [TASKS.md](TASKS.md).
+
+## 🛠️ Technical Decisions
+
+- **Hand-written BLoC architecture** — The app uses pure Dart state classes (`TranslateFlowBloc`, `OcrBloc`, `HistoryBloc`, `SettingsBloc`) instead of pulling in `flutter_bloc`. For a project of this size that keeps the state layer small, predictable and fully testable with plain fakes.
+- **`pigeon` over raw `MethodChannel`s** — The Dart ↔ Swift/Kotlin bridge is generated from a single interface definition, so every native call is compile-time type-checked instead of string-matched at runtime.
+- **On-device OCR first** — Apple Vision (macOS/iOS) and ML Kit (Android) run *before* any network call. The image bytes never leave the process; only the recognised text is sent to the provider.
+- **`flutter_secure_storage` over `shared_preferences`** — API keys go to the macOS Keychain / Android Keystore; `shared_preferences` is used only for non-sensitive preferences (language pair, provider).
+- **A local JSON file for history** — `history.json` in the application-support directory keeps the app dependency-free and the data inspectable and deletable by the user.
+
+## 📦 Key Dependencies
 
 | Package | Version | Purpose |
 |---|:---:|---|
 | `pigeon` | `^29.0.8` | Type-safe code generator for Dart ↔ Swift / Kotlin native IPC |
-| `flutter_secure_storage` | `^11.0.0` | Encrypted API key storage in macOS Keychain and Android Keystore |
+| `flutter_secure_storage` | `^11.0.0` | Encrypted API key storage in the macOS Keychain and Android Keystore |
 | `shared_preferences` | `^2.3.3` | Persistent storage for app preferences and provider settings |
 | `http` | `^1.2.2` | Minimal HTTP client for Google Gemini REST API requests |
-| `path_provider` | `^2.1.5` | Locates app-private directory for local `history.json` storage |
+| `path_provider` | `^2.1.5` | Locates the app-private directory for the local `history.json` |
 
-### Technical Decisions
-
-- **Hand-written BLoC Architecture:** Built with pure Dart classes (`TranslateFlowBloc`, `OcrBloc`, `HistoryBloc`, `SettingsBloc`) without external `flutter_bloc` dependencies. This guarantees lightweight, predictable, and testable state management.
-- **Pigeon IPC Bridge:** Replaces loose string-based `MethodChannel`s with compile-time type-checked interface definitions generated for Swift and Kotlin.
-- **On-Device OCR:** Apple Vision and ML Kit handle text recognition locally before any network call is initiated. Screenshots are held only in RAM.
-- **Secure Key Storage:** Avoids plain-text `SharedPreferences` for sensitive credentials by utilizing `flutter_secure_storage` backed by platform keystores.
-
----
+> 💡 **Note:** Versions are the constraints declared in `pubspec.yaml`. Resolved versions at the time the P12 build shipped (`pubspec.lock`): `pigeon` 29.0.8, `flutter_secure_storage` 11.2.0, `shared_preferences` 2.5.6, `http` 1.6.0, `path_provider` 2.1.6.
 
 ## 🏗️ Architecture
 
-Dart owns the UI, state, orchestration, and storage layers; Swift (macOS/iOS) and Kotlin (Android) handle platform-native capabilities. They communicate over a type-safe, Pigeon-generated interface.
-
-### System Data Flow
-
-```text
-macOS:   Select Region (Swift Overlay) -> Capture (ScreenCaptureKit) -> OCR (Vision, On-Device)
-           -> Extracted Text -> Gemini REST API -> RTL Persian View + Local History
-iOS:     Pick/Take Photo (Swift) -> OCR (Vision, On-Device)
-           -> Extracted Text -> Gemini REST API -> RTL Persian View + Local History
-Android: Pick/Take Photo (Kotlin) -> OCR (ML Kit, On-Device)
-           -> Extracted Text -> Gemini REST API -> RTL Persian View + Local History
-```
+Dart owns the UI, state, orchestration and storage layers; Swift (macOS/iOS) and Kotlin (Android) handle the platform-native capabilities. They communicate over a type-safe, Pigeon-generated interface.
 
 ### Project Structure
+
+![Project Structure](assets/diagrams/project-structure.svg)
+
+### Architecture Layers
+
+![Architecture Layers](assets/diagrams/architecture-layers.svg)
+
+### Data Flow
+
+![Data Flow](assets/diagrams/data-flow.svg)
+
+### Layer Breakdown
 
 ```text
 lib/
@@ -178,7 +196,7 @@ lib/
 │   ├── history/                       → History view & entry deletion
 │   └── settings/                      → API key management & provider selection
 ├── services/                          → Interfaces + Pigeon native impls + Gemini REST client
-│   ├── selection/capture/ocr/...      → Service abstractions (faked in test suite)
+│   ├── selection/capture/ocr/...      → Service abstractions (faked in the test suite)
 │   ├── pigeon_*.dart                  → Pigeon Swift/Kotlin implementations
 │   ├── gemini_translation_service.dart→ Gemini REST client
 │   ├── json_history_repository.dart   → history.json in Application Support
@@ -193,19 +211,15 @@ pigeons/messages.dart                  → Pigeon interface definitions
 test/                                  → Offline unit and widget test suite
 ```
 
----
-
 ## 📱 Platform Support
 
 | Platform | Status | Notes |
 |---|:---:|---|
 | 🖥️ macOS | ✅ Works end to end | macOS 14.6+ — region select → Vision OCR → Gemini → history |
-| 📱 iOS | 🔜 In progress | P7–P9; simulator-verified (iPhone 17 Pro Max), awaiting physical device test |
 | 🤖 Android | ✅ v1 Done (P12) | Photo Picker + ML Kit OCR (Latin) + Gemini; emulator-verified |
+| 📱 iOS | 🟡 Verification pending | P7–P9 code complete; UI simulator-verified (iPhone 17 Pro Max); manual checks outstanding |
 | 🪟 Windows | ❌ Out of scope | Desktop target limited to macOS |
 | 🐧 Linux | ❌ Out of scope | Out of scope |
-
----
 
 ## 🔐 Permissions
 
@@ -217,119 +231,135 @@ test/                                  → Offline unit and widget test suite
 > Fully quit and reopen Veliq after granting permissions.
 
 > [!NOTE]
-> - **iOS & Android Photos:** Picking photos via `PHPickerViewController` or Android Photo Picker requires **zero permissions**.
-> - **Camera:** Camera runtime permission is requested only when tapping *Take photo*.
+> - **iOS & Android Photos:** Picking photos via `PHPickerViewController` or the Android Photo Picker requires **zero permissions**.
+> - **Camera:** The camera runtime permission is requested only when tapping *Take photo*.
 > - Veliq does **not** require Accessibility or Full Disk Access permissions.
-
----
 
 ## 🔒 Privacy
 
 > [!IMPORTANT]
 > - **In-Memory Image Processing:** Captured screenshots and selected photos are kept solely in RAM and discarded immediately after OCR extraction.
 > - **Text-Only Cloud Transmission:** Only the recognized text string is sent to Google's Gemini API over HTTPS using your personal API key. No image files are ever uploaded.
-> - **Encrypted Credentials:** Your Gemini API key is stored securely in macOS Keychain / Android Keystore — never in plain text.
+> - **Encrypted Credentials:** Your Gemini API key is stored securely in the macOS Keychain / Android Keystore — never in plain text.
 > - **Local Data:** Translation history is saved locally in Application Support (`history.json`) and can be cleared at any time from the History tab.
 
 Details: [docs/PRIVACY.md](docs/PRIVACY.md).
 
----
-
-## 🚀 Installation & Building
+## 🚀 Installation & Running
 
 > [!NOTE]
-> Official pre-built release binaries are currently unsigned and pending release checklist verification ([docs/RELEASE.md](docs/RELEASE.md)). Follow the instructions below to build from source.
+> There is no published binary yet. Release builds are unsigned and the release checklist is
+> still open ([docs/RELEASE.md](docs/RELEASE.md)) — build from source with the steps below.
 
 ### Prerequisites
 
 - [Flutter SDK](https://docs.flutter.dev/get-started/install) (v3.47.2)
 - Dart SDK (^3.13.2)
-- Xcode 15+ (for macOS & iOS builds)
-- Android Studio / Android SDK 24+ (for Android builds)
-- A Google Gemini API Key (get one from [Google AI Studio](https://aistudio.google.com/apikey))
+- Platform-specific:
+  - **macOS**: Xcode 15+ (development used Xcode 27.0), macOS 14.6+
+  - **iOS**: Xcode 15+, iOS 16.0+, CocoaPods
+  - **Android**: Android Studio / Android SDK 24+ (`minSdk 24`)
+- A Google Gemini API key (get one from [Google AI Studio](https://aistudio.google.com/apikey))
 
-### Build from Source
+### Getting Started
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/moradzadeh67/veliq.git
+   cd veliq
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   flutter pub get
+   ```
+
+3. **Run the application**:
+   ```bash
+   flutter run -d macos
+   flutter run -d "iPhone 17 Pro Max"
+   flutter run -d <android-device-id>
+   ```
+
+### Building
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/moradzadeh67/veliq.git
-cd veliq
-
-# 2. Install dependencies
-flutter pub get
-
-# 3. Run on your target platform
-flutter run -d macos
-flutter run -d "iPhone 17 Pro Max"
-flutter run -d <android-device-id>
-
-# 4. Build release artifacts
+# Build the macOS app
 flutter build macos --release
+
+# Verify the iOS build configuration (no signing yet)
 flutter build ios --no-codesign
-flutter build apk --debug
+
+# Build the Android APK (debug-signed, see Release Signing below)
+flutter build apk --release
 ```
 
 > [!IMPORTANT]
 > **First Launch on macOS:**
 > On unsigned developer builds, macOS Gatekeeper may block double-clicking the app bundle. Right-click `Veliq.app` and choose **Open** once to bypass the Gatekeeper warning.
 
----
-
 ## 🧪 Testing & Quality Assurance
 
-The test suite runs 100% offline using service interface fakes. No permissions, network calls, or API keys are required during test execution.
+The test suite runs 100% offline using service-interface fakes. No permissions, network calls, or API keys are required during test execution.
 
 ```bash
-# 1. Run static analysis (must report zero issues)
+# Analyze code for errors and lint compliance (must report zero issues)
 flutter analyze
 
-# 2. Run unit and widget tests (199 passing tests)
+# Run unit and widget tests (199 passing tests)
 flutter test
-
-# 3. Verify iOS build configuration
-flutter build ios --no-codesign
-
-# 4. Verify Android debug build
-flutter build apk --debug
 ```
 
----
+## 🔐 Release Signing
 
-## 🗺️ Roadmap
+**There is no release signing yet.** `android/app/build.gradle.kts` currently falls back to the
+**debug** signing config, and no `android/key.properties` exists (that file is git-ignored and must
+never be committed). The APK produced by `flutter build apk --release` is therefore debug-signed and
+is **not** suitable for store publishing.
 
-- [x] **P0 — Scaffold:** Base Flutter project & directory structure
-- [x] **P1 — Research:** Native API & Pigeon channel feasibility
-- [x] **P2 — Capture MVP:** ScreenCaptureKit region selection on macOS
-- [x] **P3 — OCR:** Apple Vision integration on macOS
-- [x] **P4 — Translation:** Gemini REST client & RTL result rendering
-- [x] **P5 — History & Settings:** Keychain storage & local JSON history
-- [x] **P6 — Polish & Release Setup:** Shortcuts & error handling
-- [x] **P7 — iOS Research:** Mobile native capabilities
-- [x] **P8 — iOS Image Input:** PHPicker & Camera handlers
-- [ ] **P9 — iOS UI & Storage:** SafeArea navigation & simulator verification
-- [x] **P10 — Branding & Icons:** App icons & branding assets
-- [ ] **P11 — Shortcuts:** System-wide capture hotkey
-- [x] **P12 — Android v1:** Photo Picker, Camera, ML Kit OCR & Keystore
-- [ ] **Public Release:** Signed builds & GitHub Releases ([docs/RELEASE.md](docs/RELEASE.md))
+> [!NOTE]
+> If `android/key.properties` is missing — on a fresh clone, for example — the Gradle build does not
+> break; it simply signs with the debug key. Wiring a real upload keystore (and macOS/iOS code
+> signing + notarization) is part of the open public-release checklist in
+> [docs/RELEASE.md](docs/RELEASE.md).
 
-The active task list is tracked in [TASKS.md](TASKS.md).
+When an upload key exists, its credentials live **outside** the repository in `android/key.properties`:
 
----
+```properties
+# android/key.properties — NEVER commit this file
+storePassword=YOUR_STORE_PASSWORD_HERE
+keyPassword=YOUR_KEY_PASSWORD_HERE
+keyAlias=YOUR_KEY_ALIAS_HERE
+storeFile=/absolute/path/to/your/upload-keystore.jks
+```
+
+> [!CAUTION]
+> Back up your keystore and its passwords somewhere safe. If the upload key is lost you can no longer
+> publish updates for this app.
+
+## 🔄 CI/CD
+
+| Workflow | Trigger | What it does |
+|---|---|---|
+| [`ci.yml`](.github/workflows/ci.yml) | push & PR to `main` | Runs `flutter analyze` and `flutter test` on Flutter 3.47.2 |
+
+> [!NOTE]
+> No release pipeline exists yet (see [docs/RELEASE.md](docs/RELEASE.md)). There is no web target,
+> and no secrets or API keys live in this repository — the app asks for the user's own Gemini key at runtime.
 
 ## ⚠️ Known Limitations
 
 - **iOS Camera in Simulator:** The iOS Simulator does not support camera capture hardware; camera workflows require a physical iPhone.
+- **iOS Verification:** The P9 manual simulator checks (cancel path, revoked-permission message, history across restart) are still open.
 - **Android OCR Scope:** The bundled ML Kit model currently supports Latin script OCR; non-Latin script models are planned for future updates.
-- **Unsigned Builds:** macOS Gatekeeper flags unsigned developer builds on first double-click launch.
-
----
+- **Unsigned Builds:** macOS Gatekeeper flags unsigned developer builds on first double-click launch, and Android release builds are only debug-signed so far.
 
 ## ❓ Troubleshooting & FAQ
 
 <details>
 <summary><b>1. How do I fix "Screen Recording Permission Denied" on macOS?</b></summary>
 
-Go to **System Settings → Privacy & Security → Screen Recording**, enable **Veliq**, and fully restart the app.
+Go to **System Settings → Privacy & Security → Screen Recording**, enable **Veliq**, and fully restart the app. Note that every rebuilt debug binary counts as a new app, so the grant may need to be repeated.
 </details>
 
 <details>
@@ -356,19 +386,30 @@ History is stored locally in `history.json` within your OS Application Support d
 Apple's iOS Simulator does not emulate camera hardware (`UIImagePickerControllerSourceTypeCamera`). Use the photo library picker in the simulator or test on a physical iOS device.
 </details>
 
----
+<details>
+<summary><b>6. Why can't Veliq recognise Persian or Arabic text?</b></summary>
 
-## 🤖 Development Approach
+The Android OCR uses the bundled **ML Kit Latin** recogniser, and Apple Vision is called in its default configuration. Non-Latin script support needs a separate model — and additional languages in general (both further OCR scripts and further translation targets) are on the roadmap.
+</details>
 
-Architecture, technical decisions, and code reviews are maintained directly by the author. Implementation tasks follow strict rules documented in [`AGENTS.md`](AGENTS.md) and [`TASKS.md`](TASKS.md): one task at a time, strictly verified with `flutter analyze` and `flutter test`.
+## 💻 Development Environment
 
----
+This project is developed and tested on:
 
-## 🤝 Contributing
+* Hardware: MacBook Pro (Apple M3 Pro, 18 GB)
+* OS: macOS 27.0.1
+* IDE: VS Code / Android Studio
+* Xcode: 27.0
+* Flutter: 3.47.2 • channel stable
+* Dart: 3.13.2
 
-Contributions and issue reports are welcome on the [GitHub Issues](https://github.com/moradzadeh67/veliq/issues) page.
+## 📋 Requirements
 
----
+* Flutter SDK: 3.47.2
+* Dart SDK: ^3.13.2
+* macOS target: macOS 14.6+
+* iOS target: iOS 16.0+
+* Android: SDK 24+ (`minSdk 24`)
 
 ## 🙏 Credits & Attribution
 
@@ -380,7 +421,12 @@ Veliq is built with:
 - [`flutter_secure_storage`](https://pub.dev/packages/flutter_secure_storage)
 - [Google Gemini API](https://ai.google.dev/)
 
----
+> ℹ️ Unlike a typical open API app, Veliq needs a key: translation runs on **your own** free-tier
+> Gemini API key, entered at runtime and stored only on your device.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to get started.
 
 ## 📄 License
 

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Veliq — Local-first screen &amp; photo translator for macOS, iOS and Android</title>
+<meta name="description" content="Veliq is a free, open-source, local-first screen and photo translator. Drag a region of your screen or pick a photo, extract the text on-device with Apple Vision or ML Kit OCR, and read the Persian translation. Flutter, MIT licensed, macOS / iOS / Android.">
+<meta name="keywords" content="Veliq, screen translator, photo translator, OCR, Apple Vision, ML Kit, Persian translation, Farsi, English to Persian, macOS, iOS, Android, Flutter, open source, on-device OCR, Gemini">
+<meta name="author" content="Mohammadreza Moradzadeh">
+<link rel="canonical" href="https://moradzadeh67.github.io/veliq/">
+<link rel="icon" href="https://raw.githubusercontent.com/moradzadeh67/veliq/main/assets/branding/favicon.ico">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Veliq — local-first screen &amp; photo translator">
+<meta property="og:description" content="Drag a region of your screen or pick a photo, run OCR on-device, and read the Persian translation. Free, open source, macOS / iOS / Android.">
+<meta property="og:url" content="https://moradzadeh67.github.io/veliq/">
+<meta property="og:image" content="https://raw.githubusercontent.com/moradzadeh67/veliq/main/assets/branding/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Veliq — local-first screen &amp; photo translator">
+<meta name="twitter:description" content="On-device OCR, Persian translation, your own API key. Free and open source.">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/moradzadeh67/veliq/main/assets/branding/social-preview.png">
+
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+         background: #100a24; color: #e9e6f7; }
+  a { color: #b9a7ff; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 48px 22px 72px; }
+  header { display: flex; align-items: center; gap: 16px; margin-bottom: 8px; }
+  header img { width: 64px; height: 64px; border-radius: 16px; }
+  h1 { font-size: 40px; margin: 0; letter-spacing: -0.5px; }
+  .tagline { font-size: 20px; color: #cdc6ea; margin: 4px 0 28px; }
+  h2 { font-size: 24px; margin: 44px 0 12px; }
+  ul { padding-left: 22px; }
+  li { margin: 6px 0; }
+  .btns { display: flex; flex-wrap: wrap; gap: 12px; margin: 26px 0; }
+  .btn { display: inline-block; padding: 12px 20px; border-radius: 999px; background: #6d5bd0; color: #fff;
+         text-decoration: none; font-weight: 600; }
+  .btn.alt { background: transparent; border: 1px solid #4b3f86; color: #d9d3f5; }
+  code { background: #1c1440; padding: 2px 6px; border-radius: 6px; font-size: 14px; }
+  pre { background: #1c1440; padding: 16px; border-radius: 12px; overflow-x: auto; }
+  .shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+  .shots img { width: 100%; border-radius: 12px; border: 1px solid #2c2258; background: #171033; }
+  footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid #2c2258; color: #a79ed1; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <img src="https://raw.githubusercontent.com/moradzadeh67/veliq/main/assets/branding/logo-1024.png" alt="Veliq app icon">
+    <div>
+      <h1>Veliq</h1>
+      <p class="tagline">Local-first screen &amp; photo translator — macOS, iOS and Android</p>
+    </div>
+  </header>
+
+  <p>
+    <strong>Veliq</strong> is a free, open-source utility that reads the text on your screen.
+    Drag a region of the display — or pick / take a photo — and Veliq extracts the text
+    <strong>on your device</strong> (Apple Vision on macOS and iOS, ML&nbsp;Kit on Android) and shows the
+    Persian translation. Images never leave the machine: only the recognised text is sent to the
+    translation provider, using <em>your own</em> Google Gemini API key.
+  </p>
+
+  <div class="btns">
+    <a class="btn" href="https://github.com/moradzadeh67/veliq/releases/latest">Download the Android APK</a>
+    <a class="btn alt" href="https://github.com/moradzadeh67/veliq">Source code on GitHub</a>
+  </div>
+
+  <h2>Highlights</h2>
+  <ul>
+    <li><strong>On-device OCR</strong> — Apple Vision (macOS / iOS) and bundled ML&nbsp;Kit (Android); the image stays in memory.</li>
+    <li><strong>Bring your own key</strong> — translation runs on your free-tier Google Gemini API key, stored in the OS keychain / keystore.</li>
+    <li><strong>Region capture on macOS</strong> — a ScreenCaptureKit overlay lets you select any part of the screen.</li>
+    <li><strong>Photo &amp; camera input on mobile</strong> — no photo-library permission required (Photo Picker / PHPicker).</li>
+    <li><strong>Persian first</strong> — a right-to-left, justified result view with copy actions and a local, deletable history.</li>
+    <li><strong>No accounts, no ads, no tracking, no backend.</strong></li>
+  </ul>
+
+  <h2>Screenshots</h2>
+  <div class="shots">
+    <img src="https://raw.githubusercontent.com/moradzadeh67/veliq/main/assets/screenshots/macos/overlay.png" alt="Veliq on macOS: drag-selecting a region of the screen">
+    <img src="https://raw.githubusercontent.com/moradzadeh67/veliq/main/assets/screenshots/macos/result.png" alt="Veliq on macOS: English text translated to Persian in a right-to-left layout">
+    <img src="https://raw.githubusercontent.com/moradzadeh67/veliq/main/assets/screenshots/android/result.png" alt="Veliq on Android: photo translated to Persian">
+    <img src="https://raw.githubusercontent.com/moradzadeh67/veliq/main/assets/screenshots/android/history.png" alt="Veliq on Android: local translation history">
+  </div>
+
+  <h2>Build from source</h2>
+  <pre><code>git clone https://github.com/moradzadeh67/veliq.git
+cd veliq
+flutter pub get
+flutter run -d macos</code></pre>
+  <p>
+    Requirements: Flutter 3.47.2, Dart 3.13.2, macOS 14.6+, Xcode for the Apple targets, and the
+    Android SDK 24+ for Android. Full instructions live in the
+    <a href="https://github.com/moradzadeh67/veliq#readme">README</a>.
+  </p>
+
+  <h2>Privacy in one line</h2>
+  <p>
+    Screenshots and photos are processed in RAM and discarded; only the extracted text is transmitted,
+    over HTTPS, to the provider you configure. See
+    <a href="https://github.com/moradzadeh67/veliq/blob/main/docs/PRIVACY.md">docs/PRIVACY.md</a>.
+  </p>
+
+  <footer>
+    Veliq is released under the <a href="https://github.com/moradzadeh67/veliq/blob/main/LICENSE">MIT License</a>.
+    © 2026 Mohammadreza Moradzadeh.
+  </footer>
+
+</div>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Veliq",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "macOS, iOS, Android",
+  "description": "Free, open-source, local-first screen and photo translator. On-device OCR (Apple Vision / ML Kit) with Persian translation using your own Google Gemini API key.",
+  "url": "https://moradzadeh67.github.io/veliq/",
+  "downloadUrl": "https://github.com/moradzadeh67/veliq/releases/latest",
+  "codeRepository": "https://github.com/moradzadeh67/veliq",
+  "license": "https://opensource.org/licenses/MIT",
+  "author": { "@type": "Person", "name": "Mohammadreza Moradzadeh", "url": "https://github.com/moradzadeh67" },
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+}
+</script>
+</body>
+</html>
