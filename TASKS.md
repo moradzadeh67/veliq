@@ -17,6 +17,7 @@ P10 Branding & icons ....... DONE
 P11 Keyboard affordances .... DOING
 P12 Android v1 .............. DONE
 P13 Public release (GitHub) .. DONE
+P14 Android release hotfix ... DONE
 
 ---
 
@@ -177,7 +178,7 @@ P13 Public release (GitHub) .. DONE
 - Files: (none — manual task)
 - Do: Run the app on an iPhone simulator (`flutter run -d "iPhone 17 Pro Max"`) and verify: navigation bar at the bottom; the three main screens work; the RTL Persian result displays correctly; picking a photo from the gallery works; cancelling the picker returns cleanly; a revoked camera permission surfaces a clear message (toggle with `xcrun simctl privacy booted revoke camera com.moradzadeh67.veliq` / `grant`); history persists across an app restart. Absorbs T-118's scenarios where the simulator allows — the simulator has no camera, so an actual photo capture stays device-only (out of scope, no device).
 - Done when: all checks pass on simulator.
-- Status: TODO — progress 2026-10-14: navigation bar, the three screens, Settings (API key + connect) and the gallery picker verified working by the user on the iPhone 17 Pro Max simulator (after T-127). Remaining: cancel path, revoked-permission message, history persistence across restart. 2026-10-16: still open — the bundled `Simulator.app` on the owner's Mac is broken (binary is unsigned and exits immediately; no Simulator.app exists inside Xcode.app either), so no UI-driven verification is possible on this machine. The owner decided to leave T-124 until a repaired simulator or a physical device is available.
+- Status: TODO — progress 2026-10-14: navigation bar, the three screens, Settings (API key + connect) and the gallery picker verified working by the user on the iPhone 17 Pro Max simulator (after T-127). Remaining: cancel path, revoked-permission message, history persistence across restart. 2026-10-16: still open — the bundled `Simulator.app` on the owner's Mac is broken (binary is unsigned and exits immediately; no Simulator.app exists inside Xcode.app either), so no UI-driven verification is possible on this machine. The owner decided to leave T-124 until a repaired simulator or a physical device is available. 2026-10-16 (later): a headless alternative was investigated — `idb` / `idb-companion` is no longer published in Homebrew (there is no `facebook/fb` tap), and building it from source was judged not worth the effort; the owner decided to record the block in the roadmap and move on.
 
 ### T-126 · [S] Apply D-013: iOS deployment target 16.0 + real bundle id
 - Files: ios/Runner.xcodeproj/project.pbxproj, ios/Podfile
@@ -225,7 +226,7 @@ P13 Public release (GitHub) .. DONE
 
 ---
 
-## P12 — Android v1: photo input + local OCR (TODO)
+## P12 — Android v1: photo input + local OCR (DONE)
 
 Scope approved by the user 2026-10-14 (decision D-016): gallery + camera only -> on-device OCR (ML
 Kit) -> Gemini with the user's own key -> existing History/Settings unchanged. Region selection and
@@ -300,3 +301,13 @@ analyze/test after each.
 - Do: sign Android release builds with a real upload key (keystore outside the repo; `android/key.properties` git-ignored, debug fallback kept); replace the whole-desktop overlay screenshot and rebuild the demo GIF from app-only frames; refresh the README to the reference structure (badges, Release Signing, CI/CD, Development Environment, Requirements) and record the multi-language roadmap; add a CI workflow; add a crawlable landing page for a GitHub Pages site.
 - Done when: analyze clean, tests green, signed AAB + APK verified with apksigner, release published.
 - Status: DONE (2026-10-16) — keystore `Veliq-upload.jks` created (PKCS12, alias `veliq`, 10000 days) with a complete zipped backup on the owner's Desktop; `apksigner verify --print-certs` → `CN=Mohammadreza Moradzadeh, OU=Mobile, O=Veliq, C=IR`; AAB 66 MB + APK 84 MB built; `flutter analyze` clean, 199/199 tests; GitHub release `v1.0.0` published with `app-release.apk` + `.sha256`; repo description + 16 topics set; GitHub Pages enabled (source `main` `/docs`) with the SEO landing page. macOS history was cleared of the 4 test entries created while capturing media; a stale `Application Support/veliq/history.json` (13 owner entries from Oct 11-12, older build) was found and preserved. History path corrected in README + ARCHITECTURE: it is the bundle-id folder, not `veliq/`.
+
+---
+
+## P14 — Android release hotfix (DONE)
+
+### T-141 · [M] Fix the Android release-build launch crash (R8 obfuscated ML Kit)
+- Files: android/app/proguard-rules.pro (new), android/app/build.gradle.kts, android/app/src/main/AndroidManifest.xml, pubspec.yaml
+- Do: Two independent release-only defects found after v1.0.0 shipped. (1) **Network**: Flutter only declares `android.permission.INTERNET` in the debug/profile manifests, so release builds could not reach the Gemini API — add it to the main manifest. (2) **Crash**: Android `--release` runs R8 (minify + resource shrinking, full mode) by default, and ML Kit loads its internals reflectively; the consumer rules the AARs ship only keep native method names + proto fields, so R8 stripped/renamed `com.google.mlkit.**` and the app crashed in `MainActivity.configureFlutterEngine()` when creating the recognizer via `TextRecognition.getClient()`. Add `android/app/proguard-rules.pro` with `-keep`/`-dontwarn` rules for `com.google.mlkit.**` and the ML Kit/Vision internals, and wire it into the release build type with `proguardFiles(...)`. Bump the app version to 1.0.1+2 for the hotfix release.
+- Done when: a release APK launches without a FATAL exception, on-device OCR runs end to end, and analyze/tests stay green.
+- Status: DONE (2026-10-16) — root cause confirmed by deobfuscating the release stack trace with `build/app/outputs/mapping/release/mapping.txt` (`yg1`/`wh1` = `com.google.mlkit.vision.text.internal.zzo`/`zzp`). The earlier INTERNET fix alone did not stop the crash — both defects had to be fixed. Verified on emulator-5554: the release APK (84.4 MB) installs and launches with no FATAL exception and zero ML Kit `NoSuchMethodException`; the full gallery → ML Kit OCR path runs and the flow reaches the Gemini step ("No Google AI API key is configured" as expected without a key). `flutter analyze` clean, 199/199 tests. macOS and iOS confirmed unaffected (macOS already carries `com.apple.security.network.client` in both Debug and Release entitlements; iOS needs no explicit network permission and has no ATS restriction). Shipped as release **v1.0.1**.

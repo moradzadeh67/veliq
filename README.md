@@ -138,12 +138,12 @@ Veliq is designed with first-class Persian (Farsi) localization:
 - [x] **P6 — Polish & Release Setup:** Shortcuts & error handling
 - [x] **P7 — iOS Research:** Mobile native capabilities
 - [x] **P8 — iOS Image Input:** PHPicker & Camera handlers
-- [ ] **P9 — iOS UI & Storage:** code complete (navigation bar, SafeArea, storage); remaining manual simulator checks (cancel path, revoked permission, history across restart)
+- [ ] **P9 — iOS UI & Storage:** code complete (navigation bar, SafeArea, storage). The remaining manual checks are **blocked on the dev machine**: no Apple `Simulator.app` is installed (the copy in `~/Applications` is a non-functional shim) and there is no physical iPhone, so the cancel path, the revoked-permission message and history-across-restart are still unverified.
 - [x] **P10 — Branding & Icons:** App icons & branding assets
 - [ ] **P11 — Shortcuts:** System-wide capture hotkey
 - [x] **P12 — Android v1:** Photo Picker, Camera, ML Kit OCR & Keystore
 - [ ] **More languages:** additional source and target languages beyond English → Persian
-- [x] **Public Release:** signed Android APK + GitHub release `v1.0.0` (macOS/iOS stay build-from-source) — [docs/RELEASE.md](docs/RELEASE.md)
+- [x] **Public Release:** signed Android APK + GitHub release `v1.0.1` (macOS/iOS stay build-from-source) — [docs/RELEASE.md](docs/RELEASE.md)
 
 The active task list is tracked in [TASKS.md](TASKS.md).
 
@@ -248,7 +248,7 @@ Details: [docs/PRIVACY.md](docs/PRIVACY.md).
 ## 🚀 Installation & Running
 
 > [!NOTE]
-> The signed Android APK for **v1.0.0** is on the
+> The signed Android APK for **v1.0.1** is on the
 > [Releases page](https://github.com/moradzadeh67/veliq/releases/latest) (`minSdk 24`). macOS and iOS
 > are built from source with the steps below — there is no notarized desktop build yet.
 
@@ -291,7 +291,7 @@ flutter build macos --release
 # Verify the iOS build configuration (no signing yet)
 flutter build ios --no-codesign
 
-# Build the Android APK (debug-signed, see Release Signing below)
+# Build the Android APK (signed with the upload key — see Release Signing below)
 flutter build apk --release
 ```
 
@@ -353,6 +353,18 @@ $ANDROID_HOME/build-tools/<version>/apksigner verify --print-certs \
 > [!CAUTION]
 > Back up your keystore and its passwords somewhere safe. If the upload key is lost you can no longer
 > publish updates for `com.moradzadeh67.veliq`.
+
+### R8 / ProGuard (release builds)
+
+Android `--release` builds run **R8** (minify + resource shrinking, full mode) by default. Libraries
+that load classes reflectively must keep them from being stripped or renamed. Veliq protects the
+bundled ML Kit recognizer with [`android/app/proguard-rules.pro`](android/app/proguard-rules.pro),
+wired into the release build type in `android/app/build.gradle.kts` (`proguardFiles(...)`).
+
+> [!WARNING]
+> Debug builds do **not** run R8, so a missing keep rule only surfaces in `--release` — typically as a
+> launch crash while the OCR client is created (`TextRecognition.getClient()`). Always smoke-test a
+> release APK after touching OCR code, dependencies or build configuration.
 
 ## 🔄 CI/CD
 

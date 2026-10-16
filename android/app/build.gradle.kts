@@ -62,6 +62,14 @@ android {
             } else {
                 signingConfigs.getByName("debug")
             }
+            // ML Kit is loaded reflectively and needs to survive R8 (full mode is
+            // the AGP 8+ default), otherwise the release APK crashes on launch
+            // while MainActivity creates the OCR recognizer. Rules live in
+            // proguard-rules.pro.
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
     }
 }

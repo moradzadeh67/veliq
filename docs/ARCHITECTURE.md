@@ -76,6 +76,7 @@ device; no analytics. See docs/PRIVACY.md.
 | D-014 | Pigeon bridge and image bytes | Dart `Uint8List` maps to Swift `FlutterStandardTypedData` via the standard codec. Sizes of 2–5 MB JPEG are within Flutter's standard channel limits (no fragmentation API needed). No platform-specific workaround required. | DECIDED (source: https://docs.flutter.dev/platform-integration/platform-channels) |
 | D-015 | App icon source of truth | One master vector at `assets/branding/logo.svg` (512×512 squircle, four white brackets pushed 20 % outward, four gold text bars), turned into every required size by `assets/app_icon/source/generate_icons.sh` with `rsvg-convert` at the exact target pixel size — no intermediate raster, so no keying/crop/resize tuning. macOS renders keep the squircle clip and therefore a **transparent** surround; iOS renders strip the clip attribute and are **full-bleed opaque** (no alpha channel, asserted by `sips -g hasAlpha`) because Apple rejects icons carrying alpha and the OS applies its own mask. The former raster master `icon_master.png` was deleted (2026-10-14). File names are unchanged from the Flutter templates, so neither `Contents.json` needed an edit. | DECIDED, IMPLEMENTED (T-125); REWORKED (2026-10-14): master is now the vector `assets/branding/logo.svg` |
 | D-016 | Android v1 scope and native stack | Android v1 (P12) is **photo input only**: gallery via the Android **Photo Picker** intents (`ACTION_PICK_IMAGES` on API 33+, `ACTION_GET_CONTENT` fallback, no storage permission) and camera via `ACTION_IMAGE_CAPTURE` + `EXTRA_OUTPUT` + a `FileProvider` cache file deleted right after reading (CAMERA runtime permission; `<uses-feature camera required="false">`). `ActivityResultContracts.TakePicture` was not usable because `FlutterActivity` is not a `ComponentActivity` (deviation from the original plan, T-135). OCR is the **bundled ML Kit Latin** recognizer `com.google.mlkit:text-recognition:16.0.1` (Latin script only) implemented **directly in Kotlin behind Pigeon** — no Flutter ML Kit package, so the Dart layer stays untouched; `minSdk = flutter.minSdkVersion` (24 with Flutter 3.47). Only `ImageSourceApi` and `OcrApi` are registered on the Android Pigeon host; `SelectionApi`, `ScreenCaptureApi` and `TranslationApi` are never registered there because no Android UI calls them. Region selection and screen capture (MediaProjection + foreground service) are explicitly out of v1, and Apple Translation is unavailable on Android — translation is Gemini only. | DECIDED (user-approved 2026-10-14); IMPLEMENTED — T-131..T-139 DONE 2026-10-15, emulator-verified (T-139) |
+| D-017 | Android release build vs. R8 | Android `--release` enables R8 (minify + resource shrinking, full mode) by default; ML Kit instantiates its components **reflectively**, so its internals must be kept or R8 strips/renames them and the app crashes on launch when `TextRecognition.getClient()` runs. Keep rules live in `android/app/proguard-rules.pro` (`com.google.mlkit.**`, `com.google.android.gms.internal.mlkit_**`, `com.google.android.libraries.vision.**`) and are wired into the release build type with `proguardFiles(...)`. `android.permission.INTERNET` is declared in the **main** manifest because Flutter only adds it to debug/profile. Debug builds never run R8, so a `--release` APK must be smoke-tested after OCR/dependency/build changes. | DECIDED (T-141, 2026-10-16) |
 
 An OPEN decision must not be implemented until its task is DONE.
 
@@ -92,7 +93,8 @@ Kotlin (android/app, P12 DONE T-131..T-139): hosts `ImageSourceApi` (Photo Picke
 `ACTION_IMAGE_CAPTURE` via a FileProvider cache file deleted after reading, CAMERA runtime
 permission) and `MlKitOcrApi` (bundled ML Kit Latin) only — `SelectionApi`, `ScreenCaptureApi`
 and `TranslationApi` are not registered on Android; everything is wired in
-`MainActivity.configureFlutterEngine` (T-133).
+`MainActivity.configureFlutterEngine` (T-133). The interface is built **through R8** (the release
+default), so ML Kit needs explicit keep rules (D-017) or the release build crashes on launch.
 Translation implementations: GeminiTranslationService (network, user key), PigeonTranslationService (Apple, macOS 26+),
 SwitchingTranslationService (chooses between them from settings).
 Native selection overlay: macos/Runner/SelectionOverlayWindow.swift (SelectionApi).
@@ -108,7 +110,8 @@ lib/
   pigeon/      Pigeon definition + generated Dart
 macos/Runner/  Swift native code (+ generated Pigeon Swift)
 ios/Runner/    Swift native code (+ the same generated Pigeon Swift)
-android/app/   Kotlin native code: Photo Picker + camera + ML Kit OCR (own generated Pigeon Kotlin)
+android/app/   Kotlin native code: Photo Picker + camera + ML Kit OCR (own generated Pigeon Kotlin);
+              proguard-rules.pro keeps ML Kit intact through R8 (D-017)
 assets/app_icon/  icon generator script + veliq.icns output (not bundled: no pubspec assets entry)
 assets/branding/  logo.svg master + social/readme branding assets (not bundled)
 test/          mirrors lib/
@@ -121,7 +124,8 @@ macOS: Screen Recording expected; Accessibility NOT assumed.
 iOS: camera only (`NSCameraUsageDescription`); the photo library needs no permission because
 `PHPickerViewController` runs out-of-process (D-012).
 Android: camera runtime permission only (*Take photo*); the Photo Picker needs no permission
-(D-016).
+(D-016). The `INTERNET` permission (manifest-declared, not a runtime prompt) is required for the
+Gemini call and lives in the **main** manifest — Flutter only declares it in debug/profile (T-141).
 See docs/MACOS_PERMISSIONS.md (Apple platforms).
 
 ## Testing

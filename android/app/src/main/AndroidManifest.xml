@@ -1,4 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Required for the Gemini translation REST call on EVERY build type.
+         Flutter only adds INTERNET to the debug/profile manifests (for hot
+         reload), so release builds were missing it and translations failed
+         with a network error on a real device. -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <!-- Requested at runtime only when the user taps "Take photo" (T-135). -->
     <uses-permission android:name="android.permission.CAMERA" />
     <!-- The camera is optional so camera-less devices (some tablets/emulators)
