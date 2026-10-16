@@ -7,7 +7,7 @@ derived from one vector master.
 | --- | --- | --- |
 | `logo.svg` | vector, 512×512 | **Master artwork.** Layers: `background`, `brackets`, `bars`. Edit the generator (below), never this file by hand. |
 | `logo-1024.png` | 1024×1024 | Raster master, referenced by the composite previews below. |
-| `readme-banner.png` | 1600×400 | Header banner for `README.md`. |
+| `readme-banner.png` | 1600×600 | Header banner for `README.md` (design since 2026-10-15: glass card over the brand gradient — badge, gold subtitle, description, three chips, logo with orbit rings; emitted by `generate_branding.py`). |
 | `social-preview.png` | 1280×640 | Open Graph / social card (logo, name, tagline). |
 | `github-avatar.png` | 460×460 | GitHub organisation/user avatar. |
 | `about-logo.png` | 256×256 | Logo block for an in-app About dialog. |

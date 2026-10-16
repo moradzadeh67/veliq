@@ -6,7 +6,7 @@ Outputs (all written into this folder):
     logo-1024.png       raster master
     favicon.ico         16 / 32 / 48 px
     social-preview.png  1280 x 640
-    readme-banner.png   1600 x 400
+    readme-banner.png   1600 x 600
     github-avatar.png   460 x 460
     about-logo.png      256 x 256
 
@@ -27,6 +27,49 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 FONT = "Helvetica Neue, Arial, sans-serif"
 NAME = "Veliq"
 TAGLINE = "Local-first screen &amp; photo translator"
+
+# ---- readme banner copy (approved 2026-10-15) ----
+BADGE = "FLUTTER LOCAL-FIRST"
+BANNER_SUBTITLE = "Capture or pick a photo — read it in Persian."
+BANNER_DESC1 = "On-device OCR with Apple Vision and ML Kit, translation through Gemini"
+BANNER_DESC2 = "with your own key, and a local, deletable history — on macOS, iOS and Android."
+CHIPS = [(110, 276, "⚡", "On-device OCR"),
+         (410, 312, "📷", "Gallery + Camera"),
+         (746, 356, "🔐", "Key stays on-device")]
+
+BANNER_DEFS = '''<defs>
+  <linearGradient id="bp-bg" x1="0.08" y1="1" x2="0.92" y2="0">
+    <stop offset="0" stop-color="#241A85"/><stop offset="0.35" stop-color="#3B2FBF"/>
+    <stop offset="0.72" stop-color="#5737DA"/><stop offset="1" stop-color="#6E3FE0"/>
+  </linearGradient>
+  <radialGradient id="bp-vignette" cx="0.5" cy="0.62" r="0.80">
+    <stop offset="0" stop-color="#05073A" stop-opacity="0"/>
+    <stop offset="0.55" stop-color="#05073A" stop-opacity="0.10"/>
+    <stop offset="1" stop-color="#04052E" stop-opacity="0.55"/>
+  </radialGradient>
+  <radialGradient id="bp-highlight" cx="0.72" cy="0.12" r="0.60">
+    <stop offset="0" stop-color="#A78BFA" stop-opacity="0.55"/>
+    <stop offset="0.42" stop-color="#8B5CF6" stop-opacity="0.28"/>
+    <stop offset="1" stop-color="#8B5CF6" stop-opacity="0"/>
+  </radialGradient>
+  <pattern id="bp-grid" width="80" height="80" patternUnits="userSpaceOnUse">
+    <path d="M 80 0 L 0 0 0 80" fill="none" stroke="#FFFFFF" stroke-opacity="0.05" stroke-width="1"/>
+  </pattern>
+  <radialGradient id="bp-glow" cx="0.5" cy="0.5" r="0.5">
+    <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.22"/>
+    <stop offset="0.55" stop-color="#FFFFFF" stop-opacity="0.08"/>
+    <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+  </radialGradient>
+  <filter id="bp-card-shadow" x="-10%" y="-20%" width="120%" height="150%" color-interpolation-filters="sRGB">
+    <feDropShadow dx="0" dy="20" stdDeviation="30" flood-color="#0A0640" flood-opacity="0.45"/>
+  </filter>
+  <filter id="bp-icon-shadow" x="-35%" y="-35%" width="170%" height="170%" color-interpolation-filters="sRGB">
+    <feDropShadow dx="0" dy="16" stdDeviation="22" flood-color="#0A0640" flood-opacity="0.55"/>
+  </filter>
+  <filter id="bp-text-shadow" x="-15%" y="-30%" width="130%" height="160%" color-interpolation-filters="sRGB">
+    <feDropShadow dx="0" dy="3" stdDeviation="7" flood-color="#1A0E52" flood-opacity="0.40"/>
+  </filter>
+</defs>'''
 
 # ---- geometry (512 space), approved design: 4 bars, outward factor 1.20 ----
 N = 4.3                 # superellipse exponent (squircle)
@@ -246,17 +289,51 @@ def main():
         render(p, os.path.join(HERE, "social-preview.png"), w=1280, h=640)
 
         # ------------------------------------------------------- 4. readme banner
-        banner = svg_doc(1600, 400,
-                         '<defs>%s</defs>'
-                         '<rect width="1600" height="400" fill="#FFFFFF"/>'
-                         '%s%s' % (
-                             ICON_SHADOW,
-                             image(418, 50, 300),
-                             text(NAME, 798, 257, 160, "700", "#3B2FBF", spacing="-6")))
+        # Approved 2026-10-15: glass card over the brand gradient — badge,
+        # title, gold subtitle, two-line description, three chips, and the
+        # logo in a rounded panel with two orbit rings. Replaces the old
+        # 1600x400 white banner.
+        badge = ('<g><rect x="110" y="92" width="402" height="54" rx="27" fill="#241A85" fill-opacity="0.5" '
+                 'stroke="#FFFFFF" stroke-opacity="0.30"/>'
+                 '<circle cx="142" cy="119" r="7" fill="#FFD27E"/>%s</g>'
+                 % text(BADGE, 164, 128, 22, "600", "#FFE7A6", spacing="3"))
+        chips = ""
+        for x, w, icon, label in CHIPS:
+            chips += ('<g><rect x="%d" y="452" width="%d" height="58" rx="29" fill="#241A85" fill-opacity="0.45" '
+                      'stroke="#FFE7A6" stroke-opacity="0.35"/>%s%s</g>'
+                      % (x, w, text(icon, x + 22, 490, 24, "400", "#FFFFFF"),
+                         text(label, x + 58, 490, 25, "500", "#F2EEFF")))
+        orbits = ('<g fill="none" stroke-width="2">'
+                  '<ellipse cx="1300" cy="300" rx="230" ry="104" transform="rotate(-24 1300 300)"'
+                  ' stroke="#FFFFFF" stroke-opacity="0.35"/>'
+                  '<ellipse cx="1300" cy="300" rx="212" ry="82" transform="rotate(22 1300 300)"'
+                  ' stroke="#FFE7A6" stroke-opacity="0.30"/>'
+                  '</g>')
+        banner = svg_doc(1600, 600,
+                         BANNER_DEFS
+                         + '<rect width="1600" height="600" fill="url(#bp-bg)"/>'
+                         + '<rect width="1600" height="600" fill="url(#bp-vignette)"/>'
+                         + '<rect width="1600" height="600" fill="url(#bp-highlight)"/>'
+                         '<g filter="url(#bp-card-shadow)"><rect x="40" y="36" width="1520" height="528" rx="36" '
+                         'fill="#1A1055" fill-opacity="0.28"/></g>'
+                         '<g><rect x="40" y="36" width="1520" height="528" rx="36" fill="url(#bp-grid)"/></g>'
+                         '<rect x="40" y="36" width="1520" height="528" rx="36" fill="none" stroke="#FFFFFF" '
+                         'stroke-opacity="0.22" stroke-width="1.5"/>'
+                         + badge
+                         + '<g filter="url(#bp-text-shadow)">%s</g>' % text(NAME, 110, 252, 96, "700", "#FFFFFF", spacing="-3")
+                         + text(BANNER_SUBTITLE, 112, 318, 38, "600", "#FFD27E")
+                         + text(BANNER_DESC1, 112, 372, 26, "400", "#D8D2F5")
+                         + text(BANNER_DESC2, 112, 408, 26, "400", "#D8D2F5")
+                         + chips
+                         + '<circle cx="1300" cy="300" r="250" fill="url(#bp-glow)"/>'
+                         + orbits
+                         + '<g filter="url(#bp-icon-shadow)"><rect x="1140" y="140" width="320" height="320" rx="72" '
+                         'fill="#FFFFFF" fill-opacity="0.10" stroke="#FFFFFF" stroke-opacity="0.30" stroke-width="1.5"/></g>'
+                         + image(1176, 176, 248, shadow=False))
         p = os.path.join(workdir, "readme-banner.svg")
         with open(p, "w") as fh:
             fh.write(banner)
-        render(p, os.path.join(HERE, "readme-banner.png"), w=1600, h=400)
+        render(p, os.path.join(HERE, "readme-banner.png"), w=1600, h=600)
 
         # ------------------------------------------------------- 5. favicon
         try:
