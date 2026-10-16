@@ -32,6 +32,11 @@ Apple Translation — see "Android scope (P12, v1)".
 - macOS 14.6+, iOS 16.0+ and Android 7.0+ (`minSdk = flutter.minSdkVersion`, 24 with Flutter 3.47);
   Flutter + Swift (Apple targets) and Kotlin (Android); open source; GitHub distribution first.
 - Do not design around App Store submission, but do not block it.
+- Distribution: GitHub first. Android releases are signed with the upload key `Veliq-upload.jks`
+  (kept outside the repository; `android/key.properties` is git-ignored, with a debug fallback when
+  the file is absent). GitHub release `v1.0.0` (2026-10-16) ships the signed APK. No store listing:
+  Google Play was explicitly declined by the owner on 2026-10-16, and the public web presence is the
+  GitHub Pages landing site under `docs/` (with robots.txt + sitemap.xml).
 - Privacy rules: docs/PRIVACY.md. Permissions: docs/MACOS_PERMISSIONS.md.
 
 ## MVP acceptance (done when)

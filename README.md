@@ -143,7 +143,7 @@ Veliq is designed with first-class Persian (Farsi) localization:
 - [ ] **P11 — Shortcuts:** System-wide capture hotkey
 - [x] **P12 — Android v1:** Photo Picker, Camera, ML Kit OCR & Keystore
 - [ ] **More languages:** additional source and target languages beyond English → Persian
-- [ ] **Public Release:** Signed builds & GitHub Releases ([docs/RELEASE.md](docs/RELEASE.md))
+- [x] **Public Release:** signed Android APK + GitHub release `v1.0.0` (macOS/iOS stay build-from-source) — [docs/RELEASE.md](docs/RELEASE.md)
 
 The active task list is tracked in [TASKS.md](TASKS.md).
 
@@ -216,7 +216,7 @@ test/                                  → Offline unit and widget test suite
 | Platform | Status | Notes |
 |---|:---:|---|
 | 🖥️ macOS | ✅ Works end to end | macOS 14.6+ — region select → Vision OCR → Gemini → history |
-| 🤖 Android | ✅ v1 Done (P12) | Photo Picker + ML Kit OCR (Latin) + Gemini; emulator-verified |
+| 🤖 Android | ✅ v1 Done (P12) | Photo Picker + ML Kit OCR (Latin) + Gemini; emulator-verified; signed APK published in [v1.0.0](https://github.com/moradzadeh67/veliq/releases/latest) |
 | 📱 iOS | 🟡 Verification pending | P7–P9 code complete; UI simulator-verified (iPhone 17 Pro Max); manual checks outstanding |
 | 🪟 Windows | ❌ Out of scope | Desktop target limited to macOS |
 | 🐧 Linux | ❌ Out of scope | Out of scope |
@@ -248,8 +248,9 @@ Details: [docs/PRIVACY.md](docs/PRIVACY.md).
 ## 🚀 Installation & Running
 
 > [!NOTE]
-> There is no published binary yet. Release builds are unsigned and the release checklist is
-> still open ([docs/RELEASE.md](docs/RELEASE.md)) — build from source with the steps below.
+> The signed Android APK for **v1.0.0** is on the
+> [Releases page](https://github.com/moradzadeh67/veliq/releases/latest) (`minSdk 24`). macOS and iOS
+> are built from source with the steps below — there is no notarized desktop build yet.
 
 ### Prerequisites
 
@@ -312,18 +313,9 @@ flutter test
 
 ## 🔐 Release Signing
 
-**There is no release signing yet.** `android/app/build.gradle.kts` currently falls back to the
-**debug** signing config, and no `android/key.properties` exists (that file is git-ignored and must
-never be committed). The APK produced by `flutter build apk --release` is therefore debug-signed and
-is **not** suitable for store publishing.
-
-> [!NOTE]
-> If `android/key.properties` is missing — on a fresh clone, for example — the Gradle build does not
-> break; it simply signs with the debug key. Wiring a real upload keystore (and macOS/iOS code
-> signing + notarization) is part of the open public-release checklist in
-> [docs/RELEASE.md](docs/RELEASE.md).
-
-When an upload key exists, its credentials live **outside** the repository in `android/key.properties`:
+Android release builds are signed with the project's **upload key** (`Veliq-upload.jks`, alias
+`veliq`). The keystore lives **outside** this repository; its credentials are read from
+`android/key.properties`, which is git-ignored and never committed.
 
 ```properties
 # android/key.properties — NEVER commit this file
@@ -333,9 +325,34 @@ keyAlias=YOUR_KEY_ALIAS_HERE
 storeFile=/absolute/path/to/your/upload-keystore.jks
 ```
 
+Create your own upload key with `keytool`:
+
+```bash
+keytool -genkeypair -v \
+  -keystore ~/keystores/veliq.jks \
+  -storetype PKCS12 -keyalg RSA -keysize 2048 -validity 10000 \
+  -alias veliq \
+  -dname "CN=your-name, OU=Mobile, O=Veliq, C=IR"
+```
+
+Then build and verify the signed artifacts:
+
+```bash
+flutter build appbundle --release   # → build/app/outputs/bundle/release/app-release.aab
+flutter build apk --release         # → build/app/outputs/flutter-apk/app-release.apk
+
+# Confirm which key signed it
+$ANDROID_HOME/build-tools/<version>/apksigner verify --print-certs \
+  build/app/outputs/flutter-apk/app-release.apk
+```
+
+> [!NOTE]
+> If `android/key.properties` is missing — on a fresh clone, for example — Gradle automatically falls
+> back to the debug signing key. The build never breaks; it simply is not signed with the release key.
+
 > [!CAUTION]
 > Back up your keystore and its passwords somewhere safe. If the upload key is lost you can no longer
-> publish updates for this app.
+> publish updates for `com.moradzadeh67.veliq`.
 
 ## 🔄 CI/CD
 
@@ -352,7 +369,7 @@ storeFile=/absolute/path/to/your/upload-keystore.jks
 - **iOS Camera in Simulator:** The iOS Simulator does not support camera capture hardware; camera workflows require a physical iPhone.
 - **iOS Verification:** The P9 manual simulator checks (cancel path, revoked-permission message, history across restart) are still open.
 - **Android OCR Scope:** The bundled ML Kit model currently supports Latin script OCR; non-Latin script models are planned for future updates.
-- **Unsigned Builds:** macOS Gatekeeper flags unsigned developer builds on first double-click launch, and Android release builds are only debug-signed so far.
+- **Unsigned macOS Builds:** macOS Gatekeeper flags unsigned developer builds on first double-click launch, and there is no notarized desktop build yet. Android release builds are signed with the project upload key.
 
 ## ❓ Troubleshooting & FAQ
 
@@ -377,7 +394,7 @@ Visit [Google AI Studio](https://aistudio.google.com/apikey), log in with a Goog
 <details>
 <summary><b>4. Where is my translation history stored?</b></summary>
 
-History is stored locally in `history.json` within your OS Application Support directory (`~/Library/Containers/com.moradzadeh67.veliq/Data/Library/Application Support/veliq/history.json` on macOS; `/data/data/com.moradzadeh67.veliq/files/history.json` on Android). It can be deleted from the History tab.
+History is stored locally in `history.json` within your OS Application Support directory (`~/Library/Containers/com.moradzadeh67.veliq/Data/Library/Application Support/com.moradzadeh67.veliq/history.json` on macOS; `/data/data/com.moradzadeh67.veliq/files/history.json` on Android). It can be deleted from the History tab.
 </details>
 
 <details>

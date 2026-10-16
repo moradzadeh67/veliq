@@ -1,23 +1,45 @@
 # Veliq — Release and Distribution
 
 ## Status
-Not an active concern. Do not do distribution work unless it is the current task.
-License: MIT (see LICENSE). The repository is public.
+Active as of 2026-10-16: the first public GitHub release (`v1.0.0`) is published with a **signed**
+Android APK. License: MIT (see LICENSE). The repository is public, has a description, 16 topics and
+a GitHub Pages site (https://moradzadeh67.github.io/veliq/).
 
 ## Current distribution
-- GitHub releases, built manually with `flutter build macos`.
-- Personal use: no code signing required.
+- **GitHub releases** — `v1.0.0` (2026-10-16) ships `app-release.apk` (+ `.sha256`) built from this
+  repository and signed with the project upload key (see "Android release signing" below).
+- macOS: build from source (`flutter build macos`); no code signing / notarization yet.
 - iOS is **not distributed yet** (only `flutter build ios --no-codesign` is run, as a build check).
-  The Xcode target now carries the real bundle id `com.moradzadeh67.veliq` and the D-013 iOS 16.0
-  floor (T-126, 2026-10-14).
-- Android is **not distributed yet**: only a local debug APK (`flutter build apk --debug`, verified
-  in T-139 on 2026-10-15). No release signing and no store listing exist.
+  The Xcode target carries the real bundle id `com.moradzadeh67.veliq` and the D-013 iOS 16.0 floor
+  (T-126, 2026-10-14).
+- Android: signed APK **and** AAB are reproducible locally; there is still **no store listing**
+  (Google Play was explicitly declined by the owner on 2026-10-16 — distribution stays on GitHub).
 
 ## Future (nothing decided)
 - Code signing and notarization for Gatekeeper.
-- Android: release signing (keystore / AAB) and store distribution — nothing decided.
+- Android store distribution (Play/F-Droid). Note for any future F-Droid attempt: ML Kit is a
+  proprietary bundled dependency, so the app would not qualify as fully free software.
 - Mac App Store consideration: do a fresh privacy and entitlement review against
   Apple's requirements at that time. Do not assume today's configuration is suitable.
+
+## Android release signing (2026-10-16)
+
+- **Upload key**: `Veliq-upload.jks` (PKCS12, alias `veliq`, RSA 2048, validity 10000 days).
+  It lives **outside the repository** at `~/Desktop/Veliq-upload-key/Veliq-upload.jks` on the owner's
+  machine; a complete backup (keystore + `key.properties` + the passwords, documented in a README)
+  is the zipped folder `~/Desktop/Veliq-upload-key.zip`.
+- **Wiring**: `android/key.properties` (git-ignored — present in both `.gitignore` files) points Gradle
+  at the keystore. `android/app/build.gradle.kts` reads it when it exists and otherwise falls back to
+  the **debug** signing config, so a fresh clone still builds.
+- **Certificate** (verified with `apksigner verify --print-certs`):
+  `CN=Mohammadreza Moradzadeh, OU=Mobile, O=Veliq, C=IR`,
+  SHA-256 `1332bc480e4fac26acab2ad82db950501dc9643604af2e0429b28668c1a651af`.
+- **Artifacts**: `flutter build appbundle --release` → `build/app/outputs/bundle/release/app-release.aab`
+  (66 MB); `flutter build apk --release` → `build/app/outputs/flutter-apk/app-release.apk` (84 MB,
+  signing verified). Both are git-ignored build output; the APK is attached to the `v1.0.0` release.
+- **Never** commit the keystore, `key.properties` or the passwords. Losing the upload key means no
+  further updates for `com.moradzadeh67.veliq`.
+
 
 ## Public repository hygiene (check BEFORE the first public push and before every release)
 1. `git ls-files` contains no secrets, keys, certificates, provisioning profiles, .env files,
@@ -73,5 +95,13 @@ Also outstanding for the user: GitHub repository **About/Topics** (browser), ite
 
 ## Outstanding before a public release
 1. Item 8 above (clean-machine / separate-user-account permission verification) — user's task.
-2. GitHub repository **About/Topics** (browser) — user's task.
-3. **iOS**: the T-124 remainder on the simulator (cancel path, revoked-permission message, history across restart). Navigation, screens and the gallery picker are simulator-verified (2026-10-14); camera capture is device-only (no device in scope, T-118 dropped).
+2. ~~GitHub repository About/Topics~~ — **DONE 2026-10-16**: description + 16 topics set, homepage
+   points at the Pages site.
+3. **iOS**: the T-124 remainder on the simulator (cancel path, revoked-permission message, history
+   across restart). Navigation, screens and the gallery picker are simulator-verified (2026-10-14);
+   camera capture is device-only (no device in scope, T-118 dropped). On the owner's current Mac the
+   bundled `Simulator.app` is broken (unsigned binary, exits immediately), so this stays open until a
+   repaired simulator or a physical device is available.
+
+## Released
+- `v1.0.0` (2026-10-16): signed Android APK + `.sha256` attached. macOS/iOS remain build-from-source.

@@ -16,6 +16,7 @@ P9 iOS UI & storage ........ DOING
 P10 Branding & icons ....... DONE
 P11 Keyboard affordances .... DOING
 P12 Android v1 .............. DONE
+P13 Public release (GitHub) .. DONE
 
 ---
 
@@ -176,7 +177,7 @@ P12 Android v1 .............. DONE
 - Files: (none — manual task)
 - Do: Run the app on an iPhone simulator (`flutter run -d "iPhone 17 Pro Max"`) and verify: navigation bar at the bottom; the three main screens work; the RTL Persian result displays correctly; picking a photo from the gallery works; cancelling the picker returns cleanly; a revoked camera permission surfaces a clear message (toggle with `xcrun simctl privacy booted revoke camera com.moradzadeh67.veliq` / `grant`); history persists across an app restart. Absorbs T-118's scenarios where the simulator allows — the simulator has no camera, so an actual photo capture stays device-only (out of scope, no device).
 - Done when: all checks pass on simulator.
-- Status: TODO — progress 2026-10-14: navigation bar, the three screens, Settings (API key + connect) and the gallery picker verified working by the user on the iPhone 17 Pro Max simulator (after T-127). Remaining: cancel path, revoked-permission message, history persistence across restart.
+- Status: TODO — progress 2026-10-14: navigation bar, the three screens, Settings (API key + connect) and the gallery picker verified working by the user on the iPhone 17 Pro Max simulator (after T-127). Remaining: cancel path, revoked-permission message, history persistence across restart. 2026-10-16: still open — the bundled `Simulator.app` on the owner's Mac is broken (binary is unsigned and exits immediately; no Simulator.app exists inside Xcode.app either), so no UI-driven verification is possible on this machine. The owner decided to leave T-124 until a repaired simulator or a physical device is available.
 
 ### T-126 · [S] Apply D-013: iOS deployment target 16.0 + real bundle id
 - Files: ios/Runner.xcodeproj/project.pbxproj, ios/Podfile
@@ -289,3 +290,13 @@ analyze/test after each.
 - Do: `flutter analyze`, `flutter test`, `flutter build apk --debug`. Manual on the emulator: (1) cancel gallery, (2) cancel camera, (3) deny Camera permission, (4) image without text, (5) image with English text, (6) missing Gemini key, (7) successful Gemini translation, (8) history survives an app restart.
 - Done when: all three commands green; the checklist is executed on the emulator and the report lists changed files, the three command outputs and what was verified on a device.
 - Status: DONE (2026-10-15). Commands green: analyze 0, tests 199/199, apk built and installed. Emulator checklist, all 8 items verified: (1) cancel gallery -> Idle, (2) cancel camera -> Idle, (3) deny camera permission -> app alive + Idle, (4) blank image -> "No text found" + Android guidance, (5) English image -> OCR succeeded, (6) missing key -> "No Google AI API key is configured. Add one in Settings.", (7) after the owner entered the key in Settings ("Connected. The API key works."), a real Gemini translation succeeded: en->fa RTL output + "Saved to history", (8) History entry survived am force-stop + relaunch. (Items 7-8 were first deferred with the owner's note "needs the user's key", then executed on 2026-10-15 once the key was in place.)
+
+---
+
+## P13 — Public release (GitHub) (DONE)
+
+### T-140 · [M] Release prep: signing, CI, SEO site and v1.0.0
+- Files: android/app/build.gradle.kts, .github/workflows/ci.yml (new), CONTRIBUTING.md (new), docs/index.html + docs/robots.txt + docs/sitemap.xml + docs/.nojekyll (new), README.md, PROJECT_SPEC.md, docs/RELEASE.md, docs/ARCHITECTURE.md, assets/screenshots/**, assets/demo/demo.gif
+- Do: sign Android release builds with a real upload key (keystore outside the repo; `android/key.properties` git-ignored, debug fallback kept); replace the whole-desktop overlay screenshot and rebuild the demo GIF from app-only frames; refresh the README to the reference structure (badges, Release Signing, CI/CD, Development Environment, Requirements) and record the multi-language roadmap; add a CI workflow; add a crawlable landing page for a GitHub Pages site.
+- Done when: analyze clean, tests green, signed AAB + APK verified with apksigner, release published.
+- Status: DONE (2026-10-16) — keystore `Veliq-upload.jks` created (PKCS12, alias `veliq`, 10000 days) with a complete zipped backup on the owner's Desktop; `apksigner verify --print-certs` → `CN=Mohammadreza Moradzadeh, OU=Mobile, O=Veliq, C=IR`; AAB 66 MB + APK 84 MB built; `flutter analyze` clean, 199/199 tests; GitHub release `v1.0.0` published with `app-release.apk` + `.sha256`; repo description + 16 topics set; GitHub Pages enabled (source `main` `/docs`) with the SEO landing page. macOS history was cleared of the 4 test entries created while capturing media; a stale `Application Support/veliq/history.json` (13 owner entries from Oct 11-12, older build) was found and preserved. History path corrected in README + ARCHITECTURE: it is the bundle-id folder, not `veliq/`.
