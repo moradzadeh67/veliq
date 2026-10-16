@@ -134,7 +134,8 @@ Also outstanding for the user: GitHub repository **About/Topics** (browser), ite
    across restart). Navigation, screens and the gallery picker are simulator-verified (2026-10-14);
    camera capture is device-only (no device in scope, T-118 dropped). On the owner's current Mac the
    bundled `Simulator.app` is broken (unsigned binary, exits immediately), so this stays open until a
-   repaired simulator or a physical device is available.
+   repaired simulator or a physical device is available. A headless alternative (`idb`) was evaluated on
+   2026-10-16 and dropped as well: `idb-companion` is no longer published in Homebrew.
 
 ## Released
 - `v1.0.1` (2026-10-16): Android release-build hotfix — the missing `INTERNET` manifest permission and
