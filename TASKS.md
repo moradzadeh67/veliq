@@ -243,7 +243,7 @@ analyze/test after each.
 - Files: android/** (new)
 - Do: From the repo root run `flutter create --platforms=android .`; verify the applicationId matches the existing bundle id `com.moradzadeh67.veliq`; do not add any new native capability yet.
 - Done when: `flutter run -d <android-emulator>` launches the current app UI unchanged.
-- Status: TODO
+- Status: DONE (2026-10-22) — stale status corrected in P15; the Android scaffold shipped with P12 (DONE).
 
 ### T-132 · [S] Android UI (mobile layout)
 - Files: lib/features/home/home_shell.dart, lib/features/translation/translate_view.dart, test/features/home/home_shell_test.dart, test/features/translation/translate_view_test.dart
@@ -333,7 +333,7 @@ Order: T-150 -> T-151 -> T-152 -> T-153 -> T-154 -> T-155 -> T-156.
 - Files: tool/gen_pigeon.sh (new), .github/workflows/ci.yml, TASKS.md, pubspec.yaml
 - Do: `pigeons/messages.dart` has a single `swiftOut` (macOS); `ios/Runner/Messages.g.swift` is a manual copy (T-112), so any API change can leave iOS stale. Add `tool/gen_pigeon.sh`: run `dart run pigeon --input pigeons/messages.dart`, then copy `macos/Runner/Messages.g.swift` to `ios/Runner/Messages.g.swift` (keep the `#if os(iOS)` / `#elseif os(macOS)` import guards from T-112 — verify the generated file still carries them, otherwise re-apply). Add a CI step after `flutter pub get`: run the script, then `git diff --exit-code` (fails if generated files are not committed). Fix stale docs: T-131 status TODO -> DONE (P12 is DONE), and the `description:` in pubspec.yaml ("A new Flutter project.") -> a real one-line description.
 - Done when: running the script on a clean tree produces no diff; CI fails if a Pigeon change is not regenerated/committed; analyze + tests green.
-- Status: TODO
+- Status: DONE (2026-10-22) — `bash tool/gen_pigeon.sh` on a clean tree regenerates identical files (no diff); CI now runs it followed by `git diff --exit-code`; T-131 status fixed; pubspec description set. analyze clean, 199/199 tests.
 
 ### T-151 · [M] Language catalog and truthful "auto-detect" source
 - Files: lib/models/language.dart (new), lib/services/settings_repository.dart, lib/services/prefs_settings_repository.dart, lib/features/settings/settings_view.dart, test/models/language_test.dart (new)

@@ -22,6 +22,11 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Verify Pigeon outputs are up to date
+        run: |
+          bash tool/gen_pigeon.sh
+          git diff --exit-code
+
       - name: Analyze
         run: flutter analyze
 
