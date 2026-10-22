@@ -63,7 +63,7 @@ class _FakeOcrService implements OcrService {
   Future<Set<String>> supportedLanguages() async => const {'en'};
 }
 
-class _FakeTranslationService implements TranslationService {
+class _FakeTranslationService extends TranslationService {
   @override
   Future<String?> translateText(
     String text,

@@ -5,7 +5,7 @@ import 'package:veliq/features/translation/bloc/translation_state.dart';
 import 'package:veliq/services/translation_exception.dart';
 import 'package:veliq/services/translation_service.dart';
 
-class MockTranslationService implements TranslationService {
+class MockTranslationService extends TranslationService {
   String? mockResult;
   bool shouldThrow = false;
   Object? errorToThrow;
@@ -25,6 +25,21 @@ class MockTranslationService implements TranslationService {
     if (errorToThrow != null) throw errorToThrow!;
     if (shouldThrow) throw Exception('Translation failed');
     return mockResult;
+  }
+
+  /// Stands in for Gemini reporting the language it detected.
+  String? detectedLanguage;
+
+  @override
+  Future<TranslationOutcome> translateWithDetection(
+    String text,
+    String sourceLanguage,
+    String targetLanguage,
+  ) async {
+    return TranslationOutcome(
+      await translateText(text, sourceLanguage, targetLanguage),
+      detectedSourceLanguage: detectedLanguage,
+    );
   }
 }
 
@@ -148,6 +163,31 @@ void main() {
           (translationBloc.currentState as TranslationFailure).message;
       expect(message, isNot(contains('internal detail')));
       expect(message, isNot(contains('0x1f')));
+    });
+    test('carries the detected source language into the success state', () async {
+      mockService.mockResult = 'Bonjour le monde';
+      mockService.detectedLanguage = 'fr';
+
+      await translationBloc.translate(text: 'Hello world', sourceLanguage: 'auto');
+
+      final state = translationBloc.currentState;
+      expect(state, isA<TranslationSuccess>());
+      expect(
+        (state as TranslationSuccess).detectedSourceLanguage,
+        equals('fr'),
+      );
+    });
+
+    test('reports no detection when the provider cannot detect', () async {
+      mockService.mockResult = 'Bonjour';
+
+      await translationBloc.translate(text: 'Hello', sourceLanguage: 'en');
+
+      expect(
+        (translationBloc.currentState as TranslationSuccess)
+            .detectedSourceLanguage,
+        isNull,
+      );
     });
   });
 }

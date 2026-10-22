@@ -37,7 +37,7 @@ P15 "Multi-language input" is DONE on branch `p15-multi-language` (not pushed). 
   machine, so `validateSigningRelease` fails. The T-153 smoke APK was built with the debug key (by moving
   `android/key.properties` aside temporarily). Recover the keystore from the documented backup
   (`~/Desktop/Veliq-upload-key.zip`) before any further release.
-- History rows still print raw codes (`EN → FA`); T-155 only converted the translate-result labels.
+- History rows still print raw codes (`EN → FA`) in the *list*; the translate-result labels and the stored entry now use the detected language (T-157).
 
 Earlier work through T-129 is committed; P12 shipped in `82cbb9c`; the README/docs pass in `9db21b3`; P13
 (T-140) in `fa7a2e9` + `5e65b53`; P14 (T-141) ships in the v1.0.1 release; P15 (T-150…T-156) on branch

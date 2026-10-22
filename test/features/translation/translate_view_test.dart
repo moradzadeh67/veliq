@@ -73,8 +73,23 @@ class _FakeOcrService implements OcrService {
   Future<Set<String>> supportedLanguages() async => const {'en'};
 }
 
-class _FakeTranslationService implements TranslationService {
+class _FakeTranslationService extends TranslationService {
   String? translated = 'سلام دنیا';
+
+  /// Detection reported for an `auto` source (T-157).
+  String? detectedLanguage;
+
+  @override
+  Future<TranslationOutcome> translateWithDetection(
+    String text,
+    String sourceLanguage,
+    String targetLanguage,
+  ) async {
+    return TranslationOutcome(
+      await translateText(text, sourceLanguage, targetLanguage),
+      detectedSourceLanguage: detectedLanguage,
+    );
+  }
 
   @override
   Future<String?> translateText(
@@ -363,6 +378,18 @@ void main() {
         find.text('Saved to history · Auto-detect → Persian'),
         findsOneWidget,
       );
+    });
+
+    testWidgetsMac('shows the language Gemini detected instead of auto', (
+      tester,
+    ) async {
+      translationService.detectedLanguage = 'fr';
+
+      await openPicker(tester);
+      await closePicker(tester, region);
+
+      expect(find.text('ORIGINAL (FRENCH)'), findsOneWidget);
+      expect(find.text('Saved to history · French → Persian'), findsOneWidget);
     });
 
     testWidgetsMac('Cmd+R asks the native picker to open (T-129)', (

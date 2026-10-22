@@ -105,6 +105,7 @@ A short tour of the macOS flow: start on the Translate tab, drag a region over t
 ### 🔍 OCR & Translation
 - On-device OCR: **Apple Vision** on macOS/iOS, **ML Kit** on Android.
 - Translation via **Google Gemini API** using **your own private API key**.
+- **Auto-detect tells you what it found:** with the source set to Auto-detect, Gemini reports the language it detected, so the result reads `Original (French)` and history records `French → Persian` instead of a generic "Auto-detect".
 - Beautiful right-to-left (RTL), justified Persian result view with copy actions for both original and translated text.
 
 ### 📚 History & Settings

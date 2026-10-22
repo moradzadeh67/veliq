@@ -4,11 +4,26 @@ import 'package:veliq/services/translation_exception.dart';
 import 'package:veliq/services/switching_translation_service.dart';
 import 'package:veliq/services/translation_service.dart';
 
-class _StubService implements TranslationService {
+class _StubService extends TranslationService {
   final String label;
   final List<String> calls = <String>[];
 
+  /// Detection reported by [translateWithDetection], when set.
+  String? detectedLanguage;
+
   _StubService(this.label);
+
+  @override
+  Future<TranslationOutcome> translateWithDetection(
+    String text,
+    String sourceLanguage,
+    String targetLanguage,
+  ) async {
+    return TranslationOutcome(
+      await translateText(text, sourceLanguage, targetLanguage),
+      detectedSourceLanguage: detectedLanguage,
+    );
+  }
 
   @override
   Future<String?> translateText(
@@ -177,6 +192,29 @@ void main() {
         equals('google'),
       );
       expect(google.calls, equals(['Bonjour|auto|fa']));
+    });
+
+    test('forwards the detected language from Google', () async {
+      final google = _StubService('google')..detectedLanguage = 'fr';
+      final service = SwitchingTranslationService(
+        settings: _FakeSettingsRepository(
+          const AppSettings(
+            translationProvider: TranslationProvider.google,
+            googleApiKey: 'key-1',
+          ),
+        ),
+        apple: apple,
+        googleFactory: (_) => google,
+      );
+
+      final outcome = await service.translateWithDetection(
+        'Bonjour',
+        'auto',
+        'fa',
+      );
+
+      expect(outcome.text, equals('google'));
+      expect(outcome.detectedSourceLanguage, equals('fr'));
     });
 
     test('switching provider per call is honoured', () async {

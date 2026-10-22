@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import '../../../models/language.dart';
 import '../../../models/translation_entry.dart';
 import '../../../services/capture_service.dart';
 import '../../../services/history_repository.dart';
@@ -170,6 +171,14 @@ class TranslateFlowBloc {
       return;
     }
 
+    // With `auto` as the source, show and store the language the provider
+    // actually detected instead of the literal "Auto-detect" (T-157).
+    final detected = translationState.detectedSourceLanguage;
+    final sourceLanguage =
+        settings.sourceLanguage == LanguageCatalog.autoCode && detected != null
+        ? detected
+        : settings.sourceLanguage;
+
     // Stage 4: persist to history. A failure here must not discard the
     // translation the user is already looking at.
     try {
@@ -178,7 +187,7 @@ class TranslateFlowBloc {
           id: _idGenerator(),
           originalText: recognizedText,
           translatedText: translationState.translatedText,
-          sourceLanguage: settings.sourceLanguage,
+          sourceLanguage: sourceLanguage,
           targetLanguage: settings.targetLanguage,
           createdAt: _clock(),
         ),
@@ -191,7 +200,7 @@ class TranslateFlowBloc {
       TranslateFlowSuccess(
         originalText: recognizedText,
         translatedText: translationState.translatedText,
-        sourceLanguage: settings.sourceLanguage,
+        sourceLanguage: sourceLanguage,
         targetLanguage: settings.targetLanguage,
       ),
     );

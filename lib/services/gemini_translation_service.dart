@@ -81,6 +81,26 @@ class GeminiTranslationService implements TranslationService {
     String sourceLanguage,
     String targetLanguage,
   ) async {
+    final outcome = await translateWithDetection(
+      text,
+      sourceLanguage,
+      targetLanguage,
+    );
+    return outcome.text;
+  }
+
+  /// Translates and, when [sourceLanguage] is `auto`, reports the detected code.
+  ///
+  /// The prompt asks for a small JSON object in that case (T-157). A model that
+  /// ignores the format still produces a usable translation: the raw reply is
+  /// used and only the detection is lost.
+  @override
+  Future<TranslationOutcome> translateWithDetection(
+    String text,
+    String sourceLanguage,
+    String targetLanguage,
+  ) async {
+    final detects = sourceLanguage == LanguageCatalog.autoCode;
     final key = _apiKey.trim();
     if (key.isEmpty) {
       throw const TranslationException(
@@ -138,7 +158,7 @@ class GeminiTranslationService implements TranslationService {
       }
 
       if (response.statusCode == 200) {
-        return _parseTranslatedText(response.body);
+        return _parseOutcome(response.body, expectDetection: detects);
       }
 
       final reason = _errorReason(response.body);
@@ -188,7 +208,7 @@ class GeminiTranslationService implements TranslationService {
       );
     }
 
-    return null;
+    return const TranslationOutcome(null);
   }
 
   /// Sends [body], retrying once when the attempt fails transiently.
@@ -240,6 +260,14 @@ class GeminiTranslationService implements TranslationService {
     }
   }
 
+  /// Extra rule appended when the source is `auto`: ask for a JSON envelope so
+  /// the detected language comes back with the translation (T-157).
+  static const String _detectionRules =
+      '- Answer with a JSON object only, no code fences and no text outside it, '
+      'in exactly this shape: '
+      '{"detected_language": "<ISO 639-1 code>", "translation": "<the translation>"}.\n'
+      '- "detected_language" is the language the source text is written in.\n';
+
   /// Wraps the source text in an instruction that keeps the reply clean.
   ///
   /// The model is told to return nothing but the translation, because any
@@ -276,6 +304,7 @@ class GeminiTranslationService implements TranslationService {
         '- Do not summarise, reorder or "fix" the content.\n'
         '- If the text looks like code, an identifier or a stray label, still '
         'translate the words inside it.\n'
+        '${detects ? _detectionRules : ''}'
         '---\n'
         '$text\n'
         '---';
@@ -529,5 +558,82 @@ class GeminiTranslationService implements TranslationService {
 
     final translated = buffer.toString().trim();
     return translated.isEmpty ? null : translated;
+  }
+
+  /// Parses the envelope and, when detection was requested, the JSON payload.
+  static TranslationOutcome _parseOutcome(
+    String body, {
+    required bool expectDetection,
+  }) {
+    final raw = _parseTranslatedText(body);
+    if (!expectDetection || raw == null) return TranslationOutcome(raw);
+    return _parseDetection(raw);
+  }
+
+  /// Splits a `{"detected_language": ..., "translation": ...}` reply.
+  ///
+  /// Anything unexpected falls back to treating the whole reply as the
+  /// translation, so a model that ignores the JSON request still works.
+  static TranslationOutcome _parseDetection(String raw) {
+    final payload = _jsonPayload(raw);
+    if (payload == null) return TranslationOutcome(raw);
+
+    final translation = payload['translation'];
+    if (translation is! String || translation.trim().isEmpty) {
+      return TranslationOutcome(raw);
+    }
+
+    return TranslationOutcome(
+      translation,
+      detectedSourceLanguage: _normalizeLanguageCode(
+        payload['detected_language'],
+      ),
+    );
+  }
+
+  /// Extracts a JSON object from a reply, tolerating ``` fences and chatter.
+  static Map<String, dynamic>? _jsonPayload(String raw) {
+    var text = raw.trim();
+    if (text.startsWith('```')) {
+      final firstBreak = text.indexOf('\n');
+      if (firstBreak != -1) text = text.substring(firstBreak + 1);
+      final fence = text.lastIndexOf('```');
+      if (fence != -1) text = text.substring(0, fence);
+      text = text.trim();
+    }
+
+    final start = text.indexOf('{');
+    final end = text.lastIndexOf('}');
+    if (start == -1 || end <= start) return null;
+
+    final Object? decoded;
+    try {
+      decoded = jsonDecode(text.substring(start, end + 1));
+    } catch (_) {
+      return null;
+    }
+    return decoded is Map<String, dynamic> ? decoded : null;
+  }
+
+  /// Maps "fr", "French", "français" or "fr-FR" onto a catalog code, or `null`
+  /// when the value cannot be resolved confidently.
+  static String? _normalizeLanguageCode(Object? raw) {
+    if (raw is! String) return null;
+    final value = raw.trim().toLowerCase();
+    if (value.isEmpty) return null;
+
+    for (final language in LanguageCatalog.all) {
+      if (language.code == value ||
+          language.englishName.toLowerCase() == value ||
+          language.nativeName.toLowerCase() == value) {
+        return language.code;
+      }
+    }
+
+    final base = value.split(RegExp(r'[-_]')).first;
+    for (final language in LanguageCatalog.all) {
+      if (language.code == base) return language.code;
+    }
+    return null;
   }
 }

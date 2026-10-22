@@ -16,7 +16,7 @@ lib/services/  lib/models/  lib/pigeon/  macos/ (Swift)  ios/ (Swift)
 assets/app_icon/ (icon master + generator script)  test/ (mirrors lib/)
 
 ## Commands
-- Format:  dart format <file>
+- Format:  dart format <file>   (never `dart format lib` — it reflows lib/pigeon/messages.g.dart and breaks the CI drift check)
 - Analyze: flutter analyze <path>
 - Test:    flutter test <file>
 - Run:     flutter run -d macos   ·   flutter run -d "iPhone 15"

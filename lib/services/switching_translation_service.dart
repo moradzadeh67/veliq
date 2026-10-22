@@ -10,7 +10,7 @@ import 'translation_service.dart';
 ///
 /// The cloud backend is built lazily and rebuilt whenever the stored API key
 /// changes, so editing the key in Settings takes effect without a restart.
-class SwitchingTranslationService implements TranslationService {
+class SwitchingTranslationService extends TranslationService {
   final SettingsRepository _settings;
 
   /// The on-device (Apple) backend.
@@ -35,10 +35,40 @@ class SwitchingTranslationService implements TranslationService {
     String sourceLanguage,
     String targetLanguage,
   ) async {
-    final settings = await _settings.load();
+    final outcome = await translateWithDetection(
+      text,
+      sourceLanguage,
+      targetLanguage,
+    );
+    return outcome.text;
+  }
 
-    // Apple's Translation framework cannot take "auto" (T-154): it needs a
-    // concrete source language, so say so instead of failing natively.
+  @override
+  Future<TranslationOutcome> translateWithDetection(
+    String text,
+    String sourceLanguage,
+    String targetLanguage,
+  ) async {
+    final settings = await _loadFor(sourceLanguage);
+
+    switch (settings.translationProvider) {
+      case TranslationProvider.apple:
+        // Apple cannot report a detected language, so `auto` stays `auto`.
+        return TranslationOutcome(
+          await _apple.translateText(text, sourceLanguage, targetLanguage),
+        );
+      case TranslationProvider.google:
+        return _googleFor(settings)
+            .translateWithDetection(text, sourceLanguage, targetLanguage);
+    }
+  }
+
+  /// Loads the settings and enforces the one combination a provider cannot do.
+  ///
+  /// Apple's Translation framework cannot take "auto" (T-154): it needs a
+  /// concrete source language, so say so instead of failing natively.
+  Future<AppSettings> _loadFor(String sourceLanguage) async {
+    final settings = await _settings.load();
     if (settings.translationProvider == TranslationProvider.apple &&
         sourceLanguage == LanguageCatalog.autoCode) {
       throw const TranslationException(
@@ -46,14 +76,7 @@ class SwitchingTranslationService implements TranslationService {
         'Settings, or switch to Google Gemini.',
       );
     }
-
-    switch (settings.translationProvider) {
-      case TranslationProvider.apple:
-        return _apple.translateText(text, sourceLanguage, targetLanguage);
-      case TranslationProvider.google:
-        return _googleFor(settings)
-            .translateText(text, sourceLanguage, targetLanguage);
-    }
+    return settings;
   }
 
   TranslationService _googleFor(AppSettings settings) {

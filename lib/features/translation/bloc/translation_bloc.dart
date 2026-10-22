@@ -39,15 +39,20 @@ class TranslationBloc {
     await Future.microtask(() {});
 
     try {
-      final translated = await _translationService.translateText(
+      final outcome = await _translationService.translateWithDetection(
         text,
         sourceLanguage,
         targetLanguage,
       );
+      final translated = outcome.text;
 
       if (translated != null && translated.trim().isNotEmpty) {
         _emit(
-          TranslationSuccess(originalText: text, translatedText: translated),
+          TranslationSuccess(
+            originalText: text,
+            translatedText: translated,
+            detectedSourceLanguage: outcome.detectedSourceLanguage,
+          ),
         );
       } else {
         _emit(

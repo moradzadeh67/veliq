@@ -184,6 +184,92 @@ void main() {
       expect(prompt, contains('from xx to Persian.'));
     });
 
+    test('asks for a JSON envelope only when the source is auto', () async {
+      final autoPrompt = await _capturePrompt('Bonjour', 'auto', 'fa');
+      final explicitPrompt = await _capturePrompt('Bonjour', 'fr', 'fa');
+
+      expect(autoPrompt, contains('"detected_language"'));
+      expect(autoPrompt, contains('"translation"'));
+      expect(explicitPrompt, isNot(contains('"detected_language"')));
+    });
+
+    test('reports the detected language from the JSON reply', () async {
+      final service = _serviceReturning(
+        _okResponse('{"detected_language": "fr", "translation": "سلام"}'),
+      );
+
+      final outcome = await service.translateWithDetection(
+        'Bonjour',
+        'auto',
+        'fa',
+      );
+
+      expect(outcome.text, equals('سلام'));
+      expect(outcome.detectedSourceLanguage, equals('fr'));
+    });
+
+    test('accepts a language name and a fenced JSON reply', () async {
+      final service = _serviceReturning(
+        _okResponse(
+          '```json\n{"detected_language": "French", '
+          '"translation": "سلام"}\n```',
+        ),
+      );
+
+      final outcome = await service.translateWithDetection(
+        'Bonjour',
+        'auto',
+        'fa',
+      );
+
+      expect(outcome.text, equals('سلام'));
+      expect(outcome.detectedSourceLanguage, equals('fr'));
+    });
+
+    test('normalises a regional language code', () async {
+      final service = _serviceReturning(
+        _okResponse('{"detected_language": "fr-FR", "translation": "سلام"}'),
+      );
+
+      final outcome = await service.translateWithDetection(
+        'Bonjour',
+        'auto',
+        'fa',
+      );
+
+      expect(outcome.detectedSourceLanguage, equals('fr'));
+    });
+
+    test(
+      'keeps the translation when the model ignores the JSON format',
+      () async {
+        final service = _serviceReturning(_okResponse('سلام دنیا'));
+
+        final outcome = await service.translateWithDetection(
+          'Hello world',
+          'auto',
+          'fa',
+        );
+
+        expect(outcome.text, equals('سلام دنیا'));
+        expect(outcome.detectedSourceLanguage, isNull);
+      },
+    );
+
+    test(
+      'translateText still returns just the text for an auto source',
+      () async {
+        final service = _serviceReturning(
+          _okResponse('{"detected_language": "fr", "translation": "سلام"}'),
+        );
+
+        expect(
+          await service.translateText('Bonjour', 'auto', 'fa'),
+          equals('سلام'),
+        );
+      },
+    );
+
     test('stitches a reply that arrives in several parts', () async {
       final service = _serviceReturning(
         _jsonResponse({

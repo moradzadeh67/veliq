@@ -59,8 +59,11 @@ class _FakeOcrService implements OcrService {
   Future<Set<String>> supportedLanguages() async => const {'en'};
 }
 
-class _FakeTranslationService implements TranslationService {
+class _FakeTranslationService extends TranslationService {
   String? translated;
+
+  /// What the provider reports when the source is `auto`.
+  String? detectedLanguage;
 
   @override
   Future<String?> translateText(
@@ -68,6 +71,18 @@ class _FakeTranslationService implements TranslationService {
     String sourceLanguage,
     String targetLanguage,
   ) async => translated;
+
+  @override
+  Future<TranslationOutcome> translateWithDetection(
+    String text,
+    String sourceLanguage,
+    String targetLanguage,
+  ) async {
+    return TranslationOutcome(
+      await translateText(text, sourceLanguage, targetLanguage),
+      detectedSourceLanguage: detectedLanguage,
+    );
+  }
 }
 
 class _FakeHistoryRepository implements HistoryRepository {
@@ -211,6 +226,34 @@ void main() {
       await run();
 
       expect(ocrService.lastLanguageHint, equals('auto'));
+    });
+
+    test('uses the detected language when the source is auto', () async {
+      translationService.detectedLanguage = 'fr';
+
+      await run();
+
+      final success = flowBloc.currentState as TranslateFlowSuccess;
+      expect(success.sourceLanguage, equals('fr'));
+      expect(historyRepository.entries.single.sourceLanguage, equals('fr'));
+    });
+
+    test('ignores the detection when an explicit source was chosen', () async {
+      settingsRepository.stored = const AppSettings(sourceLanguage: 'de');
+      translationService.detectedLanguage = 'fr';
+
+      await run();
+
+      final success = flowBloc.currentState as TranslateFlowSuccess;
+      expect(success.sourceLanguage, equals('de'));
+      expect(historyRepository.entries.single.sourceLanguage, equals('de'));
+    });
+
+    test('falls back to auto-detect when nothing was detected', () async {
+      await run();
+
+      final success = flowBloc.currentState as TranslateFlowSuccess;
+      expect(success.sourceLanguage, equals('auto'));
     });
 
     test('emits each processing stage in order', () async {

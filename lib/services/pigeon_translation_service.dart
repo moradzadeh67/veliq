@@ -10,7 +10,7 @@ import 'translation_service.dart';
 /// Native failures are converted into [TranslationException]s so a raw
 /// `PlatformException` — which carries a native stack trace — never reaches
 /// the UI.
-class PigeonTranslationService implements TranslationService {
+class PigeonTranslationService extends TranslationService {
   final TranslationApi _api;
 
   PigeonTranslationService({TranslationApi? api})
