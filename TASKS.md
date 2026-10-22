@@ -357,7 +357,7 @@ Order: T-150 -> T-151 -> T-152 -> T-153 -> T-154 -> T-155 -> T-156.
 - Files: lib/services/gemini_translation_service.dart, test/services/gemini_translation_service_test.dart
 - Do: `_buildPrompt` currently injects raw codes (`from language "en"`). Resolve codes to English names through `LanguageCatalog` (fallback: the raw code). For `auto`, use a prompt variant: "Detect the language of the text between the markers and translate it to <target>; if it is already <target>, return it unchanged". Keep every existing rule (output only the translation, preserve line breaks, never echo the source). `verifyApiKey` keeps working with `auto`. Text only — never an image.
 - Done when: tests assert the prompt text for an explicit pair and for `auto`; analyze + tests green.
-- Status: TODO
+- Status: DONE (2026-10-22) — `_buildPrompt` resolves codes through `LanguageCatalog` (raw code fallback) and uses a detect-then-translate wording for `auto`; `SwitchingTranslationService` throws a readable `TranslationException` for Apple + `auto` before touching Apple, while Google + `auto` still routes normally. Prompt tests added for the explicit pair, `auto` and an unknown code; switching tests for both new paths. analyze clean, 219/219 tests. Reaching Apple with an `auto` source from the UI is prevented in T-155 (picker + notice).
 
 ### T-155 · [M] Settings and flow: platform-aware source picker
 - Files: lib/features/settings/settings_view.dart, lib/features/settings/bloc/settings_bloc.dart, lib/features/translation/bloc/translate_flow_bloc.dart, lib/features/translation/translate_view.dart, test/features/settings/settings_view_test.dart, test/features/translation/bloc/translate_flow_bloc_test.dart

@@ -78,6 +78,30 @@ Future<TranslationException> _expectFailure(
   fail('Expected a TranslationException');
 }
 
+/// Runs a translation and returns the prompt that was sent to Gemini.
+Future<String> _capturePrompt(
+  String text,
+  String sourceLanguage,
+  String targetLanguage,
+) async {
+  String? body;
+  final service = GeminiTranslationService(
+    apiKey: _apiKey,
+    client: MockClient((request) async {
+      body = request.body;
+      return _okResponse('x');
+    }),
+  );
+
+  await service.translateText(text, sourceLanguage, targetLanguage);
+
+  final decoded = jsonDecode(body!) as Map<String, dynamic>;
+  final contents = decoded['contents'] as List<Object?>;
+  final parts =
+      (contents.first as Map<String, dynamic>)['parts'] as List<Object?>;
+  return (parts.first as Map<String, dynamic>)['text'] as String;
+}
+
 void main() {
   group('GeminiTranslationService', () {
     test('sends a generateContent request with the key in the query', () async {
@@ -117,8 +141,7 @@ void main() {
       final prompt = (parts.first as Map<String, dynamic>)['text'] as String;
 
       expect(prompt, contains('Hello'));
-      expect(prompt, contains('"en"'));
-      expect(prompt, contains('"fa"'));
+      expect(prompt, contains('from English to Persian'));
       expect(prompt, contains('only the translation'));
       // The original wording gave the model an escape hatch, and it took it:
       // a region of source code came back untranslated.
@@ -128,6 +151,37 @@ void main() {
         (decoded['generationConfig'] as Map<String, dynamic>)['temperature'],
         equals(0),
       );
+    });
+
+    test('names both languages in the prompt for an explicit pair', () async {
+      final prompt = await _capturePrompt('Bonjour', 'fr', 'fa');
+
+      expect(prompt, contains('from French to Persian.'));
+      expect(prompt, contains('If the text is already entirely in Persian'));
+      expect(prompt, isNot(contains('Detect the language')));
+    });
+
+    test(
+      'asks the model to detect the language when the source is auto',
+      () async {
+        final prompt = await _capturePrompt('Bonjour', 'auto', 'fa');
+
+        expect(
+          prompt,
+          contains(
+            'Detect the language of the text between the markers and translate '
+            'it to Persian.',
+          ),
+        );
+        expect(prompt, contains('If the text is already entirely in Persian'));
+        expect(prompt, isNot(contains('from Auto-detect')));
+      },
+    );
+
+    test('falls back to the raw code for an unknown source language', () async {
+      final prompt = await _capturePrompt('Hallo', 'xx', 'fa');
+
+      expect(prompt, contains('from xx to Persian.'));
     });
 
     test('stitches a reply that arrives in several parts', () async {

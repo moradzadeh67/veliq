@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:veliq/services/settings_repository.dart';
+import 'package:veliq/services/translation_exception.dart';
 import 'package:veliq/services/switching_translation_service.dart';
 import 'package:veliq/services/translation_service.dart';
 
@@ -132,6 +133,50 @@ void main() {
 
       expect(keys, equals(['key-1', 'key-2']));
       expect(second, equals('google-key-2'));
+    });
+
+    test('Apple plus an auto source throws a readable error', () async {
+      final google = _StubService('google');
+      final service = SwitchingTranslationService(
+        settings: _FakeSettingsRepository(
+          const AppSettings(translationProvider: TranslationProvider.apple),
+        ),
+        apple: apple,
+        googleFactory: (_) => google,
+      );
+
+      await expectLater(
+        service.translateText('Bonjour', 'auto', 'fa'),
+        throwsA(
+          isA<TranslationException>().having(
+            (e) => e.message,
+            'message',
+            contains('On-device translation needs a specific source language'),
+          ),
+        ),
+      );
+      expect(apple.calls, isEmpty);
+      expect(google.calls, isEmpty);
+    });
+
+    test('Google still accepts an auto source', () async {
+      final google = _StubService('google');
+      final service = SwitchingTranslationService(
+        settings: _FakeSettingsRepository(
+          const AppSettings(
+            translationProvider: TranslationProvider.google,
+            googleApiKey: 'key-1',
+          ),
+        ),
+        apple: apple,
+        googleFactory: (_) => google,
+      );
+
+      expect(
+        await service.translateText('Bonjour', 'auto', 'fa'),
+        equals('google'),
+      );
+      expect(google.calls, equals(['Bonjour|auto|fa']));
     });
 
     test('switching provider per call is honoured', () async {

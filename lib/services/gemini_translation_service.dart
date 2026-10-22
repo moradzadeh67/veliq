@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
+import '../models/language.dart';
 import 'translation_exception.dart';
 import 'translation_service.dart';
 
@@ -243,20 +244,34 @@ class GeminiTranslationService implements TranslationService {
   ///
   /// The model is told to return nothing but the translation, because any
   /// conversational padding would land straight in the user's clipboard.
+  ///
+  /// Language codes are resolved to English names (T-154) — a model reading
+  /// "Russian" is more reliable than one reading "ru" — with the raw code as the
+  /// fallback for anything not in [LanguageCatalog]. An `auto` source switches
+  /// to a detect-then-translate instruction instead of naming a source.
   static String _buildPrompt(
     String text,
     String sourceLanguage,
     String targetLanguage,
   ) {
-    return 'You are a translation engine, not an assistant. Translate the text '
-        'between the markers from language "$sourceLanguage" to language '
-        '"$targetLanguage".\n'
+    final targetName = _languageName(targetLanguage);
+    final detects = sourceLanguage == LanguageCatalog.autoCode;
+
+    final instruction = detects
+        ? 'You are a translation engine, not an assistant. Detect the language '
+              'of the text between the markers and translate it to '
+              '$targetName.\n'
+        : 'You are a translation engine, not an assistant. Translate the text '
+              'between the markers from ${_languageName(sourceLanguage)} to '
+              '$targetName.\n';
+
+    return '$instruction'
         'Rules:\n'
         '- Output only the translation. No quotes, no notes, no explanations.\n'
-        '- If the text is already entirely in "$targetLanguage", return it '
+        '- If the text is already entirely in $targetName, return it '
         'unchanged.\n'
-        '- Otherwise translate every word into "$targetLanguage" — never echo '
-        'the source text back.\n'
+        '- Otherwise translate every word into $targetName — never echo the '
+        'source text back.\n'
         '- Preserve the original line breaks, punctuation and layout.\n'
         '- Do not summarise, reorder or "fix" the content.\n'
         '- If the text looks like code, an identifier or a stray label, still '
@@ -265,6 +280,10 @@ class GeminiTranslationService implements TranslationService {
         '$text\n'
         '---';
   }
+
+  /// English name for [code], or the raw code when it is unknown.
+  static String _languageName(String code) =>
+      LanguageCatalog.byCode(code)?.englishName ?? code;
 
   /// Prints Gemini's raw error to the console, in debug builds only.
   ///

@@ -1,4 +1,6 @@
+import '../models/language.dart';
 import 'settings_repository.dart';
+import 'translation_exception.dart';
 import 'translation_service.dart';
 
 /// Routes each translation to the backend selected in [AppSettings].
@@ -34,6 +36,16 @@ class SwitchingTranslationService implements TranslationService {
     String targetLanguage,
   ) async {
     final settings = await _settings.load();
+
+    // Apple's Translation framework cannot take "auto" (T-154): it needs a
+    // concrete source language, so say so instead of failing natively.
+    if (settings.translationProvider == TranslationProvider.apple &&
+        sourceLanguage == LanguageCatalog.autoCode) {
+      throw const TranslationException(
+        'On-device translation needs a specific source language. Choose one in '
+        'Settings, or switch to Google Gemini.',
+      );
+    }
 
     switch (settings.translationProvider) {
       case TranslationProvider.apple:
