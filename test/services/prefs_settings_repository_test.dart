@@ -24,10 +24,10 @@ class FakeApiKeyStore implements ApiKeyStore {
 
 void main() {
   group('AppSettings', () {
-    test('defaults are en -> fa with screenshots off', () {
+    test('defaults are auto -> fa with screenshots off', () {
       const settings = AppSettings.defaults;
 
-      expect(settings.sourceLanguage, equals('en'));
+      expect(settings.sourceLanguage, equals('auto'));
       expect(settings.targetLanguage, equals('fa'));
       expect(settings.saveScreenshots, isFalse);
     });
@@ -107,6 +107,22 @@ void main() {
     test('load returns defaults when nothing is persisted', () async {
       expect(await repository.load(), equals(AppSettings.defaults));
     });
+
+    test(
+      'load keeps a stored explicit source language (no auto migration)',
+      () async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'veliq.settings.sourceLanguage': 'en',
+        });
+        final prefs = await SharedPreferences.getInstance();
+        final existing = PrefsSettingsRepository(
+          prefs: prefs,
+          apiKeyStore: apiKeyStore,
+        );
+
+        expect((await existing.load()).sourceLanguage, equals('en'));
+      },
+    );
 
     test('save then load round-trips every field', () async {
       const settings = AppSettings(

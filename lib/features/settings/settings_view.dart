@@ -1,24 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../models/language.dart';
 import '../../services/settings_repository.dart';
 import 'bloc/settings_bloc.dart';
 import 'bloc/settings_state.dart';
-
-/// Languages offered in the pickers. Codes are ISO 639-1.
-const Map<String, String> kSupportedLanguages = {
-  'en': 'English',
-  'fa': 'Persian (فارسی)',
-  'ar': 'Arabic (العربية)',
-  'de': 'German',
-  'fr': 'French',
-  'es': 'Spanish',
-  'it': 'Italian',
-  'ru': 'Russian',
-  'tr': 'Turkish',
-  'zh': 'Chinese',
-  'ja': 'Japanese',
-};
 
 /// Human-readable names for the translation backends.
 const Map<TranslationProvider, String> kTranslationProviderLabels = {
@@ -139,23 +125,19 @@ class _SettingsForm extends StatelessWidget {
           ),
         ListTile(
           title: const Text('From'),
-          subtitle: Text(
-            kSupportedLanguages[settings.sourceLanguage] ??
-                settings.sourceLanguage,
-          ),
+          subtitle: Text(LanguageCatalog.displayName(settings.sourceLanguage)),
           trailing: _LanguageDropdown(
             value: settings.sourceLanguage,
+            options: LanguageCatalog.sourceOptions,
             onChanged: onSourceChanged,
           ),
         ),
         ListTile(
           title: const Text('To'),
-          subtitle: Text(
-            kSupportedLanguages[settings.targetLanguage] ??
-                settings.targetLanguage,
-          ),
+          subtitle: Text(LanguageCatalog.displayName(settings.targetLanguage)),
           trailing: _LanguageDropdown(
             value: settings.targetLanguage,
+            options: LanguageCatalog.targetOptions,
             onChanged: onTargetChanged,
           ),
         ),
@@ -433,15 +415,22 @@ class _GoogleApiKeyFieldState extends State<_GoogleApiKeyField> {
 
 class _LanguageDropdown extends StatelessWidget {
   final String value;
+  final List<Language> options;
   final ValueChanged<String> onChanged;
 
-  const _LanguageDropdown({required this.value, required this.onChanged});
+  const _LanguageDropdown({
+    required this.value,
+    required this.options,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // Guard against a persisted code that is no longer in the supported list,
-    // which would otherwise make DropdownButton assert.
-    final safeValue = kSupportedLanguages.containsKey(value) ? value : null;
+    // Guard against a persisted code that is no longer in the list, which would
+    // otherwise make DropdownButton assert.
+    final safeValue = options.any((language) => language.code == value)
+        ? value
+        : null;
 
     return DropdownButton<String>(
       value: safeValue,
@@ -449,11 +438,15 @@ class _LanguageDropdown extends StatelessWidget {
       onChanged: (selected) {
         if (selected != null) onChanged(selected);
       },
-      items: kSupportedLanguages.entries
+      items: options
           .map(
-            (entry) => DropdownMenuItem<String>(
-              value: entry.key,
-              child: Text('${entry.value} (${entry.key})'),
+            (language) => DropdownMenuItem<String>(
+              value: language.code,
+              child: Text(
+                language.code == LanguageCatalog.autoCode
+                    ? language.englishName
+                    : '${language.englishName} (${language.nativeName})',
+              ),
             ),
           )
           .toList(),

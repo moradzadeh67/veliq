@@ -89,7 +89,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('German'), findsOneWidget);
-      expect(find.text('Persian (فارسی)'), findsOneWidget);
+      expect(find.text('Persian'), findsOneWidget);
     });
 
     testWidgetsMac('screenshots switch reflects the stored value', (
@@ -126,7 +126,7 @@ void main() {
       // the "To" one is last.
       await tester.tap(find.byType(DropdownButton<String>).last);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('German (de)').last);
+      await tester.tap(find.text('German (Deutsch)').last);
       await tester.pumpAndSettle();
 
       expect(repository.stored.targetLanguage, equals('de'));

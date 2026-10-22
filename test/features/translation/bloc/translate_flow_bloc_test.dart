@@ -155,7 +155,7 @@ void main() {
       final success = state as TranslateFlowSuccess;
       expect(success.originalText, equals('Hello world'));
       expect(success.translatedText, equals('سلام دنیا'));
-      expect(success.sourceLanguage, equals('en'));
+      expect(success.sourceLanguage, equals('auto'));
       expect(success.targetLanguage, equals('fa'));
     });
 

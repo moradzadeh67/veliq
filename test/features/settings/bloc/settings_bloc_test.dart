@@ -144,7 +144,7 @@ void main() {
       await settingsBloc.load();
 
       expect(await settingsBloc.testGoogleApiKey('test-api-key'), isNull);
-      expect(verifiedKeys, equals(['test-api-key|en|fa']));
+      expect(verifiedKeys, equals(['test-api-key|auto|fa']));
     });
 
     test('testGoogleApiKey checks against the configured pair', () async {
@@ -153,7 +153,7 @@ void main() {
 
       await settingsBloc.testGoogleApiKey('test-api-key');
 
-      expect(verifiedKeys, equals(['test-api-key|en|de']));
+      expect(verifiedKeys, equals(['test-api-key|auto|de']));
     });
 
     test('testGoogleApiKey surfaces the verifier message', () async {

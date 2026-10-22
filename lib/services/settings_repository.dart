@@ -1,3 +1,5 @@
+import '../models/language.dart';
+
 /// Which backend performs the actual translation.
 enum TranslationProvider {
   /// Apple's on-device Translation framework.
@@ -20,7 +22,8 @@ enum TranslationProvider {
 
 /// Immutable user-configurable application settings.
 class AppSettings {
-  /// Language the OCR text is translated from (ISO 639-1, e.g. `en`).
+  /// Language the OCR text is translated from (ISO 639-1, e.g. `en`), or
+  /// [LanguageCatalog.autoCode] to detect it.
   final String sourceLanguage;
 
   /// Language the OCR text is translated to (ISO 639-1, e.g. `fa`).
@@ -45,7 +48,9 @@ class AppSettings {
     this.googleApiKey,
   });
 
-  static const String defaultSourceLanguage = 'en';
+  /// New installs start from auto-detect so any language's text works without
+  /// the user having to pick a source first (T-151).
+  static const String defaultSourceLanguage = LanguageCatalog.autoCode;
   static const String defaultTargetLanguage = 'fa';
 
   /// Google is the default because the app's target language (Persian) is not
