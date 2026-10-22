@@ -15,6 +15,7 @@
 		7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */; };
 		F534E1D2307A8CCF00284D02 /* Messages.g.swift in Sources */ = {isa = PBXBuildFile; fileRef = F534E1D1307A8CCF00284D02 /* Messages.g.swift */; };
 		F534E1D4307A8CCF00284D02 /* ImageSourceHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F534E1D3307A8CCF00284D02 /* ImageSourceHandler.swift */; };
+		F534E1E1307A8CCF00284D02 /* OcrHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F534E1E0307A8CCF00284D02 /* OcrHandler.swift */; };
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
@@ -59,6 +60,7 @@
 		7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		F534E1D1307A8CCF00284D02 /* Messages.g.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Messages.g.swift; sourceTree = "<group>"; };
 		F534E1D3307A8CCF00284D02 /* ImageSourceHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ImageSourceHandler.swift; sourceTree = "<group>"; };
+		F534E1E0307A8CCF00284D02 /* OcrHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OcrHandler.swift; sourceTree = "<group>"; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
 		86914AA9101FC6636E2BC3EA /* Pods_Runner.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Runner.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Flutter/Debug.xcconfig; sourceTree = "<group>"; };
@@ -160,6 +162,7 @@
 				7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */,
 				F534E1D1307A8CCF00284D02 /* Messages.g.swift */,
 				F534E1D3307A8CCF00284D02 /* ImageSourceHandler.swift */,
+				F534E1E0307A8CCF00284D02 /* OcrHandler.swift */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
 			);
 			path = Runner;
@@ -391,6 +394,7 @@
 				7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */,
 				F534E1D2307A8CCF00284D02 /* Messages.g.swift in Sources */,
 				F534E1D4307A8CCF00284D02 /* ImageSourceHandler.swift in Sources */,
+				F534E1E1307A8CCF00284D02 /* OcrHandler.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

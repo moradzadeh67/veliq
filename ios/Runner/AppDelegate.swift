@@ -14,5 +14,6 @@ import UIKit
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
     let messenger = engineBridge.applicationRegistrar.messenger()
     ImageSourceApiSetup.setUp(binaryMessenger: messenger, api: ImageSourceHandler())
+    OcrApiSetup.setUp(binaryMessenger: messenger, api: OcrHandler())
   }
 }
