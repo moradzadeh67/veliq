@@ -120,9 +120,16 @@ class TranslateFlowBloc {
       return;
     }
 
-    // Stage 2: OCR. The OcrBloc owns the "no text found" case.
+    // The pair is needed twice (OCR hint, then translator), so load it once.
+    final settings = await _settingsRepository.load();
+
+    // Stage 2: OCR. The OcrBloc owns the "no text found" case. The source
+    // language is a hint for the platform OCR: `auto` lets it detect the script.
     _emit(const TranslateFlowRecognizing());
-    await _ocrBloc.recognizeImage(imageBytes);
+    await _ocrBloc.recognizeImage(
+      imageBytes,
+      languageHint: settings.sourceLanguage,
+    );
 
     final ocrState = _ocrBloc.currentState;
     if (ocrState is! OcrSuccess) {
@@ -140,10 +147,9 @@ class TranslateFlowBloc {
 
     final recognizedText = ocrState.text;
 
-    // Stage 3: translate, using the user's persisted language pair.
+    // Stage 3: translate, using the pair loaded above.
     _emit(const TranslateFlowTranslating());
 
-    final settings = await _settingsRepository.load();
     await _translationBloc.translate(
       text: recognizedText,
       sourceLanguage: settings.sourceLanguage,

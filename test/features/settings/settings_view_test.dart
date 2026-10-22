@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:veliq/features/settings/bloc/settings_bloc.dart';
 import 'package:veliq/features/settings/settings_view.dart';
+import 'package:veliq/models/language.dart';
 import 'package:veliq/services/settings_repository.dart';
 
 /// [testWidgets] pinned to macOS: on a desktop test host the default target
@@ -48,15 +49,29 @@ void main() {
     late List<String> verifiedKeys;
     String? verifyResult;
 
+    /// What the fake device's OCR can read. `null` means "the test does not
+    /// care" and every catalog language is reported as supported.
+    late Future<Set<String>> Function()? languagesProvider;
+
     setUp(() {
       repository = FakeSettingsRepository();
       verifiedKeys = <String>[];
       verifyResult = null;
+      languagesProvider = null;
       bloc = SettingsBloc(
         settingsRepository: repository,
         googleApiKeyVerifier: (apiKey, sourceLanguage, targetLanguage) async {
           verifiedKeys.add(apiKey);
           return verifyResult;
+        },
+        ocrLanguagesProvider: () {
+          final provider = languagesProvider;
+          if (provider == null) {
+            return Future.value(
+              LanguageCatalog.all.map((language) => language.code).toSet(),
+            );
+          }
+          return provider();
         },
       );
     });
@@ -142,6 +157,107 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text('From'), findsOneWidget);
+    });
+
+    testWidgetsMac('marks the languages this device cannot read', (
+      tester,
+    ) async {
+      languagesProvider = () async => <String>{'en', 'de', 'fa'};
+
+      await _pumpView(tester, bloc);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(DropdownButton<String>).first);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text("Not supported by this device's text recognition"),
+        findsWidgets,
+      );
+
+      final items = tester
+          .widgetList<DropdownMenuItem<String>>(
+            find.byType(DropdownMenuItem<String>),
+          )
+          .toList();
+      expect(
+        items.firstWhere((item) => item.value == 'de').enabled,
+        isTrue,
+        reason: 'German is in the supported set',
+      );
+      expect(
+        items.firstWhere((item) => item.value == 'ru').enabled,
+        isFalse,
+        reason: 'Russian was not reported by this device',
+      );
+      expect(
+        items
+            .firstWhere((item) => item.value == LanguageCatalog.autoCode)
+            .enabled,
+        isTrue,
+        reason: 'auto-detect is always selectable',
+      );
+    });
+
+    testWidgetsMac('offers auto-detect when the stored source is unsupported', (
+      tester,
+    ) async {
+      repository.stored = const AppSettings(sourceLanguage: 'ru');
+      languagesProvider = () async => <String>{'en', 'fa'};
+
+      await _pumpView(tester, bloc);
+      await tester.pumpAndSettle();
+
+      expect(find.text('This device cannot read Russian'), findsOneWidget);
+
+      await tester.tap(find.text('Use auto-detect'));
+      await tester.pumpAndSettle();
+
+      expect(repository.stored.sourceLanguage, equals('auto'));
+    });
+
+    testWidgetsMac('no notice when the stored source is supported', (
+      tester,
+    ) async {
+      repository.stored = const AppSettings(sourceLanguage: 'de');
+      languagesProvider = () async => <String>{'en', 'de'};
+
+      await _pumpView(tester, bloc);
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('This device cannot read'), findsNothing);
+    });
+
+    testWidgetsMac('warns when source and target are the same', (tester) async {
+      repository.stored = const AppSettings(
+        sourceLanguage: 'de',
+        targetLanguage: 'de',
+      );
+
+      await _pumpView(tester, bloc);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Source and target language are the same.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgetsMac('does not warn when the source is auto-detect', (
+      tester,
+    ) async {
+      repository.stored = const AppSettings(
+        sourceLanguage: LanguageCatalog.autoCode,
+        targetLanguage: 'fa',
+      );
+
+      await _pumpView(tester, bloc);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Source and target language are the same.'),
+        findsNothing,
+      );
     });
 
     testWidgetsMac('shows the Google provider by default', (tester) async {

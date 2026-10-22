@@ -12,6 +12,11 @@ class SettingsBloc {
   /// this layer never builds an HTTP client itself.
   final GoogleApiKeyVerifier? _googleApiKeyVerifier;
 
+  /// Reports which languages this device's OCR can read. Injected from the
+  /// composition root so the settings layer never talks to Pigeon directly.
+  /// When absent, capability is unknown and the UI enables everything.
+  final Future<Set<String>> Function()? _ocrLanguagesProvider;
+
   final _stateController = StreamController<SettingsState>.broadcast();
   Stream<SettingsState> get stateStream => _stateController.stream;
 
@@ -21,6 +26,7 @@ class SettingsBloc {
   SettingsBloc({
     required SettingsRepository settingsRepository,
     this._googleApiKeyVerifier,
+    this._ocrLanguagesProvider,
   }) : _repository = settingsRepository;
 
   void _emit(SettingsState state) {
@@ -108,6 +114,19 @@ class SettingsBloc {
       );
     } catch (_) {
       return 'Could not verify the key: unexpected error.';
+    }
+  }
+
+  /// Languages this device's OCR can read, or `null` when that is unknown
+  /// (no provider injected, or the query failed). Callers must treat `null` as
+  /// "every language is available" so a failed query never disables the UI.
+  Future<Set<String>?> supportedOcrLanguages() async {
+    final provider = _ocrLanguagesProvider;
+    if (provider == null) return null;
+    try {
+      return await provider();
+    } catch (_) {
+      return null;
     }
   }
 

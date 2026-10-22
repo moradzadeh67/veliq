@@ -352,6 +352,19 @@ void main() {
       expect(find.textContaining('Saved to history'), findsOneWidget);
     });
 
+    testWidgetsMac('language labels use names, not raw codes', (tester) async {
+      await openPicker(tester);
+      await closePicker(tester, region);
+
+      // A fresh install translates from auto-detect into Persian. The card
+      // heading is upper-cased by `_TextCard`; the footer keeps the name as-is.
+      expect(find.text('ORIGINAL (AUTO-DETECT)'), findsOneWidget);
+      expect(
+        find.text('Saved to history · Auto-detect → Persian'),
+        findsOneWidget,
+      );
+    });
+
     testWidgetsMac('Cmd+R asks the native picker to open (T-129)', (
       tester,
     ) async {

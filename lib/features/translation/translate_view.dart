@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../models/language.dart';
 import '../../services/selection_service.dart';
 import 'bloc/translate_flow_bloc.dart';
 import 'bloc/translate_flow_state.dart';
@@ -465,7 +466,8 @@ class _ResultState extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 _TextCard(
-                  label: 'Original (${sourceLanguage.toUpperCase()})',
+                  label:
+                      'Original (${LanguageCatalog.displayName(sourceLanguage)})',
                   text: originalText,
                   onCopy: onCopyOriginal,
                 ),
@@ -506,7 +508,9 @@ class _ResultState extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: Text(
-            'Saved to history · $sourceLanguage → $targetLanguage',
+            'Saved to history · '
+            '${LanguageCatalog.displayName(sourceLanguage)} → '
+            '${LanguageCatalog.displayName(targetLanguage)}',
             style: theme.textTheme.labelSmall,
           ),
         ),

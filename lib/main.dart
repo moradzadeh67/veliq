@@ -31,6 +31,11 @@ Future<void> main() async {
   final historyRepository = JsonHistoryRepository(file: historyFile);
   final settingsRepository = PrefsSettingsRepository();
 
+  // Pipeline stages (native, via Pigeon). The OCR service is also the source of
+  // truth for which languages this device can read (D-018).
+  final ocrService = PigeonOcrService();
+  final ocrBloc = OcrBloc(ocrService: ocrService);
+
   // Feature state holders.
   final historyBloc = HistoryBloc(historyRepository: historyRepository);
   final settingsBloc = SettingsBloc(
@@ -43,10 +48,9 @@ Future<void> main() async {
           sourceLanguage: sourceLanguage,
           targetLanguage: targetLanguage,
         ),
+    // Settings never talks to Pigeon: the capability query is injected here.
+    ocrLanguagesProvider: ocrService.supportedLanguages,
   );
-
-  // Pipeline stages (native, via Pigeon).
-  final ocrBloc = OcrBloc(ocrService: PigeonOcrService());
   final translationBloc = TranslationBloc(
     translationService: SwitchingTranslationService(
       settings: settingsRepository,

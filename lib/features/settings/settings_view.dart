@@ -23,10 +23,21 @@ class SettingsView extends StatefulWidget {
 }
 
 class _SettingsViewState extends State<SettingsView> {
+  /// Languages this device's OCR can read. `null` while loading or when the
+  /// capability is unknown — both cases leave every entry enabled.
+  Set<String>? _supportedLanguages;
+
   @override
   void initState() {
     super.initState();
     widget.bloc.load();
+    _loadSupportedLanguages();
+  }
+
+  Future<void> _loadSupportedLanguages() async {
+    final languages = await widget.bloc.supportedOcrLanguages();
+    if (!mounted) return;
+    setState(() => _supportedLanguages = languages);
   }
 
   @override
@@ -48,6 +59,7 @@ class _SettingsViewState extends State<SettingsView> {
             ),
             SettingsLoaded(:final settings) => _SettingsForm(
               settings: settings,
+              supportedLanguages: _supportedLanguages,
               onSourceChanged: widget.bloc.setSourceLanguage,
               onTargetChanged: widget.bloc.setTargetLanguage,
               onSaveScreenshotsChanged: widget.bloc.setSaveScreenshots,
@@ -64,6 +76,10 @@ class _SettingsViewState extends State<SettingsView> {
 
 class _SettingsForm extends StatelessWidget {
   final AppSettings settings;
+
+  /// ISO 639-1 codes this device's OCR can read, or `null` when unknown.
+  final Set<String>? supportedLanguages;
+
   final ValueChanged<String> onSourceChanged;
   final ValueChanged<String> onTargetChanged;
   final ValueChanged<bool> onSaveScreenshotsChanged;
@@ -75,6 +91,7 @@ class _SettingsForm extends StatelessWidget {
 
   const _SettingsForm({
     required this.settings,
+    required this.supportedLanguages,
     required this.onSourceChanged,
     required this.onTargetChanged,
     required this.onSaveScreenshotsChanged,
@@ -95,6 +112,18 @@ class _SettingsForm extends StatelessWidget {
     final usesGoogle = provider == TranslationProvider.google;
     final appleNeedsFix =
         isAndroid && storedProvider == TranslationProvider.apple;
+
+    // D-018: a source language is only offered if this device's OCR can read
+    // it. `null` means capability is still unknown (loading or failed query), in
+    // which case everything stays enabled rather than flickering.
+    final supported = supportedLanguages;
+    final sourceIsAuto = settings.sourceLanguage == LanguageCatalog.autoCode;
+    final sourceUnsupported =
+        !sourceIsAuto &&
+        supported != null &&
+        !supported.contains(settings.sourceLanguage);
+    final sameLanguage =
+        !sourceIsAuto && settings.sourceLanguage == settings.targetLanguage;
 
     return ListView(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -129,9 +158,27 @@ class _SettingsForm extends StatelessWidget {
           trailing: _LanguageDropdown(
             value: settings.sourceLanguage,
             options: LanguageCatalog.sourceOptions,
+            supported: supported,
             onChanged: onSourceChanged,
           ),
         ),
+        if (sourceUnsupported)
+          ListTile(
+            leading: Icon(Icons.info_outline, color: theme.colorScheme.primary),
+            title: Text(
+              'This device cannot read '
+              '${LanguageCatalog.displayName(settings.sourceLanguage)}',
+            ),
+            subtitle: const Text(
+              "The text recognition on this device does not support that "
+              'language, so OCR would find nothing. Auto-detect lets the '
+              'platform pick a supported language.',
+            ),
+            trailing: TextButton(
+              onPressed: () => onSourceChanged(LanguageCatalog.autoCode),
+              child: const Text('Use auto-detect'),
+            ),
+          ),
         ListTile(
           title: const Text('To'),
           subtitle: Text(LanguageCatalog.displayName(settings.targetLanguage)),
@@ -141,6 +188,18 @@ class _SettingsForm extends StatelessWidget {
             onChanged: onTargetChanged,
           ),
         ),
+        if (sameLanguage)
+          ListTile(
+            leading: Icon(
+              Icons.warning_amber_rounded,
+              color: theme.colorScheme.error,
+            ),
+            title: const Text('Source and target language are the same.'),
+            subtitle: const Text(
+              'Pick a different target language, or use auto-detect as the '
+              'source.',
+            ),
+          ),
         if (usesGoogle) ...[
           _GoogleApiKeyField(
             apiKey: settings.googleApiKey,
@@ -416,16 +475,30 @@ class _GoogleApiKeyFieldState extends State<_GoogleApiKeyField> {
 class _LanguageDropdown extends StatelessWidget {
   final String value;
   final List<Language> options;
+
+  /// ISO 639-1 codes this device's OCR can read, or `null` when unknown (then
+  /// every entry stays selectable). `auto` is always selectable.
+  final Set<String>? supported;
+
   final ValueChanged<String> onChanged;
 
   const _LanguageDropdown({
     required this.value,
     required this.options,
+    this.supported,
     required this.onChanged,
   });
 
+  bool _isSupported(Language language) {
+    final supported = this.supported;
+    if (supported == null) return true;
+    if (language.code == LanguageCatalog.autoCode) return true;
+    return supported.contains(language.code);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     // Guard against a persisted code that is no longer in the list, which would
     // otherwise make DropdownButton assert.
     final safeValue = options.any((language) => language.code == value)
@@ -435,21 +508,41 @@ class _LanguageDropdown extends StatelessWidget {
     return DropdownButton<String>(
       value: safeValue,
       hint: Text(value),
+      // Variable-height items: an unsupported entry carries a reason line.
+      itemHeight: null,
       onChanged: (selected) {
         if (selected != null) onChanged(selected);
       },
-      items: options
-          .map(
-            (language) => DropdownMenuItem<String>(
-              value: language.code,
-              child: Text(
-                language.code == LanguageCatalog.autoCode
-                    ? language.englishName
-                    : '${language.englishName} (${language.nativeName})',
+      items: options.map((language) {
+        final isSupported = _isSupported(language);
+        final label = language.code == LanguageCatalog.autoCode
+            ? language.englishName
+            : '${language.englishName} (${language.nativeName})';
+
+        return DropdownMenuItem<String>(
+          value: language.code,
+          enabled: isSupported,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: isSupported
+                    ? null
+                    : TextStyle(color: theme.disabledColor),
               ),
-            ),
-          )
-          .toList(),
+              if (!isSupported)
+                Text(
+                  "Not supported by this device's text recognition",
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.disabledColor,
+                  ),
+                ),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 }

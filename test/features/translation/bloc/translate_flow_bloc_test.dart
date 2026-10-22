@@ -199,6 +199,20 @@ void main() {
       expect(success.targetLanguage, equals('fr'));
     });
 
+    test('passes the source language to OCR as a hint', () async {
+      settingsRepository.stored = const AppSettings(sourceLanguage: 'fr');
+
+      await run();
+
+      expect(ocrService.lastLanguageHint, equals('fr'));
+    });
+
+    test('hints auto-detect on a fresh install', () async {
+      await run();
+
+      expect(ocrService.lastLanguageHint, equals('auto'));
+    });
+
     test('emits each processing stage in order', () async {
       final states = <TranslateFlowState>[];
       final subscription = flowBloc.stateStream.listen(states.add);
