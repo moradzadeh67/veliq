@@ -125,7 +125,7 @@ Veliq is designed with first-class Persian (Farsi) localization:
 - **RTL Layout:** Fully adaptive Right-To-Left (RTL) text container with justified paragraph alignment for Persian text.
 - **Bi-directional Text Support:** Clean separation and side-by-side view for English source text and Persian translation.
 - **Font & Glyph Rendering:** Uses native system typography with fallback for Persian/Arabic glyphs to ensure crisp rendering across macOS, iOS, and Android.
-- **Translation Languages:** v1 ships **English → Persian**; additional source and target languages are on the roadmap.
+- **Translation Languages:** 14 languages (`en`, `fa`, `ar`, `de`, `fr`, `es`, `it`, `ru`, `tr`, `zh`, `ja`, `pt`, `nl`, `ko`) with **Auto-detect** as the default source. Persian remains the default target. The *From* picker only offers languages the current platform's on-device OCR can actually read (see [D-018](docs/ARCHITECTURE.md)); unsupported entries are shown disabled with the reason.
 
 ## 🗺️ Roadmap
 
@@ -142,7 +142,8 @@ Veliq is designed with first-class Persian (Farsi) localization:
 - [x] **P10 — Branding & Icons:** App icons & branding assets
 - [ ] **P11 — Shortcuts:** System-wide capture hotkey
 - [x] **P12 — Android v1:** Photo Picker, Camera, ML Kit OCR & Keystore
-- [ ] **More languages:** additional source and target languages beyond English → Persian
+- [x] **P15 — Multi-language input:** 14-language catalog, Auto-detect source, per-platform OCR capability query, iOS Vision OCR handler
+- [ ] **More OCR scripts & offline translation:** Arabic/Persian and Cyrillic OCR on Android (extra ML Kit models, larger APK) and an offline translation engine, gated on a quality check (see the P15 notes in [TASKS.md](TASKS.md))
 - [x] **Public Release:** signed Android APK + GitHub release `v1.0.1` (macOS/iOS stay build-from-source) — [docs/RELEASE.md](docs/RELEASE.md)
 
 The active task list is tracked in [TASKS.md](TASKS.md).
@@ -380,7 +381,8 @@ wired into the release build type in `android/app/build.gradle.kts` (`proguardFi
 
 - **iOS Camera in Simulator:** The iOS Simulator does not support camera capture hardware; camera workflows require a physical iPhone.
 - **iOS Verification:** The P9 manual simulator checks (cancel path, revoked-permission message, history across restart) are still open.
-- **Android OCR Scope:** The bundled ML Kit model currently supports Latin script OCR; non-Latin script models are planned for future updates.
+- **Android OCR Scope:** The bundled ML Kit model is Latin-script only (`en`, `de`, `fr`, `es`, `it`, `pt`, `nl`, `tr`). Chinese, Japanese, Korean, Russian, Arabic and Persian need additional ML Kit recognizers, so those languages are disabled in Settings on Android.
+- **Persian OCR depends on the platform:** Apple Vision reports its supported languages at runtime, so what Veliq offers on macOS/iOS is exactly what that OS release supports. Apple's on-device *translation* still has no Persian, so the Gemini provider stays the default.
 - **Unsigned macOS Builds:** macOS Gatekeeper flags unsigned developer builds on first double-click launch, and there is no notarized desktop build yet. Android release builds are signed with the project upload key.
 
 ## ❓ Troubleshooting & FAQ
@@ -418,7 +420,7 @@ Apple's iOS Simulator does not emulate camera hardware (`UIImagePickerController
 <details>
 <summary><b>6. Why can't Veliq recognise Persian or Arabic text?</b></summary>
 
-The Android OCR uses the bundled **ML Kit Latin** recogniser, and Apple Vision is called in its default configuration. Non-Latin script support needs a separate model — and additional languages in general (both further OCR scripts and further translation targets) are on the roadmap.
+It depends on the platform's OCR, not on the translator. On **Android** Veliq bundles the **ML Kit Latin** recogniser (`en`, `de`, `fr`, `es`, `it`, `pt`, `nl`, `tr`); Arabic/Persian, Cyrillic and CJK need separate ML Kit models, so Settings shows those languages disabled. On **macOS/iOS** the list comes from **Apple Vision** at runtime (`VNRecognizeTextRequest.supportedRecognitionLanguages()`), so a language is offered only if that macOS/iOS version can read it. Auto-detect is always available as the source. See D-018 in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 </details>
 
 ## 💻 Development Environment

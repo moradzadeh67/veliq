@@ -1,25 +1,44 @@
 # CURRENT_TASK.md
-Active: none. **v1.0.1** (2026-10-16) is released: an Android release-build hotfix on top of v1.0.0. P14 (T-141) is DONE.
 
-Status: RELEASED — GitHub release **v1.0.1** ships a signed Android APK that fixes the two release-only Android defects found after v1.0.0:
-1. the missing `android.permission.INTERNET` in the **main** manifest (Flutter only adds it to debug/profile, so release builds could not reach the Gemini API), and
-2. an R8/ML Kit crash: Android `--release` runs R8 (minify + resource shrinking, full mode) and ML Kit instantiates its internals reflectively, so R8 stripped/renamed them and the app crashed on launch in `MainActivity.configureFlutterEngine()` → `TextRecognition.getClient()`. Fixed with `android/app/proguard-rules.pro` wired into the release build type.
+Active: **T-124 — manual review on the iOS simulator** (the last open verification task; P15 is DONE).
 
-Root cause was confirmed by deobfuscating the release stack trace with `build/app/outputs/mapping/release/mapping.txt` (`yg1`/`wh1` = `com.google.mlkit.vision.text.internal.zzo`/`zzp`). The INTERNET fix alone did **not** stop the crash — both defects had to be fixed. Verified on emulator-5554: the release APK (84.4 MB) installs and launches with no FATAL exception, zero ML Kit `NoSuchMethodException`, and the full gallery → ML Kit OCR → Gemini path runs (it reaches the Gemini step and reports the expected "No Google AI API key is configured" without a key). `flutter analyze` clean, 199/199 tests. **macOS and iOS were checked and are unaffected** (macOS already carries `com.apple.security.network.client` in both Debug and Release entitlements; iOS needs no explicit network permission and has no ATS restriction).
+Status: OPEN — blocked on hardware. The bundled `Simulator.app` on the owner's Mac is broken (unsigned
+binary that exits immediately; no Simulator.app inside Xcode.app either), so no UI-driven verification is
+possible on this machine. Remaining checks: cancel path, revoked-permission message, history across an app
+restart, and now also the first real iOS OCR run (gallery image → Vision → translate, added by T-153).
+`idb` / `idb-companion` was evaluated as a headless alternative on 2026-10-16 and dropped (no longer
+published in Homebrew). The owner decided to leave T-124 until a repaired simulator or a physical device
+is available. Camera capture stays device-only (T-118 dropped).
 
-Everything about the v1.0.0 release pass still holds: CI workflow (`flutter analyze` + `flutter test`, green on GitHub), `CONTRIBUTING.md`, a reference-style README (badges incl. Release/CI, Release Signing, CI/CD, Development Environment, Requirements, multi-language roadmap), a crawlable GitHub Pages landing site (`docs/index.html`, robots.txt, sitemap.xml — live at https://moradzadeh67.github.io/veliq/), repository description + 16 topics, and re-captured media (app-only demo GIF, macOS overlay screenshot, screenshots ordered macOS → Android → iOS).
+## What P15 (2026-10-23) delivered
 
-Notes for a future session:
-- **Google Search Console (2026-10-16)**: `docs/googlec8a5c68571a77023.html` is Google's ownership-verification file for the Pages site (the *HTML file* method). **Do not delete or rename it** — removing it revokes the verification. It is served at `https://moradzadeh67.github.io/veliq/googlec8a5c68571a77023.html` (verified live). The other three projects' sites were made GSC-ready the same day (robots.txt + sitemap.xml on all four; mcp_ssd_weather gained them via `web/`).
-- **Signing**: keystore `~/Desktop/Veliq-upload-key/Veliq-upload.jks` (PKCS12, alias `veliq`, 10000 days), backup `~/Desktop/Veliq-upload-key.zip` (contains README.txt with the passwords). `android/key.properties` exists on this machine and points at it (git-ignored; Gradle falls back to the debug key when it is missing). Certificate SHA-256 `1332bc480e4fac26acab2ad82db950501dc9643604af2e0429b28668c1a651af`. Never commit the keystore or `android/key.properties` (git-ignored; Gradle falls back to the debug key when it is missing). Losing this key means no further updates for `com.moradzadeh67.veliq`.
-- **Android release builds**: R8 is ON by default; ML Kit keep rules live in `android/app/proguard-rules.pro` (D-017). Debug builds never run R8, so release-only crashes are invisible in debug — always smoke-test a `--release` APK after changing OCR code, dependencies or build configuration.
-- **History path (corrected 2026-10-16)**: `~/Library/Containers/com.moradzadeh67.veliq/Data/Library/Application Support/com.moradzadeh67.veliq/history.json` — the folder is named after the bundle id, not `veliq/`. A **stale** `.../Application Support/veliq/history.json` from an older build still exists on the owner's Mac with 13 owner entries (Oct 11–12); it was preserved, not deleted. Backups of both files are in `/tmp/veliq-history-backup-*.json` and `/tmp/veliq-active-history-backup-*.json`. The 4 test entries from the media-capture work were removed from the active file at the owner's request.
-- **macOS debug rebuilds** get a new code signature, so Screen Recording must be re-granted (System Settings) and the Keychain may re-prompt (choose "Always Allow"). Handled by the owner on 2026-10-16.
-- **iOS (T-124) stays open**: the bundled `Simulator.app` on the owner's Mac is broken (unsigned binary, exits immediately; no Simulator.app inside Xcode.app either), so the remaining manual checks (cancel path, revoked-permission message, history across restart) cannot be driven on this machine. The owner decided to leave it until a repaired simulator or a physical device exists. Camera capture is device-only (T-118 dropped). A headless alternative (`idb`) was also evaluated on 2026-10-16 and dropped: `idb-companion` is no longer available via Homebrew. This block is recorded in the README roadmap.
-- **Automation recipe (throwaway, not committed)**: `/tmp/veliq_click.swift` posts real CGEvent mouse/key events — note that `System Events click at` does NOT reach Flutter views. `/tmp/make_veliq_page.swift` generates the synthetic "document" page that was used as a temporary wallpaper for clean captures (the owner's own wallpaper was restored afterwards).
-- **ADB tip**: `adb shell input tap` takes **real device pixels**, not the scaled-down screenshot size. Read coordinates from the `ui_state` bounds (the emulator reports 1344×2992), never from the compressed PNG.
-- Pending wording pass: the macOS Settings screen says the key is "Stored locally in this Mac's app preferences" although it is Keychain-backed; the iOS result screen still says "Select another region".
-- Roadmap items still open: P9 verification (above), P11 system-wide capture hotkey (blocked on two owner decisions: key combo and behaviour when the app is not running), more languages, macOS notarization.
-- Older note: the Android icon generator was a one-off `/tmp` script; the tracked pipeline for icons is `assets/app_icon/source/generate_icons.sh`.
+P15 "Multi-language input" is DONE on branch `p15-multi-language` (not pushed). Summary:
 
-Earlier work through T-129 is committed; P12 shipped in `82cbb9c`; the README/docs pass in `9db21b3`; P13 (T-140) in `fa7a2e9` + `5e65b53`; P14 (T-141) ships in the v1.0.1 release commit.
+- `lib/models/language.dart`: `Language` + `LanguageCatalog` — 14 ISO 639-1 codes plus the source-only
+  pseudo-code `auto`; `AppSettings.defaultSourceLanguage` is now `auto` (no migration; a stored choice is
+  kept). `kSupportedLanguages` is gone.
+- `OcrApi.recognizeText(bytes, languageHint)` + `OcrApi.supportedLanguages()` (D-018). macOS and iOS derive
+  the list from `VNRecognizeTextRequest.supportedRecognitionLanguages()` at runtime and honour the hint
+  (`auto` → `automaticallyDetectsLanguage`); Android keeps the single bundled ML Kit Latin model, ignores
+  the hint and reports `en,de,fr,es,it,pt,nl,tr`.
+- **iOS OCR now exists**: `ios/Runner/OcrHandler.swift` (UIImage → CGImage, EXIF orientation, registered via
+  `OcrApiSetup`). Before T-153 the iOS target had no `OcrApi` implementation at all.
+- Settings: the From picker disables languages the device cannot read, offers "Use auto-detect" when the
+  stored source is unsupported, and warns when source == target. The flow passes the source language to OCR
+  as a hint and the Gemini prompt now uses language names (Apple + `auto` is refused with a readable error).
+- `tool/gen_pigeon.sh` + a CI step that fails when the generated files are stale.
+
+## Open items after P15
+
+- **T-124** (above) — including the first iOS OCR run.
+- `PROJECT_SPEC.md` still lists "source language selection, other target languages" under *Post-MVP
+  (deferred)*; that wording predates P15 and was left untouched by T-156.
+- **Upload keystore missing** (2026-10-23): `~/Desktop/Veliq-upload-key/Veliq-upload.jks` is not on this
+  machine, so `validateSigningRelease` fails. The T-153 smoke APK was built with the debug key (by moving
+  `android/key.properties` aside temporarily). Recover the keystore from the documented backup
+  (`~/Desktop/Veliq-upload-key.zip`) before any further release.
+- History rows still print raw codes (`EN → FA`); T-155 only converted the translate-result labels.
+
+Earlier work through T-129 is committed; P12 shipped in `82cbb9c`; the README/docs pass in `9db21b3`; P13
+(T-140) in `fa7a2e9` + `5e65b53`; P14 (T-141) ships in the v1.0.1 release; P15 (T-150…T-156) on branch
+`p15-multi-language`.

@@ -18,7 +18,7 @@ P11 Keyboard affordances .... DOING
 P12 Android v1 .............. DONE
 P13 Public release (GitHub) .. DONE
 P14 Android release hotfix ... DONE
-P15 Multi-language input .... DOING
+P15 Multi-language input .... DONE
 
 ---
 
@@ -312,7 +312,7 @@ analyze/test after each.
 - Do: Two independent release-only defects found after v1.0.0 shipped. (1) **Network**: Flutter only declares `android.permission.INTERNET` in the debug/profile manifests, so release builds could not reach the Gemini API — add it to the main manifest. (2) **Crash**: Android `--release` runs R8 (minify + resource shrinking, full mode) by default, and ML Kit loads its internals reflectively; the consumer rules the AARs ship only keep native method names + proto fields, so R8 stripped/renamed `com.google.mlkit.**` and the app crashed in `MainActivity.configureFlutterEngine()` when creating the recognizer via `TextRecognition.getClient()`. Add `android/app/proguard-rules.pro` with `-keep`/`-dontwarn` rules for `com.google.mlkit.**` and the ML Kit/Vision internals, and wire it into the release build type with `proguardFiles(...)`. Bump the app version to 1.0.1+2 for the hotfix release.
 - Done when: a release APK launches without a FATAL exception, on-device OCR runs end to end, and analyze/tests stay green.
 - Status: DONE (2026-10-16) — root cause confirmed by deobfuscating the release stack trace with `build/app/outputs/mapping/release/mapping.txt` (`yg1`/`wh1` = `com.google.mlkit.vision.text.internal.zzo`/`zzp`). The earlier INTERNET fix alone did not stop the crash — both defects had to be fixed. Verified on emulator-5554: the release APK (84.4 MB) installs and launches with no FATAL exception and zero ML Kit `NoSuchMethodException`; the full gallery → ML Kit OCR path runs and the flow reaches the Gemini step ("No Google AI API key is configured" as expected without a key). `flutter analyze` clean, 199/199 tests. macOS and iOS confirmed unaffected (macOS already carries `com.apple.security.network.client` in both Debug and Release entitlements; iOS needs no explicit network permission and has no ATS restriction). Shipped as release **v1.0.1**.
-## P15 — Multi-language input (TODO)
+## P15 — Multi-language input (DONE)
 
 Goal: translate text from many more source languages into Persian, and make the
 existing From/To pickers truthful. Today `AppSettings` already stores a free
@@ -369,7 +369,7 @@ Order: T-150 -> T-151 -> T-152 -> T-153 -> T-154 -> T-155 -> T-156.
 - Files: docs/ARCHITECTURE.md, README.md, docs/PRIVACY.md (only if wording changes), TASKS.md, CURRENT_TASK.md
 - Do: Add **D-018 — OCR language model**: language catalog, `auto` default, per-platform capability via `OcrApi.supportedLanguages()` (Vision list at runtime, ML Kit Latin set on Android), and the explicit gaps (Android: no Arabic/Persian/Cyrillic script recognizers in ML Kit; CJK/Devanagari need separate ML Kit dependencies; Persian OCR availability on Apple is whatever Vision reports). Update README (Roadmap, Known limitations, FAQ "which languages") and the data-flow section. Run acceptance: analyze, tests, macOS manual (3 languages), Android emulator manual (2 Latin languages), release-APK smoke test.
 - Done when: docs match behaviour; acceptance checklist recorded in the Status line.
-- Status: TODO
+- Status: DONE (2026-10-23) — ARCHITECTURE has **D-018** plus corrected data-flow/components text (iOS `ios/Runner/OcrHandler.swift`, new `OcrApi` signature, and an explicit note that iOS had no OCR backend before T-153); README Roadmap/Known limitations/FAQ 6 updated; CURRENT_TASK points at T-124. Acceptance run: `flutter analyze` clean, `flutter test` 227/227, `flutter build macos` ✓ (46.7 MB), `flutter build ios --simulator --no-codesign` ✓, `flutter build apk --release` ✓ (84.4 MB) and the emulator-5554 smoke test shows the Translate screen with **zero** `FATAL EXCEPTION`. Android Settings verified by screenshot on the emulator: From = Auto-detect, To = Persian, and the From list disables Persian/Arabic/Russian/Chinese/Japanese/Korean with "Not supported by this device's text recognition". The macOS multi-language capture check and the first iOS OCR run stay with the owner (GUI / broken simulator).
 
 ### Not in P15 (recorded, not scheduled)
 - **Offline translation:** only via a future research task with a quality gate — blind comparison against Gemini on ~50 real sentences, owner sets the threshold; if it fails, no offline engine ships. Note: Apple Translation has no Persian, and ML Kit Translate model downloads come from Google servers (may be unreachable from Iran).
