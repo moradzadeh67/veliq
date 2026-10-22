@@ -58,9 +58,19 @@ class _FakeImageSourceService implements ImageSourceService {
 
 class _FakeOcrService implements OcrService {
   String? text = 'Hello world';
+  String? lastLanguageHint;
 
   @override
-  Future<String?> recognizeText(Uint8List imageBytes) async => text;
+  Future<String?> recognizeText(
+    Uint8List imageBytes, {
+    String? languageHint,
+  }) async {
+    lastLanguageHint = languageHint;
+    return text;
+  }
+
+  @override
+  Future<Set<String>> supportedLanguages() async => const {'en'};
 }
 
 class _FakeTranslationService implements TranslationService {

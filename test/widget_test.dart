@@ -54,7 +54,13 @@ class _FakeSelectionService implements SelectionService {
 
 class _FakeOcrService implements OcrService {
   @override
-  Future<String?> recognizeText(Uint8List imageBytes) async => null;
+  Future<String?> recognizeText(
+    Uint8List imageBytes, {
+    String? languageHint,
+  }) async => null;
+
+  @override
+  Future<Set<String>> supportedLanguages() async => const {'en'};
 }
 
 class _FakeTranslationService implements TranslationService {

@@ -360,7 +360,10 @@ interface ScreenCaptureApi {
 }
 /** Generated interface from Pigeon that represents a handler of messages from Flutter. */
 interface OcrApi {
-  suspend fun recognizeText(imageBytes: ByteArray): String?
+  /** [languageHint] is an ISO 639-1 code, or null / 'auto' to detect. */
+  suspend fun recognizeText(imageBytes: ByteArray, languageHint: String?): String?
+  /** ISO 639-1 base codes this platform's OCR can read. */
+  suspend fun supportedLanguages(): List<String>
 
   companion object {
     /** The codec used by OcrApi. */
@@ -377,9 +380,27 @@ interface OcrApi {
           channel.setMessageHandler { message, reply ->
             val args = message as List<Any?>
             val imageBytesArg = args[0] as ByteArray
+            val languageHintArg = args[1] as String?
             CoroutineScope(Dispatchers.Main).launch {
               val wrapped: List<Any?> = try {
-                listOf(api.recognizeText(imageBytesArg))
+                listOf(api.recognizeText(imageBytesArg, languageHintArg))
+              } catch (exception: Throwable) {
+                MessagesPigeonUtils.wrapError(exception)
+              }
+              reply.reply(wrapped)
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.veliq.OcrApi.supportedLanguages$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { _, reply ->
+            CoroutineScope(Dispatchers.Main).launch {
+              val wrapped: List<Any?> = try {
+                listOf(api.supportedLanguages())
               } catch (exception: Throwable) {
                 MessagesPigeonUtils.wrapError(exception)
               }

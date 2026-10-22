@@ -165,12 +165,14 @@ class MainActivity : FlutterActivity() {
 
 /// On-device Latin OCR (T-136). The image stays in memory: JPEG bytes ->
 /// [Bitmap] -> [InputImage]; nothing is written to disk, logs or the network.
-/// The bundled ML Kit model recognizes Latin-script text (the default source
-/// language is English); other scripts are a future model addition.
+/// The bundled ML Kit model recognizes Latin-script text; Arabic/Persian,
+/// Cyrillic and CJK need separate ML Kit dependencies (D-018).
 private class MlKitOcrApi : OcrApi {
     private val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
 
-    override suspend fun recognizeText(imageBytes: ByteArray): String? =
+    /// [languageHint] is ignored on purpose: only one Latin recognizer is
+    /// bundled, so it already reads every language in [supportedLanguages].
+    override suspend fun recognizeText(imageBytes: ByteArray, languageHint: String?): String? =
         withContext(Dispatchers.IO) {
             val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
                 ?: throw IllegalArgumentException(
@@ -185,4 +187,8 @@ private class MlKitOcrApi : OcrApi {
             }
             result.text.ifEmpty { null }
         }
+
+    /// Scripts the bundled Latin recognizer reads (D-018).
+    override suspend fun supportedLanguages(): List<String> =
+        listOf("en", "de", "fr", "es", "it", "pt", "nl", "tr")
 }

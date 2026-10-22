@@ -51,8 +51,13 @@ abstract class ScreenCaptureApi {
 
 @HostApi()
 abstract class OcrApi {
+  /// [languageHint] is an ISO 639-1 code, or null / 'auto' to detect.
   @async
-  String? recognizeText(Uint8List imageBytes);
+  String? recognizeText(Uint8List imageBytes, String? languageHint);
+
+  /// ISO 639-1 base codes this platform's OCR can read.
+  @async
+  List<String> supportedLanguages();
 }
 
 @HostApi()

@@ -8,12 +8,21 @@ import 'package:veliq/services/ocr_service.dart';
 class MockOcrService implements OcrService {
   String? mockResult;
   bool shouldThrow = false;
+  String? lastLanguageHint;
+  Set<String> languages = const {'en'};
 
   @override
-  Future<String?> recognizeText(Uint8List imageBytes) async {
+  Future<String?> recognizeText(
+    Uint8List imageBytes, {
+    String? languageHint,
+  }) async {
+    lastLanguageHint = languageHint;
     if (shouldThrow) throw Exception('OCR failed');
     return mockResult;
   }
+
+  @override
+  Future<Set<String>> supportedLanguages() async => languages;
 }
 
 void main() {
@@ -53,6 +62,23 @@ void main() {
         expect(ocrBloc.currentState, isA<OcrFailure>());
       },
     );
+
+    test('recognizeImage forwards the language hint to the service', () async {
+      mockOcrService.mockResult = 'Bonjour';
+
+      await ocrBloc.recognizeImage(Uint8List(0), languageHint: 'fr');
+
+      expect(mockOcrService.lastLanguageHint, equals('fr'));
+      expect(ocrBloc.currentState, isA<OcrSuccess>());
+    });
+
+    test('recognizeImage passes a null hint through', () async {
+      mockOcrService.mockResult = 'Hello';
+
+      await ocrBloc.recognizeImage(Uint8List(0));
+
+      expect(mockOcrService.lastLanguageHint, isNull);
+    });
 
     test('recognizeImage sets state to OcrFailure on exception', () async {
       mockOcrService.shouldThrow = true;

@@ -21,11 +21,17 @@ class OcrBloc {
     _stateController.add(state);
   }
 
-  Future<void> recognizeImage(Uint8List imageBytes) async {
+  Future<void> recognizeImage(
+    Uint8List imageBytes, {
+    String? languageHint,
+  }) async {
     _emit(const OcrLoading());
     await Future.microtask(() {});
     try {
-      final text = await _ocrService.recognizeText(imageBytes);
+      final text = await _ocrService.recognizeText(
+        imageBytes,
+        languageHint: languageHint,
+      );
       if (text != null && text.trim().isNotEmpty) {
         _emit(OcrSuccess(text));
       } else {

@@ -124,7 +124,7 @@ class ScreenCaptureHandler: ScreenCaptureApi {
 }
 
 class OcrHandler: OcrApi {
-  func recognizeText(imageBytes: FlutterStandardTypedData) async throws -> String? {
+  func recognizeText(imageBytes: FlutterStandardTypedData, languageHint: String?) async throws -> String? {
     let data = imageBytes.data
     guard let cgImage = NSImage(data: data)?.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
       return nil
@@ -148,6 +148,13 @@ class OcrHandler: OcrApi {
       request.recognitionLevel = .accurate
       request.usesLanguageCorrection = true
 
+      do {
+        try OcrHandler.applyLanguageHint(languageHint, to: request)
+      } catch {
+        continuation.resume(throwing: error)
+        return
+      }
+
       let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
       do {
         try handler.perform([request])
@@ -155,6 +162,68 @@ class OcrHandler: OcrApi {
         continuation.resume(throwing: error)
       }
     }
+  }
+
+  /// ISO 639-1 base codes the current Vision revision can read (D-018).
+  ///
+  /// Derived from Vision at runtime rather than hard-coded: the list changes
+  /// between macOS releases.
+  func supportedLanguages() async throws -> [String] {
+    return OcrHandler.baseCodes(OcrHandler.visionLanguages)
+  }
+
+  /// Base codes ("zh-Hans" -> "zh", "fr-FR" -> "fr"), de-duplicated, ordered.
+  private static func baseCodes(_ identifiers: [String]) -> [String] {
+    var seen = Set<String>()
+    var codes: [String] = []
+    for identifier in identifiers {
+      let code = baseCode(identifier)
+      if !code.isEmpty && seen.insert(code).inserted {
+        codes.append(code)
+      }
+    }
+    return codes
+  }
+
+  private static func baseCode(_ identifier: String) -> String {
+    return identifier.split(separator: "-").first.map(String.init)?.lowercased()
+      ?? identifier.lowercased()
+  }
+
+  /// Every language the accurate recognizer supports, or an empty list on
+  /// systems predating the query API.
+  private static var visionLanguages: [String] {
+    guard #available(macOS 11.0, *) else { return [] }
+    let probe = VNRecognizeTextRequest()
+    probe.recognitionLevel = .accurate
+    return (try? probe.supportedRecognitionLanguages()) ?? []
+  }
+
+  /// Applies [hint] to [request]: `nil`/`auto` lets Vision detect the script,
+  /// otherwise the request is restricted to the matching Vision languages.
+  private static func applyLanguageHint(_ hint: String?, to request: VNRecognizeTextRequest) throws {
+    guard #available(macOS 11.0, *) else { return }
+
+    guard let hint = hint, !hint.isEmpty, hint != "auto" else {
+      request.automaticallyDetectsLanguage = true
+      return
+    }
+
+    let matches = ((try? request.supportedRecognitionLanguages()) ?? [])
+      .filter { baseCode($0) == hint.lowercased() }
+
+    guard !matches.isEmpty else {
+      throw NSError(
+        domain: "com.moradzadeh67.veliq.ocr",
+        code: 1,
+        userInfo: [
+          NSLocalizedDescriptionKey:
+            "Text recognition is not available for language '\(hint)' on this Mac."
+        ])
+    }
+
+    request.recognitionLanguages = matches
+    request.automaticallyDetectsLanguage = false
   }
 }
 

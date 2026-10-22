@@ -353,7 +353,10 @@ class ScreenCaptureApiSetup {
 }
 /// Generated protocol from Pigeon that represents a handler of messages from Flutter.
 protocol OcrApi {
-  func recognizeText(imageBytes: FlutterStandardTypedData) async throws -> String?
+  /// [languageHint] is an ISO 639-1 code, or null / 'auto' to detect.
+  func recognizeText(imageBytes: FlutterStandardTypedData, languageHint: String?) async throws -> String?
+  /// ISO 639-1 base codes this platform's OCR can read.
+  func supportedLanguages() async throws -> [String]
 }
 
 /// Generated setup class from Pigeon to handle messages through the `binaryMessenger`.
@@ -362,14 +365,16 @@ class OcrApiSetup {
   /// Sets up an instance of `OcrApi` to handle messages through the `binaryMessenger`.
   static func setUp(binaryMessenger: FlutterBinaryMessenger, api: OcrApi?, messageChannelSuffix: String = "") {
     let channelSuffix = messageChannelSuffix.count > 0 ? ".\(messageChannelSuffix)" : ""
+    /// [languageHint] is an ISO 639-1 code, or null / 'auto' to detect.
     let recognizeTextChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.veliq.OcrApi.recognizeText\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
       recognizeTextChannel.setMessageHandler { message, reply in
         let args = message as! [Any?]
         let imageBytesArg = args[0] as! FlutterStandardTypedData
+        let languageHintArg: String? = nilOrValue(args[1])
         Task { @MainActor in
           do {
-            let result = try await api.recognizeText(imageBytes: imageBytesArg)
+            let result = try await api.recognizeText(imageBytes: imageBytesArg, languageHint: languageHintArg)
             reply(wrapResult(result))
           } catch {
             reply(wrapError(error))
@@ -378,6 +383,22 @@ class OcrApiSetup {
       }
     } else {
       recognizeTextChannel.setMessageHandler(nil)
+    }
+    /// ISO 639-1 base codes this platform's OCR can read.
+    let supportedLanguagesChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.veliq.OcrApi.supportedLanguages\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      supportedLanguagesChannel.setMessageHandler { _, reply in
+        Task { @MainActor in
+          do {
+            let result = try await api.supportedLanguages()
+            reply(wrapResult(result))
+          } catch {
+            reply(wrapError(error))
+          }
+        }
+      }
+    } else {
+      supportedLanguagesChannel.setMessageHandler(nil)
     }
   }
 }
