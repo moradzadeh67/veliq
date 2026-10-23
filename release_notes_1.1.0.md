@@ -22,13 +22,16 @@ language it recognised, so the result card says `Original (French)` and History 
 | Platform | Languages |
 |---|---|
 | macOS / iOS (Apple Vision) | whatever the OS reports at runtime — typically en, fr, de, es, it, pt, nl, tr, plus other scripts such as Russian, Chinese, Japanese and Korean on recent versions. Settings lists exactly what your device supports. |
-| Android (bundled ML Kit Latin model) | `en`, `de`, `fr`, `es`, `it`, `pt`, `nl`, `tr` |
+| Android (bundled ML Kit Latin **and** Tesseract) | `en`, `de`, `fr`, `es`, `it`, `pt`, `nl`, `tr` — plus **Persian, Arabic and Russian** through a second on-device engine (Tesseract). Both engines run offline; the photo never leaves the phone. |
 
 ### Known limits
 
-- **Android OCR reads Latin script only.** Persian/Arabic, Cyrillic and CJK input are **not available
-  on Android yet** — the UI shows those choices disabled with an explanation. Reading them needs extra
-  ML Kit models and a larger APK; it is on the roadmap.
+- **Chinese, Japanese and Korean are not readable on Android yet** — those choices stay disabled there
+  (their models would add several MB each). macOS and iOS read them through Apple Vision.
+- **Auto-detect on Android still starts with the Latin model.** A Persian, Arabic or Russian photo is
+  read correctly when you pick that language in Settings; on Auto-detect the Latin model may "read"
+  Cyrillic as look-alike Latin letters, and the app then tells you the photo was misread instead of
+  showing nonsense.
 - **Apple's on-device translation needs a concrete source language**, so it cannot be combined with
   Auto-detect. Veliq tells you so in plain words instead of failing silently; switch to Google Gemini
   for auto-detect.
