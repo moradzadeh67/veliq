@@ -1,14 +1,17 @@
 # Veliq — Release and Distribution
 
 ## Status
-Active as of 2026-10-16: the public GitHub releases ship a **signed** Android APK — `v1.0.0` (first
-release) and `v1.0.1` (Android release-build hotfix). License: MIT (see LICENSE). The repository is
-public, has a description, 16 topics and a GitHub Pages site (https://moradzadeh67.github.io/veliq/).
+Active as of 2026-10-23: the public GitHub releases ship a **signed** Android APK — `v1.1.0` (current:
+multi-language input), `v1.0.1` (Android release-build hotfix) and `v1.0.0` (first release). License:
+MIT (see LICENSE). The repository is public, has a description, 16 topics and a GitHub Pages site
+(https://moradzadeh67.github.io/veliq/).
 
 ## Current distribution
-- **GitHub releases** — `v1.0.1` (2026-10-16, Android release-build hotfix) and `v1.0.0` (2026-10-16,
-  first release) each ship `app-release.apk` (+ `.sha256`) built from this repository and signed with
-  the project upload key (see "Android release signing" below).
+- **GitHub releases** — `v1.1.0` (2026-10-23, multi-language input) ships per-ABI APKs and an AAB built
+  from this repository and signed with the project upload key (see "Android release signing" below):
+  `app-arm64-v8a-release.apk`, `app-armeabi-v7a-release.apk`, `app-x86_64-release.apk`
+  (each with a `.sha256`) plus `app-release.aab`. `v1.0.1` (2026-10-16) and `v1.0.0` (2026-10-16) each
+  ship the single universal `app-release.apk` (+ `.sha256`).
 - macOS: build from source (`flutter build macos`); no code signing / notarization yet.
 - iOS is **not distributed yet** (only `flutter build ios --no-codesign` is run, as a build check).
   The Xcode target carries the real bundle id `com.moradzadeh67.veliq` and the D-013 iOS 16.0 floor
@@ -35,9 +38,11 @@ public, has a description, 16 topics and a GitHub Pages site (https://moradzadeh
 - **Certificate** (verified with `apksigner verify --print-certs`):
   `CN=Mohammadreza Moradzadeh, OU=Mobile, O=Veliq, C=IR`,
   SHA-256 `1332bc480e4fac26acab2ad82db950501dc9643604af2e0429b28668c1a651af`.
-- **Artifacts**: `flutter build appbundle --release` → `build/app/outputs/bundle/release/app-release.aab`
-  (66 MB); `flutter build apk --release` → `build/app/outputs/flutter-apk/app-release.apk` (~84 MB,
-  signing verified). Both are git-ignored build output; the APK is attached to the GitHub releases.
+- **Artifacts**: `flutter build appbundle --release` → `build/app/outputs/bundle/release/app-release.aab`;
+  `flutter build apk --release` → `build/app/outputs/flutter-apk/app-release.apk` (universal, v1.0.x
+  releases); from 1.1.0 `flutter build apk --release --split-per-abi` →
+  `app-arm64-v8a-release.apk`, `app-armeabi-v7a-release.apk` and `app-x86_64-release.apk`. All are
+  git-ignored build output; the AAB and the per-ABI APKs are attached to the GitHub release.
 - **Never** commit the keystore, `key.properties` or the passwords. Losing the upload key means no
   further updates for `com.moradzadeh67.veliq`.
 
@@ -138,6 +143,9 @@ Also outstanding for the user: GitHub repository **About/Topics** (browser), ite
    2026-10-16 and dropped as well: `idb-companion` is no longer published in Homebrew.
 
 ## Released
+- `v1.1.0` (2026-10-23): multi-language input — 14-language source catalog with Auto-detect, per-platform
+  OCR capability query, an iOS Vision OCR backend, the source language Gemini detects shown in the result
+  and History, and the Settings/iOS wording fixes. Per-ABI APKs (`.sha256` each) + AAB.
 - `v1.0.1` (2026-10-16): Android release-build hotfix — the missing `INTERNET` manifest permission and
   the R8 keep rules for ML Kit (T-141). Signed Android APK + `.sha256` attached.
 - `v1.0.0` (2026-10-16): first release. Signed Android APK + `.sha256` attached.

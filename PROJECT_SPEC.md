@@ -18,10 +18,14 @@ Primarily the author. Secondarily GitHub users who want a local-first screen/pho
 7. Clear handling of missing Screen Recording permission.
 
 ## Post-MVP (deferred, needs explicit task)
-- Global shortcut, translation history (user-deletable), settings screen,
-  dictionary-style lookup, source language selection, other target languages.
-  Roadmap: more languages — additional OCR scripts and additional source/target
-  languages beyond English -> Persian (owner request, 2026-10-16).
+- Global shortcut, dictionary-style lookup, additional target languages.
+  Roadmap: more languages — additional OCR scripts (Arabic/Persian, Cyrillic, CJK on Android) and
+  targets beyond Persian (owner request, 2026-10-16).
+
+Delivered after the MVP, so no longer deferred: translation history (user-deletable), the settings
+screen, source-language selection and multi-language input — a 14-language catalog with an
+auto-detect source, per-platform OCR capability query, and the source language Gemini detects
+reported back in the result and in History (P15, T-150…T-158).
 
 ## Out of scope
 Windows/Linux, accounts, cloud sync, analytics, backend, payments, saving screenshots

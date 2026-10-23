@@ -145,7 +145,7 @@ Veliq is designed with first-class Persian (Farsi) localization:
 - [x] **P12 — Android v1:** Photo Picker, Camera, ML Kit OCR & Keystore
 - [x] **P15 — Multi-language input:** 14-language catalog, Auto-detect source, per-platform OCR capability query, iOS Vision OCR handler
 - [ ] **More OCR scripts & offline translation:** Arabic/Persian and Cyrillic OCR on Android (extra ML Kit models, larger APK) and an offline translation engine, gated on a quality check (see the P15 notes in [TASKS.md](TASKS.md))
-- [x] **Public Release:** signed Android APK + GitHub release `v1.0.1` (macOS/iOS stay build-from-source) — [docs/RELEASE.md](docs/RELEASE.md)
+- [x] **Public Release:** signed Android APKs + GitHub release `v1.1.0` (macOS/iOS stay build-from-source) — [docs/RELEASE.md](docs/RELEASE.md)
 
 The active task list is tracked in [TASKS.md](TASKS.md).
 
@@ -250,9 +250,11 @@ Details: [docs/PRIVACY.md](docs/PRIVACY.md).
 ## 🚀 Installation & Running
 
 > [!NOTE]
-> The signed Android APK for **v1.0.1** is on the
-> [Releases page](https://github.com/moradzadeh67/veliq/releases/latest) (`minSdk 24`). macOS and iOS
-> are built from source with the steps below — there is no notarized desktop build yet.
+> The signed Android APKs for **v1.1.0** are on the
+> [Releases page](https://github.com/moradzadeh67/veliq/releases/latest) (`minSdk 24`). Pick the file
+> that matches your phone's CPU: `app-arm64-v8a-release.apk` (any recent phone),
+> `app-armeabi-v7a-release.apk` (older 32-bit devices) or `app-x86_64-release.apk` (emulators). macOS
+> and iOS are built from source with the steps below — there is no notarized desktop build yet.
 
 ### Prerequisites
 
@@ -341,7 +343,8 @@ Then build and verify the signed artifacts:
 
 ```bash
 flutter build appbundle --release   # → build/app/outputs/bundle/release/app-release.aab
-flutter build apk --release         # → build/app/outputs/flutter-apk/app-release.apk
+flutter build apk --release         # → universal build/app/outputs/flutter-apk/app-release.apk
+flutter build apk --release --split-per-abi  # → per-ABI APKs, what the 1.1.0 release ships
 
 # Confirm which key signed it
 $ANDROID_HOME/build-tools/<version>/apksigner verify --print-certs \
