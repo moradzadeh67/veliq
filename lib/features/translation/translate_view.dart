@@ -353,7 +353,13 @@ class _FailureState extends StatelessWidget {
                 'and enable Veliq, then restart the app.',
     TranslateFlowStage.recognize =>
       _isAndroid
-          ? 'Try a photo with printed, clearly readable text.'
+          // Android ships the ML Kit Latin model only, so a Persian, Arabic,
+          // Cyrillic or CJK photo legitimately comes back empty. Say why
+          // instead of blaming the photo (T-161).
+          ? 'On this device Veliq reads Latin script only — photos in Persian, '
+                'Arabic, Russian, Chinese, Japanese or Korean come back empty. '
+                'Try a photo with Latin text (or use the macOS or iOS app for '
+                'those languages).'
           : 'Try selecting a region that contains printed, clearly readable '
                 'text.',
     TranslateFlowStage.translate =>

@@ -158,7 +158,37 @@ class GeminiTranslationService implements TranslationService {
       }
 
       if (response.statusCode == 200) {
-        return _parseOutcome(response.body, expectDetection: detects);
+        final outcome = _parseOutcome(response.body, expectDetection: detects);
+
+        // A model that answers with the source text is not translating it. With
+        // `auto` we know the language it reported, so ask again with that as an
+        // explicit source: the JSON envelope is usually what it choked on, not
+        // the translation (T-161).
+        if (detects &&
+            outcome.detectedSourceLanguage != null &&
+            _echoed(
+              text,
+              outcome.text,
+              outcome.detectedSourceLanguage,
+              targetLanguage,
+            )) {
+          return translateWithDetection(
+            text,
+            outcome.detectedSourceLanguage!,
+            targetLanguage,
+          );
+        }
+
+        if (!detects &&
+            _echoed(text, outcome.text, sourceLanguage, targetLanguage)) {
+          throw const TranslationException(
+            'Gemini sent the text back unchanged instead of translating it. '
+            'This usually means the photo cut the paragraph mid-sentence — '
+            'try again with the whole paragraph inside the frame.',
+          );
+        }
+
+        return outcome;
       }
 
       final reason = _errorReason(response.body);
@@ -304,6 +334,9 @@ class GeminiTranslationService implements TranslationService {
         '- Do not summarise, reorder or "fix" the content.\n'
         '- If the text looks like code, an identifier or a stray label, still '
         'translate the words inside it.\n'
+        '- The text may start or end mid-word because it was cropped out of a '
+        'photo. Translate what is there anyway — never answer with the source '
+        'text itself.\n'
         '${detects ? _detectionRules : ''}'
         '---\n'
         '$text\n'
@@ -559,6 +592,30 @@ class GeminiTranslationService implements TranslationService {
     final translated = buffer.toString().trim();
     return translated.isEmpty ? null : translated;
   }
+
+  /// True when [translation] is just [source] handed back unchanged.
+  ///
+  /// Only meaningful when the two languages differ: the prompt explicitly allows
+  /// an unchanged answer when the text is already in the target language.
+  static bool _echoed(
+    String source,
+    String? translation,
+    String? sourceLanguage,
+    String targetLanguage,
+  ) {
+    if (translation == null) return false;
+    if (sourceLanguage == null || sourceLanguage == targetLanguage) {
+      return false;
+    }
+    return _squash(source) == _squash(translation);
+  }
+
+  /// Drops case, spacing and punctuation so a cosmetic difference does not hide
+  /// an echo.
+  static String _squash(String text) => text.toLowerCase().replaceAll(
+    RegExp(r'[\s\p{P}\p{S}]+', unicode: true),
+    '',
+  );
 
   /// Parses the envelope and, when detection was requested, the JSON payload.
   static TranslationOutcome _parseOutcome(

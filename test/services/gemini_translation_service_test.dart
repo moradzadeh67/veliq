@@ -587,6 +587,77 @@ void main() {
     });
   });
 
+  group('echoed answers (T-161)', () {
+    const russian = 'зеленой и кирпичной пряжей, 2 ряда совсем светло-';
+
+    test(
+      'retries with the detected language when auto echoes the input',
+      () async {
+        final prompts = <String>[];
+        var call = 0;
+        final service = GeminiTranslationService(
+          apiKey: _apiKey,
+          client: MockClient((request) async {
+            prompts.add(
+              (jsonDecode(request.body)['contents'][0]['parts'][0]['text']
+                  as String),
+            );
+            call++;
+            // First answer: valid JSON, but "translation" is the source text.
+            if (call == 1) {
+              return _okResponse(
+                '{"detected_language": "ru", "translation": "$russian"}',
+              );
+            }
+            return _okResponse('با نخ سبز و آجری، ۲ ردیف کاملاً روشن');
+          }),
+        );
+
+        final outcome = await service.translateWithDetection(
+          russian,
+          'auto',
+          'fa',
+        );
+
+        expect(outcome.text, equals('با نخ سبز و آجری، ۲ ردیف کاملاً روشن'));
+        expect(call, equals(2));
+        // The retry must ask for a plain translation from the known language.
+        expect(prompts.first, contains('detected_language'));
+        expect(prompts.last, isNot(contains('detected_language')));
+        expect(prompts.last, contains('from Russian to Persian'));
+      },
+    );
+
+    test(
+      'keeps a legitimate unchanged answer when the text is already Persian',
+      () async {
+        final service = _serviceReturning(_okResponse('این متن فارسی است'));
+
+        final outcome = await service.translateWithDetection(
+          'این متن فارسی است',
+          'auto',
+          'fa',
+        );
+
+        expect(outcome.text, equals('این متن فارسی است'));
+      },
+    );
+
+    test(
+      'reports an echo instead of showing the source as a translation',
+      () async {
+        final service = _serviceReturning(_okResponse(russian));
+
+        final error = await _expectFailure(
+          () => service.translateText(russian, 'ru', 'fa'),
+        );
+
+        expect(error.message, contains('unchanged'));
+        expect(error.message, contains('mid-sentence'));
+      },
+    );
+  });
+
   group('verifyApiKey', () {
     test('returns null when the key works', () async {
       final service = _serviceReturning(_okResponse('Hola'));

@@ -33,6 +33,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Settings said the Gemini API key was stored in "this Mac's app preferences" although it lives in the
   Keychain; it now names the real store, and iOS no longer says "Mac" (T-158, T-159).
 - Duplicate/unused code paths removed while wiring the language hint through the OCR pipeline.
+- **Android "No text found" for Persian/Arabic/Cyrillic photos** now explains that the bundled model
+  reads Latin script only, instead of telling the user to find a clearer photo (T-161).
+- **Gemini handing the text back untranslated** — for a paragraph cropped mid-sentence the model could
+  answer with the source text, which the app then showed (and stored) as the translation. It now retries
+  once with the language it detected, and reports a clear message if the answer is still an echo
+  (T-161).
 
 ## [1.0.1] - 2026-10-16
 
