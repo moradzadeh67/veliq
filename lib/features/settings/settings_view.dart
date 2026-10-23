@@ -107,6 +107,7 @@ class _SettingsForm extends StatelessWidget {
     // exist there, so a stored Apple choice is surfaced as a fixable notice
     // rather than silently kept.
     final isAndroid = defaultTargetPlatform == TargetPlatform.android;
+    final isMac = defaultTargetPlatform == TargetPlatform.macOS;
     final storedProvider = settings.translationProvider;
     final provider = isAndroid ? TranslationProvider.google : storedProvider;
     final usesGoogle = provider == TranslationProvider.google;
@@ -235,10 +236,11 @@ class _SettingsForm extends StatelessWidget {
         SwitchListTile(
           title: const Text('Keep screenshots'),
           subtitle: Text(
-            isAndroid
-                ? 'Off by default. Screenshots stay on this device and are '
+            // Only macOS has a "this Mac"; iOS runs on the iPhone it says.
+            isMac
+                ? 'Off by default. Screenshots stay on this Mac and are '
                       'never uploaded (see docs/PRIVACY.md).'
-                : 'Off by default. Screenshots stay on this Mac and are '
+                : 'Off by default. Screenshots stay on this device and are '
                       'never uploaded (see docs/PRIVACY.md).',
           ),
           value: settings.saveScreenshots,

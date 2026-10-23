@@ -4,11 +4,13 @@ Active: **T-124 — manual review on the iOS simulator** (the last open verifica
 
 Status: OPEN (partial, owner-side only). Xcode 27 replaced `Simulator.app` with **Device Hub**, which is
 why the old "broken simulator" diagnosis was wrong; Device Hub runs, but it exposes no windows to System
-Events and `osascript` has no assistive access here, so scripted taps are impossible. Headless proof on
+Events and `osascript` has no assistive access here, so scripted taps are impossible. Proof on
 2026-10-23: the current build installs, launches and shows the bottom navigation bar on the iOS 26.5
-iPhone 17 Pro Max simulator. The three residual checks now have automated equivalents (picker cancel at
-app level, permission message is moot with `PHPickerViewController`, history round-trip tests); what is
-left for the owner is tapping the native picker's Cancel and a short visual pass. The first iOS OCR run
+iPhone 17 Pro Max simulator; the container's `history.json` kept three real translations across relaunches
+with the detected codes `fr`/`ru`/`de`, and History + Settings were rendered on-device from real storage
+(History shows `French → Persian`, Settings the Keychain line). The visual pass also found and fixed the
+last "this Mac" leak (T-159). The picker cancel is covered at app level and the permission message is moot
+with `PHPickerViewController`; what is left for the owner is tapping Cancel in the native picker. The first iOS OCR run
 (Vision, added by T-153) was confirmed by the owner on all three platforms on 2026-10-23. Camera capture
 stays device-only (T-118 dropped).
 

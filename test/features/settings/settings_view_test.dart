@@ -494,6 +494,30 @@ void main() {
     });
   });
 
+  group('SettingsView iOS Copy Tests', () {
+    late FakeSettingsRepository repository;
+    late SettingsBloc bloc;
+
+    setUp(() {
+      repository = FakeSettingsRepository();
+      bloc = SettingsBloc(settingsRepository: repository);
+    });
+
+    tearDown(() {
+      bloc.dispose();
+    });
+
+    testWidgets('privacy copy says "this device", never "this Mac"', (
+      tester,
+    ) async {
+      await _pumpView(tester, bloc);
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('stay on this device'), findsOneWidget);
+      expect(find.textContaining('this Mac'), findsNothing);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
+  });
+
   group('SettingsView Android Copy Tests (T-138)', () {
     late FakeSettingsRepository repository;
     late SettingsBloc bloc;
