@@ -164,22 +164,72 @@ void main() {
       expect(message, isNot(contains('internal detail')));
       expect(message, isNot(contains('0x1f')));
     });
-    test('carries the detected source language into the success state', () async {
-      mockService.mockResult = 'Bonjour le monde';
-      mockService.detectedLanguage = 'fr';
+    test(
+      'explains a Latin answer for a Persian target as a misread photo',
+      () async {
+        // What a Cyrillic photo looks like after the Android Latin-only model
+        // "reads" it: look-alike letters, not words.
+        mockService.mockResult = 'le nonKMB rNyoMHe Mara BHHylo B 4epHylo KOxy';
+        mockService.detectedLanguage = 'ru';
 
-      await translationBloc.translate(text: 'Hello world', sourceLanguage: 'auto');
+        await translationBloc.translate(
+          text: 'зеленой и кирпичной пряжей',
+          sourceLanguage: 'auto',
+        );
 
-      final state = translationBloc.currentState;
-      expect(state, isA<TranslationSuccess>());
-      expect(
-        (state as TranslationSuccess).detectedSourceLanguage,
-        equals('fr'),
+        final state = translationBloc.currentState;
+        expect(state, isA<TranslationFailure>());
+        expect(
+          (state as TranslationFailure).message,
+          contains('probably misread'),
+        );
+        expect(state.message, contains('Latin'));
+      },
+    );
+
+    test('accepts a Persian answer for a Persian target', () async {
+      mockService.mockResult = 'با نخ سبز و آجری';
+
+      await translationBloc.translate(
+        text: 'зеленой и кирпичной пряжей',
+        sourceLanguage: 'ru',
       );
+
+      expect(translationBloc.currentState, isA<TranslationSuccess>());
     });
 
+    test('does not flag a numbers-only answer', () async {
+      mockService.mockResult = '2026-10-24';
+
+      await translationBloc.translate(text: '24.10.2026', sourceLanguage: 'en');
+
+      expect(translationBloc.currentState, isA<TranslationSuccess>());
+    });
+
+    test(
+      'carries the detected source language into the success state',
+      () async {
+        // The target is Persian, so the stub must answer in Persian — a Latin
+        // answer is treated as a misread photo (T-162).
+        mockService.mockResult = 'سلام دنیا';
+        mockService.detectedLanguage = 'fr';
+
+        await translationBloc.translate(
+          text: 'Hello world',
+          sourceLanguage: 'auto',
+        );
+
+        final state = translationBloc.currentState;
+        expect(state, isA<TranslationSuccess>());
+        expect(
+          (state as TranslationSuccess).detectedSourceLanguage,
+          equals('fr'),
+        );
+      },
+    );
+
     test('reports no detection when the provider cannot detect', () async {
-      mockService.mockResult = 'Bonjour';
+      mockService.mockResult = 'سلام';
 
       await translationBloc.translate(text: 'Hello', sourceLanguage: 'en');
 

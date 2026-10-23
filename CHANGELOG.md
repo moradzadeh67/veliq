@@ -35,6 +35,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Duplicate/unused code paths removed while wiring the language hint through the OCR pipeline.
 - **Android "No text found" for Persian/Arabic/Cyrillic photos** now explains that the bundled model
   reads Latin script only, instead of telling the user to find a clearer photo (T-161).
+- **A misread photo is no longer shown as a translation.** When the answer arrives in the source's
+  writing system instead of the target's (a Cyrillic or Arabic photo on Android is "read" as look-alike
+  Latin letters), the app now says the photo was misread and explains the Latin-only OCR limit, instead
+  of presenting gibberish as Persian (T-162).
 - **Gemini handing the text back untranslated** — for a paragraph cropped mid-sentence the model could
   answer with the source text, which the app then showed (and stored) as the translation. It now retries
   once with the language it detected, and reports a clear message if the answer is still an echo
