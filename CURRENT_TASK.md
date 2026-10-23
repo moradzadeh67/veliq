@@ -1,20 +1,16 @@
 # CURRENT_TASK.md
 
-Active: **release 1.1.0** — everything is merged into `main` (`b493867`), artifacts are built and
-signed, and the Android non-Latin OCR was verified on the owner's phone. Only the push, the tag and the
-GitHub release remain.
+Active: **v1.1.0 is released** (2026-10-24) — tag `v1.1.0` on `655446a`, GitHub release published with
+three per-ABI APKs (+ `.sha256`) and the AAB, CI green, Pages deployed. Next up: T-164 (make Auto-detect
+work for Persian/Arabic/Russian on Android).
 
-## State of the branches (2026-10-24)
+## State of the repository (2026-10-24)
 
-`main` is the release branch: `44d3c0b` (merge of T-163 + docs) and `b493867` (release notes), on top of
-the pushed `faf2a96`. **These two commits plus the merge are local only** — push, tag and GitHub release
-are the owner's last step.
-
-| Branch | Head | Contents |
-|---|---|---|
-| `main` | `b493867` | Everything: P15, T-124 closed, T-160…T-163, docs. Pushed up to `faf2a96`. |
-| `release-1.1.0` | `faf2a96` | Superseded by `main` (fast-forwarded earlier). |
-| `p16-android-non-latin-ocr` | `8db4791` | Superseded by `main` (merged). |
+`main` at `655446a` is tagged `v1.1.0` and pushed; the working tree is clean and the two short-lived
+branches (`release-1.1.0`, `p16-android-non-latin-ocr`) were deleted after merging. Release assets:
+`app-arm64-v8a-release.apk` (41.9 MB), `app-armeabi-v7a-release.apk` (33.0 MB),
+`app-x86_64-release.apk` (44.3 MB) with checksums, plus `app-release.aab` (78.6 MB) — signed with the
+upload key (`SHA-256 1332bc48…a651af`), smoke-tested with zero `FATAL EXCEPTION`.
 
 ### Verified on a real device (2026-10-24)
 
@@ -26,18 +22,15 @@ misread" instead of showing gibberish (T-162) — see the open item below.
 
 ## Open items
 
-1. **Owner: publish** — `git push origin main`, then `git tag v1.1.0 && git push origin main --tags`, then
-   `gh release create` with the four artifacts + their `.sha256` files (commands are in the session log and
-   `docs/RELEASE.md`).
-2. **Auto-detect with non-Latin photos (next task, T-164 candidate)** — on Android the Latin model runs
+1. **Auto-detect with non-Latin photos (next task, T-164)** — on Android the Latin model runs
    first, so `auto` cannot read Persian/Arabic/Russian photos; the user must pick the language. Planned
    fix: when Gemini reports a detected language that the bundled Tesseract models cover but the OCR text
    is in the wrong script, re-run OCR with that model and translate again.
-3. **iOS camera** — still untested on a physical iPhone (device-only, T-118 dropped).
-4. **Tesseract accuracy on paper photos** — verified on rendered images and one screen photo; curved
+2. **iOS camera** — still untested on a physical iPhone (device-only, T-118 dropped).
+3. **Tesseract accuracy on paper photos** — verified on rendered images and one screen photo; curved
    pages/shadow are unmeasured. If quality disappoints: preprocessing or a higher OCR resolution, never a
    cloud OCR API (privacy).
-5. **Diagrams** — `assets/diagrams/*.svg` were redrawn by the owner and already show the two Android
+4. **Diagrams** — `assets/diagrams/*.svg` were redrawn by the owner and already show the two Android
    engines and the detection step; no further drawing needed.
 
 ## Release 1.1.0 (2026-10-24)

@@ -138,6 +138,15 @@ Also outstanding for the user: GitHub repository **About/Topics** (browser), ite
 | 4 | No real API keys in source | PASS — unchanged |
 | — | Release smoke test | ADDED to the process: launch a `--release` APK after any OCR/dependency/build change (R8 only runs in release; see the R8/ProGuard section above) |
 
+## Release v1.1.0 — published 2026-10-24
+- Tag `v1.1.0` on `655446a`; GitHub release with `app-arm64-v8a-release.apk` (41.9 MB),
+  `app-armeabi-v7a-release.apk` (33.0 MB) and `app-x86_64-release.apk` (44.3 MB), each with a `.sha256`,
+  plus `app-release.aab` (78.6 MB). Signed with the upload key (`1332bc48…a651af`) and smoke-tested on
+  `Pixel_10_Pro_XL` (zero `FATAL EXCEPTION`). The owner also verified Persian and Russian OCR on a Galaxy
+  S24 with the release APK. CI (`Analyze & test`) and Pages both green.
+- Follow-up for the next release: Auto-detect on Android still runs the Latin model first, so a Persian,
+  Arabic or Russian photo needs the language picked explicitly (T-164).
+
 ## Outstanding before a public release
 1. Item 8 above (clean-machine / separate-user-account permission verification) — user's task.
 2. ~~GitHub repository About/Topics~~ — **DONE 2026-10-16**: description + 16 topics set, homepage
