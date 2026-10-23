@@ -183,7 +183,9 @@ void main() {
           (state as TranslationFailure).message,
           contains('probably misread'),
         );
-        expect(state.message, contains('Latin'));
+        // The remedy points at the language picker, which now covers these
+        // scripts on Android when chosen explicitly (T-163).
+        expect(state.message, contains('Settings'));
       },
     );
 

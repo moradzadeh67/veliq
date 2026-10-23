@@ -5,6 +5,17 @@ All notable changes to Veliq are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Android can read Persian, Arabic and Russian.** ML Kit ships no model for those scripts, so Android
+  now bundles Tesseract as a second on-device engine (`fas`, `ara`, `rus`). Choose the language in
+  Settings and pick a photo: it runs offline, the image never leaves the device, and auto-detect still
+  tries the Latin model first (T-163).
+
+### Changed
+- The "no text found" guidance points at the language choice instead of blaming the photo.
+
 ## [1.1.0] - 2026-10-23
 
 ### Added

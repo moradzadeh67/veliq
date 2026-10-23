@@ -424,7 +424,7 @@ Apple's iOS Simulator does not emulate camera hardware (`UIImagePickerController
 <details>
 <summary><b>6. Why can't Veliq recognise Persian or Arabic text?</b></summary>
 
-It depends on the platform's OCR, not on the translator. On **Android** Veliq bundles the **ML Kit Latin** recogniser (`en`, `de`, `fr`, `es`, `it`, `pt`, `nl`, `tr`); Arabic/Persian, Cyrillic and CJK need separate ML Kit models, so Settings shows those languages disabled. On **macOS/iOS** the list comes from **Apple Vision** at runtime (`VNRecognizeTextRequest.supportedRecognitionLanguages()`), so a language is offered only if that macOS/iOS version can read it. Auto-detect is always available as the source. See D-018 in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+It depends on the platform's OCR, not on the translator. On **Android** Veliq bundles two engines: **ML Kit Latin** (`en`, `de`, `fr`, `es`, `it`, `pt`, `nl`, `tr`) and **Tesseract** for the scripts ML Kit has no model for — Persian, Arabic and Russian (`fas`, `ara`, `rus`). Both run offline; the image never leaves the device. Chinese, Japanese and Korean are still macOS/iOS-only, so Settings shows those disabled on Android. On **macOS/iOS** the list comes from **Apple Vision** at runtime (`VNRecognizeTextRequest.supportedRecognitionLanguages()`), so a language is offered only if that macOS/iOS version can read it. Auto-detect is always available as the source. See D-018 in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 </details>
 
 ## 💻 Development Environment

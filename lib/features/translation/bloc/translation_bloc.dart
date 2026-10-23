@@ -126,10 +126,10 @@ class TranslationBloc {
 
     final name = LanguageCatalog.displayName(targetLanguage);
     return "The translation came back without any $name text, so the photo was "
-        'probably misread rather than mistranslated. Veliq only reads Latin '
-        'script on Android, which is why Persian, Arabic, Russian, Chinese, '
-        'Japanese and Korean photos cannot be read there yet. Try a photo with '
-        'Latin text, or use the macOS or iOS app for those languages.';
+        'probably misread rather than mistranslated. Choose the language of the '
+        'photo in Settings (Android can read Persian, Arabic and Russian when '
+        'you pick the language explicitly, and Chinese, Japanese and Korean '
+        'only on macOS/iOS), or try a photo with clearly framed text.';
   }
 
   void dispose() {

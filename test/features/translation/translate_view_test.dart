@@ -738,10 +738,13 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Try again'), findsOneWidget);
-      // Android's ML Kit model is Latin-only, so the guidance must say that
-      // rather than blame the photo (T-161).
-      expect(find.textContaining('reads Latin script only'), findsOneWidget);
-      expect(find.textContaining('Persian, Arabic, Russian'), findsOneWidget);
+      // Android reads Latin by default, so the guidance must point at the
+      // language choice instead of blaming the photo (T-161, T-163).
+      expect(find.textContaining('readable'), findsOneWidget);
+      expect(
+        find.textContaining('choose that language in Settings'),
+        findsOneWidget,
+      );
       expect(find.textContaining('region'), findsNothing);
     }, variant: TargetPlatformVariant.only(TargetPlatform.android));
   });

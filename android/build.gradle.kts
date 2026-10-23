@@ -2,6 +2,9 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        // Tesseract4Android (the non-Latin OCR engine, T-163) is published on
+        // JitPack only. Scoped to this project; no other dependency uses it.
+        maven { url = uri("https://jitpack.io") }
     }
 }
 

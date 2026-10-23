@@ -27,3 +27,8 @@
 -dontwarn com.google.mlkit.**
 -dontwarn com.google.android.gms.**
 -dontwarn com.google.android.libraries.vision.**
+
+# Tesseract (T-163) reaches its native engine through JNI, so the Java face of
+# the library must keep its names and members.
+-keep class com.googlecode.tesseract.android.** { *; }
+-dontwarn com.googlecode.tesseract.android.**

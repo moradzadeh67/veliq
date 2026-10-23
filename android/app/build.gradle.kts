@@ -89,4 +89,16 @@ dependencies {
     // the model ships inside the APK (~4MB per ABI) and runs offline; the
     // alternative play-services variant downloads the model at first run.
     implementation("com.google.mlkit:text-recognition:16.0.1")
+
+    // Tesseract (T-163) reads the scripts ML Kit does not ship: Persian/Arabic,
+    // Cyrillic, CJK. The traineddata files are bundled as assets, so it runs
+    // offline like ML Kit and never uploads the image.
+    implementation("com.github.adaptech-cz:tesseract4android:4.9.0") {
+        // JitPack's POM pulls the OpenMP variant as well, which duplicates every
+        // class and native library. One engine is enough.
+        exclude(
+            group = "com.github.adaptech-cz.tesseract4android",
+            module = "tesseract4android-openmp",
+        )
+    }
 }

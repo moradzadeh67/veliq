@@ -2,6 +2,7 @@ package com.moradzadeh67.veliq
 
 import android.Manifest
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -16,6 +17,7 @@ import com.google.android.gms.tasks.Tasks
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import com.googlecode.tesseract.android.TessBaseAPI
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import kotlinx.coroutines.CompletableDeferred
@@ -39,7 +41,7 @@ class MainActivity : FlutterActivity() {
 
         // Only the two APIs the Android flow uses are registered (D-016).
         ImageSourceApi.setUp(messenger, AndroidImageSourceApi())
-        OcrApi.setUp(messenger, MlKitOcrApi())
+        OcrApi.setUp(messenger, AndroidOcrApi(applicationContext))
     }
 
     override fun onRequestPermissionsResult(
@@ -163,32 +165,130 @@ class MainActivity : FlutterActivity() {
     }
 }
 
-/// On-device Latin OCR (T-136). The image stays in memory: JPEG bytes ->
-/// [Bitmap] -> [InputImage]; nothing is written to disk, logs or the network.
-/// The bundled ML Kit model recognizes Latin-script text; Arabic/Persian,
-/// Cyrillic and CJK need separate ML Kit dependencies (D-018).
-private class MlKitOcrApi : OcrApi {
-    private val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+/// On-device OCR for Android (T-136, T-163).
+///
+/// Two engines, because no single one covers the languages Veliq offers:
+///  * **ML Kit** ships a bundled Latin model (`en, de, fr, es, it, pt, nl, tr`)
+///    and needs no download — it stays the default.
+///  * **Tesseract** reads what ML Kit has no model for: Persian/Arabic
+///    (`fas`, `ara`) and Cyrillic (`rus`). Its traineddata files are bundled as
+///    assets and copied to app storage on first use, so it runs offline too.
+///
+/// The image stays in memory: JPEG bytes -> [Bitmap] -> engine; nothing is
+/// written to disk, logged or sent anywhere.
+private class AndroidOcrApi(private val context: Context) : OcrApi {
+    private val latinRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
 
-    /// [languageHint] is ignored on purpose: only one Latin recognizer is
-    /// bundled, so it already reads every language in [supportedLanguages].
+    private var tesseract: TessBaseAPI? = null
+    private var tesseractLanguage: String? = null
+
     override suspend fun recognizeText(imageBytes: ByteArray, languageHint: String?): String? =
         withContext(Dispatchers.IO) {
             val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
                 ?: throw IllegalArgumentException(
                     "Could not read the image (invalid or corrupt image data).",
                 )
-            val result = try {
-                Tasks.await(recognizer.process(InputImage.fromBitmap(bitmap, 0)))
-            } catch (e: Exception) {
-                // Surface a readable message through Pigeon instead of a raw
-                // ML Kit stack trace; the Dart side shows it as the failure state.
-                throw IllegalStateException("On-device text recognition failed: ${e.message}", e)
+
+            val hint = languageHint?.lowercase()
+            val tesseractForHint = hint?.let { TESSERACT_LANGUAGES[it] }
+            if (tesseractForHint != null) {
+                return@withContext tesseract(bitmap, tesseractForHint)
             }
-            result.text.ifEmpty { null }
+
+            val latin = latin(bitmap)
+            if (latin != null) return@withContext latin
+
+            // Auto-detect on a photo ML Kit could not read at all: try the
+            // non-Latin scripts we bundle. Slower, so only as a fallback.
+            tesseract(bitmap, FALLBACK_LANGUAGE)
         }
 
-    /// Scripts the bundled Latin recognizer reads (D-018).
+    private suspend fun latin(bitmap: Bitmap): String? {
+        val result = try {
+            Tasks.await(latinRecognizer.process(InputImage.fromBitmap(bitmap, 0)))
+        } catch (e: Exception) {
+            // Surface a readable message through Pigeon instead of a raw ML Kit
+            // stack trace; the Dart side shows it as the failure state.
+            throw IllegalStateException(
+                "On-device text recognition failed: ${e.message}",
+                e,
+            )
+        }
+        return result.text.ifEmpty { null }
+    }
+
+    @Synchronized
+    private fun tesseract(bitmap: Bitmap, language: String): String? {
+        val engine = try {
+            tesseractFor(language)
+        } catch (e: Exception) {
+            throw IllegalStateException(
+                "On-device text recognition failed: ${e.message}",
+                e,
+            )
+        }
+
+        return try {
+            engine.setImage(bitmap)
+            engine.getUTF8Text()?.trim()?.ifEmpty { null }
+        } finally {
+            engine.clear()
+        }
+    }
+
+    /// One engine per language string; re-initialising for every photo would
+    /// re-read the traineddata each time.
+    private fun tesseractFor(language: String): TessBaseAPI {
+        tesseract?.let { existing ->
+            if (tesseractLanguage == language) return existing
+            existing.recycle()
+        }
+
+        copyTrainedData(language)
+        val engine = TessBaseAPI()
+        val dataPath = tesseractRoot().absolutePath
+        if (!engine.init(dataPath, language)) {
+            engine.recycle()
+            throw IllegalStateException("Could not load the $language OCR data.")
+        }
+        engine.pageSegMode = TessBaseAPI.PageSegMode.PSM_AUTO
+        tesseract = engine
+        tesseractLanguage = language
+        return engine
+    }
+
+    private fun tesseractRoot() = File(context.filesDir, "tesseract")
+
+    /// Tesseract reads `tessdata/*.traineddata` from real files, not assets.
+    private fun copyTrainedData(language: String) {
+        val dir = File(tesseractRoot(), "tessdata")
+        if (!dir.exists() && !dir.mkdirs()) {
+            throw IllegalStateException("Could not create the OCR data folder.")
+        }
+        for (code in language.split("+")) {
+            val target = File(dir, "$code.traineddata")
+            if (target.length() > 0) continue
+            context.assets.open("tessdata/$code.traineddata").use { input ->
+                target.outputStream().use { output -> input.copyTo(output) }
+            }
+        }
+    }
+
+    /// Languages Veliq can read on Android (D-018). ML Kit Latin plus the
+    /// Tesseract scripts that are bundled; CJK is not bundled yet, so those
+    /// stay disabled in Settings.
     override suspend fun supportedLanguages(): List<String> =
-        listOf("en", "de", "fr", "es", "it", "pt", "nl", "tr")
+        listOf("en", "de", "fr", "es", "it", "pt", "nl", "tr", "fa", "ar", "ru")
+
+    private companion object {
+        /// Source language -> Tesseract language code.
+        val TESSERACT_LANGUAGES = mapOf(
+            "fa" to "fas",
+            "ar" to "ara",
+            "ru" to "rus",
+        )
+
+        /// Tried when the source is `auto` and ML Kit read nothing at all.
+        const val FALLBACK_LANGUAGE = "rus+fas+ara"
+    }
 }
