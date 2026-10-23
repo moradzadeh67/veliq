@@ -524,6 +524,24 @@ void main() {
       expect(find.text('سلام دنیا'), findsOneWidget);
     }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
 
+    testWidgets('cancelling the picker returns to the idle screen (T-124)', (
+      tester,
+    ) async {
+      imageSourceService.galleryBytes = null;
+
+      await pump(tester);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Pick image'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.textContaining('Select a region of the screen'),
+        findsOneWidget,
+      );
+      expect(find.text('Pick image'), findsOneWidget);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
+
     testWidgets('Take photo runs the pipeline with camera bytes', (
       tester,
     ) async {

@@ -459,11 +459,12 @@ class _GoogleApiKeyFieldState extends State<_GoogleApiKeyField> {
             )
           else
             Text(
-              // Android keeps the key in flutter_secure_storage (encrypted),
-              // not in the platform preferences (T-138).
+              // Android keeps the key in flutter_secure_storage (encrypted,
+              // T-138); Apple platforms use the Keychain (D-009). Neither is
+              // the plain preferences store, so say where it really lives.
               defaultTargetPlatform == TargetPlatform.android
                   ? 'Stored securely in an encrypted store on this device.'
-                  : "Stored locally in this Mac's app preferences.",
+                  : "Stored in this device's Keychain.",
               style: theme.textTheme.bodySmall,
             ),
         ],

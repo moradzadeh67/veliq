@@ -2,13 +2,15 @@
 
 Active: **T-124 — manual review on the iOS simulator** (the last open verification task; P15 is DONE).
 
-Status: OPEN — blocked on hardware. The bundled `Simulator.app` on the owner's Mac is broken (unsigned
-binary that exits immediately; no Simulator.app inside Xcode.app either), so no UI-driven verification is
-possible on this machine. Remaining checks: cancel path, revoked-permission message, history across an app
-restart, and now also the first real iOS OCR run (gallery image → Vision → translate, added by T-153).
-`idb` / `idb-companion` was evaluated as a headless alternative on 2026-10-16 and dropped (no longer
-published in Homebrew). The owner decided to leave T-124 until a repaired simulator or a physical device
-is available. Camera capture stays device-only (T-118 dropped).
+Status: OPEN (partial, owner-side only). Xcode 27 replaced `Simulator.app` with **Device Hub**, which is
+why the old "broken simulator" diagnosis was wrong; Device Hub runs, but it exposes no windows to System
+Events and `osascript` has no assistive access here, so scripted taps are impossible. Headless proof on
+2026-10-23: the current build installs, launches and shows the bottom navigation bar on the iOS 26.5
+iPhone 17 Pro Max simulator. The three residual checks now have automated equivalents (picker cancel at
+app level, permission message is moot with `PHPickerViewController`, history round-trip tests); what is
+left for the owner is tapping the native picker's Cancel and a short visual pass. The first iOS OCR run
+(Vision, added by T-153) was confirmed by the owner on all three platforms on 2026-10-23. Camera capture
+stays device-only (T-118 dropped).
 
 ## What P15 (2026-10-23) delivered
 
@@ -37,7 +39,7 @@ P15 "Multi-language input" is DONE on branch `p15-multi-language` (not pushed). 
   machine, so `validateSigningRelease` fails. The T-153 smoke APK was built with the debug key (by moving
   `android/key.properties` aside temporarily). Recover the keystore from the documented backup
   (`~/Desktop/Veliq-upload-key.zip`) before any further release.
-- History rows still print raw codes (`EN → FA`) in the *list*; the translate-result labels and the stored entry now use the detected language (T-157).
+- ~~History rows print raw codes (`EN → FA`)~~ — fixed by T-158 together with the Keychain wording.
 
 Earlier work through T-129 is committed; P12 shipped in `82cbb9c`; the README/docs pass in `9db21b3`; P13
 (T-140) in `fa7a2e9` + `5e65b53`; P14 (T-141) ships in the v1.0.1 release; P15 (T-150…T-156) on branch

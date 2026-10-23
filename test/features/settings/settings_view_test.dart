@@ -470,6 +470,30 @@ void main() {
     });
   });
 
+  group('Key storage copy', () {
+    late FakeSettingsRepository repository;
+    late SettingsBloc bloc;
+
+    setUp(() {
+      repository = FakeSettingsRepository();
+      bloc = SettingsBloc(settingsRepository: repository);
+    });
+
+    tearDown(() {
+      bloc.dispose();
+    });
+
+    testWidgetsMac('names the Keychain, not the app preferences', (
+      tester,
+    ) async {
+      await _pumpView(tester, bloc);
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining("this device's Keychain"), findsOneWidget);
+      expect(find.textContaining('app preferences'), findsNothing);
+    });
+  });
+
   group('SettingsView Android Copy Tests (T-138)', () {
     late FakeSettingsRepository repository;
     late SettingsBloc bloc;

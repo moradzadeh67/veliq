@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../models/language.dart';
 import '../../models/translation_entry.dart';
 import 'bloc/history_bloc.dart';
 import 'bloc/history_state.dart';
@@ -146,8 +147,8 @@ class _HistoryTile extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '${entry.sourceLanguage.toUpperCase()} → '
-            '${entry.targetLanguage.toUpperCase()} · '
+            '${LanguageCatalog.displayName(entry.sourceLanguage)} → '
+            '${LanguageCatalog.displayName(entry.targetLanguage)} · '
             '${_formatTimestamp(entry.createdAt)}',
             style: theme.textTheme.labelSmall,
           ),

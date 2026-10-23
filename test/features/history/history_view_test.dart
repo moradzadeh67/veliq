@@ -26,12 +26,16 @@ class FakeHistoryRepository implements HistoryRepository {
   Future<void> clear() async => entries.clear();
 }
 
-TranslationEntry _entry(String id) => TranslationEntry(
+TranslationEntry _entry(
+  String id, {
+  String sourceLanguage = 'en',
+  String targetLanguage = 'fa',
+}) => TranslationEntry(
   id: id,
   originalText: 'Hello $id',
   translatedText: 'سلام $id',
-  sourceLanguage: 'en',
-  targetLanguage: 'fa',
+  sourceLanguage: sourceLanguage,
+  targetLanguage: targetLanguage,
   createdAt: DateTime(2024, 1, 1),
 );
 
@@ -81,8 +85,22 @@ void main() {
       await _pumpView(tester, bloc);
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('EN → FA'), findsOneWidget);
+      expect(find.textContaining('English → Persian'), findsOneWidget);
       expect(find.textContaining('2024-01-01 00:00'), findsOneWidget);
+    });
+
+    testWidgets('an auto-detected entry shows the real source language', (
+      tester,
+    ) async {
+      repository.entries.add(
+        _entry('1', sourceLanguage: 'fr', targetLanguage: 'fa'),
+      );
+
+      await _pumpView(tester, bloc);
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('French → Persian'), findsOneWidget);
+      expect(find.textContaining('FR →'), findsNothing);
     });
 
     testWidgets('translated text is rendered right-to-left', (tester) async {
