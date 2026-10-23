@@ -139,7 +139,7 @@ Veliq is designed with first-class Persian (Farsi) localization:
 - [x] **P6 — Polish & Release Setup:** Shortcuts & error handling
 - [x] **P7 — iOS Research:** Mobile native capabilities
 - [x] **P8 — iOS Image Input:** PHPicker & Camera handlers
-- [ ] **P9 — iOS UI & Storage:** code complete (navigation bar, SafeArea, storage). The remaining manual checks are **blocked on the dev machine**: no Apple `Simulator.app` is installed (the copy in `~/Applications` is a non-functional shim) and there is no physical iPhone, so the cancel path, the revoked-permission message and history-across-restart are still unverified.
+- [x] **P9 — iOS UI & Storage:** navigation bar, SafeArea, storage. The manual review (T-124) closed on 2026-10-23 on the iOS 26.5 iPhone simulator: picker cancel, history across restarts and the first Vision OCR run all verified (Xcode 27 ships Device Hub instead of `Simulator.app`). Camera capture stays device-only.
 - [x] **P10 — Branding & Icons:** App icons & branding assets
 - [ ] **P11 — Shortcuts:** System-wide capture hotkey
 - [x] **P12 — Android v1:** Photo Picker, Camera, ML Kit OCR & Keystore

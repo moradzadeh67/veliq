@@ -30,8 +30,12 @@ MIT (see LICENSE). The repository is public, has a description, 16 topics and a 
 
 - **Upload key**: `Veliq-upload.jks` (PKCS12, alias `veliq`, RSA 2048, validity 10000 days).
   It lives **outside the repository** at `~/Desktop/Veliq-upload-key/Veliq-upload.jks` on the owner's
-  machine; a complete backup (keystore + `key.properties` + the passwords, documented in a README)
-  is the zipped folder `~/Desktop/Veliq-upload-key.zip`.
+  machine, together with a zipped copy of that folder and a README describing how it is wired.
+- **Passwords**: they are **not** in the repository, in this documentation, in the backed-up folder or
+  in its README/zip. On the owner's machine they live only in the macOS Keychain as generic passwords
+  under the service name `Veliq Android upload keystore` (accounts `storePassword` and `keyPassword`);
+  `android/key.properties` is the only file that materialises them for Gradle. Read one with
+  `security find-generic-password -s "Veliq Android upload keystore" -a storePassword -w`.
 - **Wiring**: `android/key.properties` (git-ignored — present in both `.gitignore` files) points Gradle
   at the keystore. `android/app/build.gradle.kts` reads it when it exists and otherwise falls back to
   the **debug** signing config, so a fresh clone still builds.
@@ -45,8 +49,9 @@ MIT (see LICENSE). The repository is public, has a description, 16 topics and a 
   `app-arm64-v8a-release.apk` (31.7 MB), `app-armeabi-v7a-release.apk` (24.8 MB) and
   `app-x86_64-release.apk` (33.7 MB). All are
   git-ignored build output; the AAB and the per-ABI APKs are attached to the GitHub release.
-- **Never** commit the keystore, `key.properties` or the passwords. Losing the upload key means no
-  further updates for `com.moradzadeh67.veliq`.
+- **Never** commit the keystore, `key.properties` or the passwords — and never copy them into docs,
+  issues, release notes, CI logs or any cloud service. Losing the upload key means no further updates
+  for `com.moradzadeh67.veliq`; treating the passwords as portable is what leaks them.
 
 
 ## Android release build notes: R8 / ProGuard (2026-10-16)
@@ -137,12 +142,10 @@ Also outstanding for the user: GitHub repository **About/Topics** (browser), ite
 1. Item 8 above (clean-machine / separate-user-account permission verification) — user's task.
 2. ~~GitHub repository About/Topics~~ — **DONE 2026-10-16**: description + 16 topics set, homepage
    points at the Pages site.
-3. **iOS**: the T-124 remainder on the simulator (cancel path, revoked-permission message, history
-   across restart). Navigation, screens and the gallery picker are simulator-verified (2026-10-14);
-   camera capture is device-only (no device in scope, T-118 dropped). On the owner's current Mac the
-   bundled `Simulator.app` is broken (unsigned binary, exits immediately), so this stays open until a
-   repaired simulator or a physical device is available. A headless alternative (`idb`) was evaluated on
-   2026-10-16 and dropped as well: `idb-companion` is no longer published in Homebrew.
+3. ~~**iOS**: the T-124 remainder on the simulator~~ — **DONE 2026-10-23**: cancel path, history across
+   restart and the first Vision OCR run verified on the iOS 26.5 iPhone simulator (Xcode 27 ships
+   **Device Hub** instead of `Simulator.app`; the earlier "broken simulator" diagnosis was wrong).
+   Camera capture stays device-only (T-118 dropped) and has never been run on a physical iPhone.
 
 ## Released
 - `v1.1.0` (2026-10-23): multi-language input — 14-language source catalog with Auto-detect, per-platform

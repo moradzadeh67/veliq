@@ -392,6 +392,12 @@ Order: T-150 -> T-151 -> T-152 -> T-153 -> T-154 -> T-155 -> T-156.
 - Done when: iOS and Android say "this device", macOS keeps "this Mac"; analyze + tests green.
 - Status: DONE (2026-10-23) — the branch is now `isMac` vs everything else; an iOS-variant test asserts "this device" and no "this Mac". Screenshot on the iPhone 17 Pro Max simulator confirms the fixed line.
 
+### T-160 · [M] Prepare release 1.1.0+3
+- Files: pubspec.yaml, CHANGELOG.md, PROJECT_SPEC.md, README.md, docs/RELEASE.md, release_notes_1.1.0.md, TASKS.md, CURRENT_TASK.md
+- Do: Ship multi-language input as 1.1.0. Bump the version, write the changelog (1.1.0/1.0.1/1.0.0), bring `PROJECT_SPEC.md` in line with the delivered behaviour (source-language selection is no longer deferred), update the README/RELEASE status and asset names, build and verify the release artifacts with the upload key (D-017), write the user-facing notes. The owner tags and publishes.
+- Done when: version is 1.1.0+3; analyze + tests green; appbundle + per-ABI APKs signed with the upload key and checksummed; release smoke test on the emulator clean; docs and notes match what ships.
+- Status: DONE (2026-10-23) — branch `release-1.1.0` (not pushed). `app-release.aab` 66.5 MB, `app-arm64-v8a-release.apk` 31.7 MB, `app-armeabi-v7a-release.apk` 24.8 MB, `app-x86_64-release.apk` 33.7 MB, each with a `.sha256`; `apksigner verify` reports `verified` with `SHA-256 1332bc480e4fac26acab2ad82db950501dc9643604af2e0429b28668c1a651af` on all three APKs. D-017 smoke test on `Pixel_10_Pro_XL`: the old debug-signed build had to be uninstalled first (`INSTALL_FAILED_UPDATE_INCOMPATIBLE` — proof the new APK carries the upload key), then a fresh install, launch, 10 s, zero `FATAL EXCEPTION`/`E AndroidRuntime`; `versionName=1.1.0`. 244/244 tests, analyze clean.
+
 ### Not in P15 (recorded, not scheduled)
 - **Offline translation:** only via a future research task with a quality gate — blind comparison against Gemini on ~50 real sentences, owner sets the threshold; if it fails, no offline engine ships. Note: Apple Translation has no Persian, and ML Kit Translate model downloads come from Google servers (may be unreachable from Iran).
 - **Persian (Arabic-script) OCR on Android** and **ML Kit CJK/Devanagari recognizers** (extra dependencies, APK size): separate task after P15, informed by the supported-language data.

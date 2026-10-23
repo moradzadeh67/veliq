@@ -1,22 +1,11 @@
-# CURRENT_TASK.md
+Active: **release 1.1.0+3 (T-160)** — branch `release-1.1.0`. Everything else in P15 and the iOS
+manual review is closed. The owner publishes (tag + GitHub release); nothing has been pushed yet.
 
-Active: **T-124 — manual review on the iOS simulator** (the last open verification task; P15 is DONE).
-
-Status: OPEN (partial, owner-side only). Xcode 27 replaced `Simulator.app` with **Device Hub**, which is
-why the old "broken simulator" diagnosis was wrong; Device Hub runs, but it exposes no windows to System
-Events and `osascript` has no assistive access here, so scripted taps are impossible. Proof on
-2026-10-23: the current build installs, launches and shows the bottom navigation bar on the iOS 26.5
-iPhone 17 Pro Max simulator; the container's `history.json` kept three real translations across relaunches
-with the detected codes `fr`/`ru`/`de`, and History + Settings were rendered on-device from real storage
-(History shows `French → Persian`, Settings the Keychain line). The visual pass also found and fixed the
-last "this Mac" leak (T-159). The picker cancel is covered at app level and the permission message is moot
-with `PHPickerViewController`; what is left for the owner is tapping Cancel in the native picker. The first iOS OCR run
-(Vision, added by T-153) was confirmed by the owner on all three platforms on 2026-10-23. Camera capture
-stays device-only (T-118 dropped).
+Status: OPEN — only the owner's real-device check and the publish commands remain (see "Open items").
 
 ## What P15 (2026-10-23) delivered
 
-P15 "Multi-language input" is DONE on branch `p15-multi-language` (not pushed). Summary:
+P15 "Multi-language input" is DONE and merged to `main` (2026-10-23). Summary:
 
 - `lib/models/language.dart`: `Language` + `LanguageCatalog` — 14 ISO 639-1 codes plus the source-only
   pseudo-code `auto`; `AppSettings.defaultSourceLanguage` is now `auto` (no migration; a stored choice is
@@ -32,17 +21,38 @@ P15 "Multi-language input" is DONE on branch `p15-multi-language` (not pushed). 
   as a hint and the Gemini prompt now uses language names (Apple + `auto` is refused with a readable error).
 - `tool/gen_pigeon.sh` + a CI step that fails when the generated files are stale.
 
-## Open items after P15
+## Release 1.1.0 (2026-10-23)
 
-- **T-124** (above) — including the first iOS OCR run.
-- `PROJECT_SPEC.md` still lists "source language selection, other target languages" under *Post-MVP
-  (deferred)*; that wording predates P15 and was left untouched by T-156.
-- **Upload keystore missing** (2026-10-23): `~/Desktop/Veliq-upload-key/Veliq-upload.jks` is not on this
-  machine, so `validateSigningRelease` fails. The T-153 smoke APK was built with the debug key (by moving
-  `android/key.properties` aside temporarily). Recover the keystore from the documented backup
-  (`~/Desktop/Veliq-upload-key.zip`) before any further release.
-- ~~History rows print raw codes (`EN → FA`)~~ — fixed by T-158 together with the Keychain wording.
+Prepared on branch `release-1.1.0`, not pushed. `pubspec.yaml` is `1.1.0+3`; `CHANGELOG.md` is new
+(1.1.0 / 1.0.1 / 1.0.0); `PROJECT_SPEC.md`, `README.md` and `docs/RELEASE.md` match the shipped
+behaviour; `release_notes_1.1.0.md` holds the user-facing notes. Artifacts (git-ignored) built from this
+branch and signed with the upload key — verified `SHA-256 1332bc48…a651af`:
+
+| Artifact | Size |
+|---|---|
+| `build/app/outputs/bundle/release/app-release.aab` | 66.5 MB |
+| `app-arm64-v8a-release.apk` | 31.7 MB |
+| `app-armeabi-v7a-release.apk` | 24.8 MB |
+| `app-x86_64-release.apk` | 33.7 MB |
+
+Each has a `.sha256` next to it. D-017 smoke test on `Pixel_10_Pro_XL` (arm64-v8a): uninstall of the old
+debug-signed build, fresh install, launch, 10 s, zero `FATAL EXCEPTION`. `flutter analyze` clean,
+244/244 tests.
+
+## Open items
+
+- **Owner: real-device check** — install `app-arm64-v8a-release.apk` on a physical Android phone, pick a
+  gallery photo, OCR → Gemini translate, check the result card and History.
+- **Owner: publish** — merge `release-1.1.0` into `main`, tag `v1.1.0`, create the GitHub release with the
+  four artifacts + their `.sha256` files (commands in the session log / `docs/RELEASE.md`).
+- **iOS camera** — untested on a physical iPhone (device-only, T-118 dropped).
+- `PROJECT_SPEC.md` is up to date since T-160; the earlier "source language selection is deferred"
+  wording is gone.
+- **Upload keystore** — restored 2026-10-23 (`~/Desktop/Veliq-upload-key/Veliq-upload.jks`); the release
+  build signs with it. The passwords live only in the macOS Keychain (service
+  `Veliq Android upload keystore`) and must never be copied into the repository, docs or any cloud.
 
 Earlier work through T-129 is committed; P12 shipped in `82cbb9c`; the README/docs pass in `9db21b3`; P13
-(T-140) in `fa7a2e9` + `5e65b53`; P14 (T-141) ships in the v1.0.1 release; P15 (T-150…T-156) on branch
-`p15-multi-language`.
+(T-140) in `fa7a2e9` + `5e65b53`; P14 (T-141) ships in the v1.0.1 release; P15 (T-150…T-157) merged to
+`main` in `0b83dbb`; T-158 `0b83dbb`, T-159 `9149523`, T-124 closed in `8ed21f1`; release prep on
+`release-1.1.0` (`b1a4b24`, `8bae5e2`).
