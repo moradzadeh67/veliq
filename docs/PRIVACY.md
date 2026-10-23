@@ -12,7 +12,7 @@ as long as possible.
 Target flow:
 macOS:   screen region -> local capture -> local OCR -> extracted text -> translation provider (text only) -> result
 iOS:     picked/taken photo -> local OCR -> extracted text -> translation provider (text only) -> result
-Android: picked/taken photo -> local OCR (ML Kit, Latin script) -> extracted text -> Gemini (text only) -> result
+Android: picked/taken photo -> local OCR (ML Kit Latin, or Tesseract for fa/ar/ru) -> extracted text -> Gemini (text only) -> result
          (Android v1 has Gemini only — the text always leaves the device when translating)
 
 ## Screen content
@@ -48,8 +48,12 @@ On Android v1 the user supplies the image; there is no region selection.
 
 ## OCR
 - Preferred: Apple Vision, local processing, no network for the OCR stage.
-- Android: the bundled ML Kit Latin recognizer (`com.google.mlkit:text-recognition`), also
-  local processing with no network for the OCR stage (D-016). Latin script only for now.
+- Android: **two bundled, offline engines** — ML Kit Latin (`com.google.mlkit:text-recognition`)
+  for `en, de, fr, es, it, pt, nl, tr` and Tesseract with the `fas`, `ara` and `rus` traineddata
+  files for Persian, Arabic and Russian (D-016, T-163). Both run in-process, need no network, and
+  are the only addition: nothing is downloaded, nothing is uploaded, and the traineddata files are
+  read-only assets copied into the app's private storage on first use. Chinese, Japanese and Korean
+  are not bundled, so those languages stay unavailable on Android.
 - The OCR service returns text and relevant metadata and does not retain the source image unnecessarily.
 
 ## Translation
