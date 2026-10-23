@@ -38,10 +38,12 @@ MIT (see LICENSE). The repository is public, has a description, 16 topics and a 
 - **Certificate** (verified with `apksigner verify --print-certs`):
   `CN=Mohammadreza Moradzadeh, OU=Mobile, O=Veliq, C=IR`,
   SHA-256 `1332bc480e4fac26acab2ad82db950501dc9643604af2e0429b28668c1a651af`.
-- **Artifacts**: `flutter build appbundle --release` → `build/app/outputs/bundle/release/app-release.aab`;
+- **Artifacts**: `flutter build appbundle --release` → `build/app/outputs/bundle/release/app-release.aab`
+  (1.1.0: 66.5 MB);
   `flutter build apk --release` → `build/app/outputs/flutter-apk/app-release.apk` (universal, v1.0.x
   releases); from 1.1.0 `flutter build apk --release --split-per-abi` →
-  `app-arm64-v8a-release.apk`, `app-armeabi-v7a-release.apk` and `app-x86_64-release.apk`. All are
+  `app-arm64-v8a-release.apk` (31.7 MB), `app-armeabi-v7a-release.apk` (24.8 MB) and
+  `app-x86_64-release.apk` (33.7 MB). All are
   git-ignored build output; the AAB and the per-ABI APKs are attached to the GitHub release.
 - **Never** commit the keystore, `key.properties` or the passwords. Losing the upload key means no
   further updates for `com.moradzadeh67.veliq`.
