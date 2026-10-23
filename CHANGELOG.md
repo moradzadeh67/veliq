@@ -5,18 +5,7 @@ All notable changes to Veliq are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Added
-- **Android can read Persian, Arabic and Russian.** ML Kit ships no model for those scripts, so Android
-  now bundles Tesseract as a second on-device engine (`fas`, `ara`, `rus`). Choose the language in
-  Settings and pick a photo: it runs offline, the image never leaves the device, and auto-detect still
-  tries the Latin model first (T-163).
-
-### Changed
-- The "no text found" guidance points at the language choice instead of blaming the photo.
-
-## [1.1.0] - 2026-10-23
+## [1.1.0] - 2026-10-24
 
 ### Added
 - **Multi-language source input.** The source language is now a choice from a 14-language catalog
@@ -31,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   language it recognised, so the result card reads `Original (French)` and History records
   `French → Persian` instead of a generic "Auto-detect" (T-157). An explicit source choice always wins.
 - **Language names in History** instead of raw ISO codes (`English → Persian`, not `EN → FA`) (T-158).
+- **Android reads Persian, Arabic and Russian.** ML Kit ships no model for those scripts, so Android
+  bundles Tesseract as a second on-device engine (`fas`, `ara`, `rus` models, ~5.6 MB). Choose the
+  language in Settings and pick a photo: it runs offline, the image never leaves the device, and
+  auto-detect still tries the Latin model first (T-163).
 - A Pigeon regeneration script (`tool/gen_pigeon.sh`) and a CI step that fails when the generated
   bindings are stale.
 
@@ -39,6 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   refused with a readable message when the source is Auto-detect, because it needs a concrete language
   (T-154).
 - Settings warns when the source and target languages are the same.
+- On Android the "no text found" guidance points at the language choice (Latin by default, Persian,
+  Arabic and Russian when picked explicitly) instead of blaming the photo.
 
 ### Fixed
 - Settings said the Gemini API key was stored in "this Mac's app preferences" although it lives in the

@@ -1,7 +1,7 @@
 # Veliq — Release and Distribution
 
 ## Status
-Active as of 2026-10-23: the public GitHub releases ship a **signed** Android APK — `v1.1.0` (current:
+Active as of 2026-10-24: the public GitHub releases ship a **signed** Android APK — `v1.1.0` (current:
 multi-language input), `v1.0.1` (Android release-build hotfix) and `v1.0.0` (first release). License:
 MIT (see LICENSE). The repository is public, has a description, 16 topics and a GitHub Pages site
 (https://moradzadeh67.github.io/veliq/).
@@ -148,7 +148,7 @@ Also outstanding for the user: GitHub repository **About/Topics** (browser), ite
    Camera capture stays device-only (T-118 dropped) and has never been run on a physical iPhone.
 
 ## Released
-- `v1.1.0` (2026-10-23): multi-language input — 14-language source catalog with Auto-detect, per-platform
+- `v1.1.0` (2026-10-24): multi-language input — 14-language source catalog with Auto-detect, per-platform
   OCR capability query, an iOS Vision OCR backend, the source language Gemini detects shown in the result
   and History, and the Settings/iOS wording fixes. Per-ABI APKs (`.sha256` each) + AAB.
 - `v1.0.1` (2026-10-16): Android release-build hotfix — the missing `INTERNET` manifest permission and
