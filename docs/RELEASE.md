@@ -43,11 +43,11 @@ MIT (see LICENSE). The repository is public, has a description, 16 topics and a 
   `CN=Mohammadreza Moradzadeh, OU=Mobile, O=Veliq, C=IR`,
   SHA-256 `1332bc480e4fac26acab2ad82db950501dc9643604af2e0429b28668c1a651af`.
 - **Artifacts**: `flutter build appbundle --release` → `build/app/outputs/bundle/release/app-release.aab`
-  (1.1.0: 66.5 MB);
+  (1.1.0: 78.6 MB, which includes the bundled Tesseract models);
   `flutter build apk --release` → `build/app/outputs/flutter-apk/app-release.apk` (universal, v1.0.x
   releases); from 1.1.0 `flutter build apk --release --split-per-abi` →
-  `app-arm64-v8a-release.apk` (31.7 MB), `app-armeabi-v7a-release.apk` (24.8 MB) and
-  `app-x86_64-release.apk` (33.7 MB). All are
+  `app-arm64-v8a-release.apk` (41.9 MB), `app-armeabi-v7a-release.apk` (33.0 MB) and
+  `app-x86_64-release.apk` (44.3 MB). All are
   git-ignored build output; the AAB and the per-ABI APKs are attached to the GitHub release.
 - **Never** commit the keystore, `key.properties` or the passwords — and never copy them into docs,
   issues, release notes, CI logs or any cloud service. Losing the upload key means no further updates
