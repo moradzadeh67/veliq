@@ -124,6 +124,20 @@ class TranslateFlowBloc {
     // The pair is needed twice (OCR hint, then translator), so load it once.
     final settings = await _settingsRepository.load();
 
+    if (settings.sourceLanguage != LanguageCatalog.autoCode &&
+        settings.sourceLanguage == settings.targetLanguage) {
+      final name = LanguageCatalog.displayName(settings.sourceLanguage);
+      _emit(
+        TranslateFlowFailure(
+          stage: TranslateFlowStage.recognize,
+          message:
+              'Source and target language are both $name. Choose a different '
+              'language in Settings.',
+        ),
+      );
+      return;
+    }
+
     // Stage 2: OCR. The OcrBloc owns the "no text found" case. The source
     // language is a hint for the platform OCR: `auto` lets it detect the script.
     _emit(const TranslateFlowRecognizing());

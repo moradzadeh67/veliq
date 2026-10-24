@@ -468,7 +468,7 @@ Order: T-164 -> T-165 -> T-166 -> T-167.
   (`LanguageCatalog.displayName`). Correct the release-notes claim that Persian/Arabic/Russian are
   "read correctly" and add the handwriting/Fraktur limit to the known limits in both files.
 - Done when: analyze + tests green.
-- Status: TODO
+- Status: DONE (2026-10-24)
 
 ### T-167 · [S] Docs and acceptance
 - Files: docs/ARCHITECTURE.md, PROJECT_SPEC.md, TASKS.md, CURRENT_TASK.md, assets/diagrams/*.svg

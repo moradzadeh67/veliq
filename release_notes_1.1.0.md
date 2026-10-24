@@ -28,13 +28,11 @@ language it recognised, so the result card says `Original (French)` and History 
 
 - **Chinese, Japanese and Korean are not readable on Android yet** — those choices stay disabled there
   (their models would add several MB each). macOS and iOS read them through Apple Vision.
-- **Auto-detect on Android still starts with the Latin model.** A Persian, Arabic or Russian photo is
-  read correctly when you pick that language in Settings; on Auto-detect the Latin model may "read"
-  Cyrillic as look-alike Latin letters, and the app then tells you the photo was misread instead of
-  showing nonsense.
+- **Handwriting and complex scripts** — handwriting, Gothic/Fraktur fonts and heavily stylised text are frequently misread by both ML Kit and Tesseract; use printed, clearly framed text.
+- **Auto-detect on Android** — with confidence routing (P16), low-confidence ML Kit results automatically trigger the Tesseract fallback for Persian, Arabic and Russian. However, very low-quality or stylised photos may still be rejected as unreadable rather than showing gibberish.
 - **Apple's on-device translation needs a concrete source language**, so it cannot be combined with
   Auto-detect. Veliq tells you so in plain words instead of failing silently; switch to Google Gemini
-  for auto-detect.
+  or Google Translate for auto-detect.
 - **iOS camera capture has not been tested on a physical device** (only the gallery picker has been
   verified on the simulator).
 - The Android APKs are signed with the Veliq upload key; install them over a previous GitHub build of
