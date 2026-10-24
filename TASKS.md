@@ -479,3 +479,24 @@ Order: T-164 -> T-165 -> T-166 -> T-167.
   P16 DONE.
 - Done when: full acceptance reported — analyze, tests, `flutter build macos`, `flutter build ios --simulator --no-codesign`, `flutter build apk --release --split-per-abi` + FATAL check.
 - Status: DONE (2026-10-24)
+
+### T-168 · [M] Fix Tesseract fallback selection and unwrap OCR line breaks
+- Files: android/app/src/main/kotlin/com/moradzadeh67/veliq/MainActivity.kt,
+  android/app/src/test/kotlin/com/moradzadeh67/veliq/OcrRoutingTest.kt,
+  lib/services/google_translate_free_service.dart, test/services/google_translate_free_service_test.dart
+- Do: The on-device run flagged two defects. (1) `auto` compared raw mean confidences, so Tesseract's
+  3-character fragment @0.82 beat ML Kit's 71 correct characters @0.608 and the user was shown “۲۱۹”.
+  A Tesseract result is now a *candidate* only when
+  `tessLen >= max(10, ceil(0.3 * mlLen))`; a single candidate wins outright, otherwise the higher
+  confidence wins, and `MIN_ACCEPT` applies to the winner. Constants retuned from the measurements:
+  `ML_KIT_TRUST = 0.70`, `MIN_ACCEPT = 0.45` (handwriting 0.336/0.357/0.411 must be rejected, legible
+  text 0.469/0.608/0.730/0.81/0.84 accepted). The numbers-only `Log.d("VeliqOcr", …)` line also prints
+  `mlLen`, `tessLen` and whether Tesseract counted as a candidate — never recognised text.
+  (2) Google Translate got one line per visual OCR line and translated each as its own sentence
+  (“By pitching the tailfinishing…”), so `GoogleTranslateFreeService` rejoins hard-wrapped lines before
+  chunking: blank lines stay paragraph breaks (one `\n\n`), a line ending in `. ! ? : ; … ؟ ۔ » " ) ]`
+  keeps its break, a trailing `-` followed by a lowercase word is rejoined without the hyphen. Gemini
+  and Apple providers are unchanged.
+- Done when: analyze + Dart tests green (268), `:app:testDebugUnitTest` 12/12 including the seven
+  routing cases above, `flutter build apk --release --split-per-abi` succeeds.
+- Status: DONE (2026-10-24)

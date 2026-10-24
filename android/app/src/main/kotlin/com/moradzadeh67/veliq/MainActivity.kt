@@ -166,15 +166,38 @@ class MainActivity : FlutterActivity() {
     }
 }
 
+/// Which engine produced the accepted text (T-168).
+enum class OcrEngine { ML_KIT, TESSERACT, NONE }
+
 /// Result holder for confidence-based OCR routing.
 data class OcrResult(
     val text: String,
     val chosenConfidence: Float,
     val mlKitConfidence: Float,
     val tessConfidence: Float,
+    val engine: OcrEngine = OcrEngine.NONE,
+    val tessIsCandidate: Boolean = false,
 )
 
-/// Pure decision function for OCR confidence routing (T-165, D-021).
+/// How many characters a Tesseract result needs before it may compete with ML
+/// Kit: `max(MIN_TESS_TEXT_CHARS, ceil(TESS_MIN_COVERAGE * mlKitLength))`.
+///
+/// Tesseract reports the mean over whatever it happened to read, so a handful of
+/// confident characters can outscore a long, correct ML Kit reading (measured:
+/// 3 chars @0.82 beat 71 chars @0.608). Requiring a comparable amount of text
+/// keeps a fragment from winning the comparison.
+fun minTessTextLength(mlKitTextLength: Int): Int = maxOf(
+    AndroidOcrApi.MIN_TESS_TEXT_CHARS,
+    kotlin.math.ceil(AndroidOcrApi.TESS_MIN_COVERAGE * mlKitTextLength).toInt(),
+)
+
+/// Pure decision function for OCR confidence routing (T-165, T-168, D-021).
+///
+/// `auto` compares engine confidence only between *valid candidates*: ML Kit
+/// when it returned text, Tesseract when it returned at least
+/// [minTessTextLength] characters. A single candidate wins outright; with none,
+/// or with a winner below [AndroidOcrApi.MIN_ACCEPT], the result is empty and
+/// the Dart layer shows its readable "misread photo" error.
 fun chooseOcrResult(
     mlKitText: String,
     mlKitConf: Float,
@@ -183,30 +206,73 @@ fun chooseOcrResult(
     sourceLanguage: String,
 ): OcrResult {
     val isAuto = sourceLanguage.isEmpty() || sourceLanguage.equals("auto", ignoreCase = true)
+    val mlLen = mlKitText.trim().length
+    val tessLen = tessText.trim().length
+    val mlIsCandidate = mlLen > 0
+    // Only meaningful for `auto`; explicit Tesseract languages are never gated
+    // on coverage (their result is the only one available).
+    val tessIsCandidate = tessLen >= minTessTextLength(mlLen)
 
-    val (selectedText, selectedConf) = if (!isAuto) {
-        val isTesseractLanguage = AndroidOcrApi.TESSERACT_LANGUAGES.containsKey(sourceLanguage.lowercase())
-        if (isTesseractLanguage) {
-            tessText to tessConf
-        } else {
-            mlKitText to mlKitConf
+    val engine: OcrEngine
+    val text: String
+    val conf: Float
+    when {
+        !isAuto -> {
+            val isTesseractLanguage =
+                AndroidOcrApi.TESSERACT_LANGUAGES.containsKey(sourceLanguage.lowercase())
+            if (isTesseractLanguage) {
+                engine = OcrEngine.TESSERACT
+                text = tessText
+                conf = tessConf
+            } else {
+                engine = OcrEngine.ML_KIT
+                text = mlKitText
+                conf = mlKitConf
+            }
         }
-    } else {
-        if (mlKitConf >= AndroidOcrApi.ML_KIT_TRUST && mlKitText.isNotBlank()) {
-            mlKitText to mlKitConf
-        } else if (tessConf > mlKitConf && tessText.isNotBlank()) {
-            tessText to tessConf
-        } else {
-            mlKitText to mlKitConf
+        // Trusted ML Kit reading: the caller does not even run Tesseract.
+        mlIsCandidate && mlKitConf >= AndroidOcrApi.ML_KIT_TRUST -> {
+            engine = OcrEngine.ML_KIT
+            text = mlKitText
+            conf = mlKitConf
+        }
+        mlIsCandidate && tessIsCandidate -> {
+            if (tessConf > mlKitConf) {
+                engine = OcrEngine.TESSERACT
+                text = tessText
+                conf = tessConf
+            } else {
+                engine = OcrEngine.ML_KIT
+                text = mlKitText
+                conf = mlKitConf
+            }
+        }
+        mlIsCandidate -> {
+            engine = OcrEngine.ML_KIT
+            text = mlKitText
+            conf = mlKitConf
+        }
+        tessIsCandidate -> {
+            engine = OcrEngine.TESSERACT
+            text = tessText
+            conf = tessConf
+        }
+        else -> {
+            engine = OcrEngine.NONE
+            text = ""
+            conf = 0.0f
         }
     }
 
-    val finalText = if (selectedConf >= AndroidOcrApi.MIN_ACCEPT) selectedText.trim() else ""
+    val accepted = engine != OcrEngine.NONE && conf >= AndroidOcrApi.MIN_ACCEPT
+    val finalText = if (accepted) text.trim() else ""
     return OcrResult(
         text = finalText,
-        chosenConfidence = if (finalText.isEmpty()) 0.0f else selectedConf,
+        chosenConfidence = if (finalText.isEmpty()) 0.0f else conf,
         mlKitConfidence = mlKitConf,
         tessConfidence = tessConf,
+        engine = if (finalText.isEmpty()) OcrEngine.NONE else engine,
+        tessIsCandidate = tessIsCandidate,
     )
 }
 
@@ -234,31 +300,44 @@ private class AndroidOcrApi(private val context: Context) : OcrApi {
             val hint = languageHint?.lowercase() ?: "auto"
             val tesseractForHint = TESSERACT_LANGUAGES[hint]
 
+            var mlLen = 0
+            var tessLen = 0
             val ocrResult: OcrResult = if (tesseractForHint != null) {
                 val (tessText, tessConf) = tesseract(bitmap, tesseractForHint)
+                tessLen = tessText.length
                 chooseOcrResult("", 0.0f, tessText, tessConf, hint)
             } else if (hint != "auto") {
                 val (mlText, mlConf) = latin(bitmap)
+                mlLen = mlText.length
                 chooseOcrResult(mlText, mlConf, "", 0.0f, hint)
             } else {
-                // Auto-detect: run ML Kit first.
+                // Auto-detect: run ML Kit first and keep it when it is trusted.
                 val (mlText, mlConf) = latin(bitmap)
+                mlLen = mlText.length
                 if (mlConf >= ML_KIT_TRUST && mlText.isNotBlank()) {
                     chooseOcrResult(mlText, mlConf, "", 0.0f, "auto")
                 } else {
                     val (tessText, tessConf) = tesseract(bitmap, FALLBACK_LANGUAGE)
+                    tessLen = tessText.length
                     chooseOcrResult(mlText, mlConf, tessText, tessConf, "auto")
                 }
             }
 
+            // Numbers and labels only — never the recognised text (PRIVACY.md).
             Log.d(
                 "VeliqOcr",
                 String.format(
                     java.util.Locale.US,
-                    "mlConf=%.2f tessConf=%.2f chosen=%.2f",
+                    "mlLen=%d mlConf=%.3f tessLen=%d tessConf=%.3f tessCandidate=%d " +
+                        "engine=%s chosen=%.3f accepted=%d",
+                    mlLen,
                     ocrResult.mlKitConfidence,
+                    tessLen,
                     ocrResult.tessConfidence,
+                    if (ocrResult.tessIsCandidate) 1 else 0,
+                    ocrResult.engine.name.lowercase(java.util.Locale.US),
                     ocrResult.chosenConfidence,
+                    if (ocrResult.text.isEmpty()) 0 else 1,
                 ),
             )
 
@@ -360,11 +439,29 @@ private class AndroidOcrApi(private val context: Context) : OcrApi {
         listOf("en", "de", "fr", "es", "it", "pt", "nl", "tr", "fa", "ar", "ru")
 
     companion object {
-        /// ML Kit result confidence threshold required to trust ML Kit when source is auto.
-        const val ML_KIT_TRUST = 0.75f
+        /// ML Kit confidence that is trusted immediately when the source is
+        /// `auto` (no Tesseract run). Tuned on-device (T-168) with
+        /// `adb logcat -s VeliqOcr`: legible Latin measured 0.608 / 0.730 / 0.82,
+        /// and 0.730 sat just under the old 0.75, which paid for a fallback run
+        /// that returned no text at all. Lowered to 0.70 so a good reading is
+        /// trusted straight away; 0.608 still falls back. Small sample — tune
+        /// with `adb logcat -s VeliqOcr`.
+        const val ML_KIT_TRUST = 0.70f
 
-        /// Minimum confidence threshold required to accept any OCR result.
-        const val MIN_ACCEPT = 0.35f
+        /// Minimum confidence for accepting any single-engine result. Tuned
+        /// on-device (T-168): handwriting scored 0.336 / 0.357 / 0.411, and the
+        /// old 0.35 accepted two of the three as plausible nonsense. 0.45
+        /// rejects all three while legible text (0.469 / 0.608 / 0.730 / 0.81 /
+        /// 0.84) clears it with margin. Small sample — tune with
+        /// `adb logcat -s VeliqOcr`.
+        const val MIN_ACCEPT = 0.45f
+
+        /// A Tesseract result is only compared with ML Kit when it read at least
+        /// this many characters...
+        const val MIN_TESS_TEXT_CHARS = 10
+
+        /// ...or this fraction of ML Kit's length, whichever is larger.
+        const val TESS_MIN_COVERAGE = 0.3
 
         /// Source language -> Tesseract language code.
         val TESSERACT_LANGUAGES = mapOf(

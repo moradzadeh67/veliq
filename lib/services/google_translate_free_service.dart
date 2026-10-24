@@ -99,7 +99,10 @@ class GoogleTranslateFreeService implements TranslationService {
     final source = _wireCode(sourceLanguage);
     final target = _wireCode(targetLanguage);
 
-    final chunks = _chunk(text);
+    // OCR emits one line per visual line, and Google treats every line break as
+    // a sentence boundary, so hard-wrapped text came back translated line by
+    // line. Re-join the wrapped lines before chunking (T-168).
+    final chunks = _chunk(_unwrapLines(text));
     final translated = <String>[];
     String? detected;
 
@@ -211,6 +214,69 @@ class GoogleTranslateFreeService implements TranslationService {
 
   static String _stripTrailingNewlines(String value) =>
       value.replaceFirst(RegExp(r'\n+$'), '');
+
+  /// Characters that end a sentence. A line break after one of these is
+  /// meaningful, so the break is preserved.
+  static const String _sentenceEnders = '.!?:;…؟۔»")]';
+
+  /// Re-joins hard-wrapped OCR line breaks into running text.
+  ///
+  /// OCR emits one line per visual line and Google reads each break as a
+  /// sentence boundary, which produced line-by-line translations ("By pitching
+  /// the tailfinishing…"). Inside a paragraph a line is joined to the next with
+  /// a space, except when it ends a sentence (the break is kept) or ends with a
+  /// hyphen continuing a lowercase word (joined without space, hyphen dropped).
+  /// Blank lines still separate paragraphs and collapse to a single `\n\n`.
+  static String _unwrapLines(String text) {
+    // Nothing hard-wrapped: leave a single line exactly as it came in.
+    if (!text.contains('\n')) return text;
+
+    final paragraphs = <String>[];
+    var lines = <String>[];
+
+    void flush() {
+      if (lines.isEmpty) return;
+      paragraphs.add(_joinLines(lines));
+      lines = <String>[];
+    }
+
+    for (final raw in text.split('\n')) {
+      final line = raw.trim();
+      if (line.isEmpty) {
+        flush();
+      } else {
+        lines.add(line);
+      }
+    }
+    flush();
+
+    return paragraphs.join('\n\n');
+  }
+
+  /// Joins the trimmed [lines] of one paragraph.
+  static String _joinLines(List<String> lines) {
+    var out = lines.first;
+    for (var i = 1; i < lines.length; i++) {
+      final line = lines[i];
+      final lastChar = out[out.length - 1];
+      if (lastChar == '-' && _startsWithLowercase(line)) {
+        // A word split across lines: drop the hyphen and join with no space.
+        out = out.substring(0, out.length - 1) + line;
+      } else if (_sentenceEnders.contains(lastChar)) {
+        out = '$out\n$line';
+      } else {
+        out = '$out $line';
+      }
+    }
+    return out;
+  }
+
+  /// True when [value] starts with a cased letter in its lowercase form, so
+  /// digits and punctuation are not treated as a lowercase continuation.
+  static bool _startsWithLowercase(String value) {
+    final first = value[0];
+    return first == first.toLowerCase() && first != first.toUpperCase();
+  }
 
   /// Splits [text] into requests of at most [maxChunkChars] characters.
   ///

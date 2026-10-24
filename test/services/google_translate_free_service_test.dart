@@ -92,6 +92,74 @@ void main() {
       expect(sentTl, equals('zh-CN'));
     });
 
+    group('unwraps hard-wrapped OCR lines before translating (T-168)', () {
+      late List<String> sent;
+      late GoogleTranslateFreeService service;
+
+      setUp(() {
+        sent = <String>[];
+        service = GoogleTranslateFreeService(
+          client: MockClient((request) async {
+            sent.add(request.bodyFields['q'] ?? '');
+            return _jsonResponse('[[["ok","ok"]],null,"fr"]');
+          }),
+        );
+      });
+
+      Future<void> send(String text) async {
+        await service.translateText(text, 'fr', 'en');
+      }
+
+      test('joins French OCR lines into one sentence', () async {
+        await send(
+          'En rangeant les\nrayonnages\npoussiéreux, il\n'
+          'découvrit un livre\nsans titre.',
+        );
+
+        expect(sent, hasLength(1));
+        expect(
+          sent.single,
+          equals(
+            'En rangeant les rayonnages poussiéreux, il découvrit un livre '
+            'sans titre.',
+          ),
+        );
+      });
+
+      test('keeps the break when every line ends a sentence', () async {
+        await send('Première phrase.\nDeuxième phrase.');
+
+        expect(sent.single, equals('Première phrase.\nDeuxième phrase.'));
+      });
+
+      test('keeps a blank line as a single paragraph break', () async {
+        await send('Une ligne\ndeux lignes\n\nTrois lignes\nquatre lignes');
+
+        expect(
+          sent.single,
+          equals('Une ligne deux lignes\n\nTrois lignes quatre lignes'),
+        );
+      });
+
+      test('re-joins a hyphenated word split across lines', () async {
+        await send('un fait bien-\nconnu');
+
+        expect(sent.single, equals('un fait bienconnu'));
+      });
+
+      test('keeps Persian question lines separate', () async {
+        await send('چرا؟\nنمی‌دانم');
+
+        expect(sent.single, equals('چرا؟\nنمی‌دانم'));
+      });
+
+      test('leaves a single line unchanged', () async {
+        await send('Bonjour le monde');
+
+        expect(sent.single, equals('Bonjour le monde'));
+      });
+    });
+
     test(
       'missing data[2] in response reports null detected language',
       () async {
