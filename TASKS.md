@@ -459,7 +459,7 @@ Order: T-164 -> T-165 -> T-166 -> T-167.
   decision into a pure `chooseOcrResult` function with JUnit tests, and add one numbers-only
   `Log.d("VeliqOcr", ...)` line for threshold tuning.
 - Done when: analyze + Dart tests green, Kotlin unit tests pass, `flutter build apk --release --split-per-abi` succeeds, release APK smoke test shows no FATAL EXCEPTION, keep rules unchanged.
-- Status: TODO
+- Status: DONE (2026-10-24)
 
 ### T-166 · [S] Clear messages and honest release notes
 - Files: lib/features/translation/bloc/translate_flow_bloc.dart, tests, release_notes_1.1.0.md, README.md

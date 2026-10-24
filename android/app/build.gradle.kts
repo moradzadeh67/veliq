@@ -101,4 +101,6 @@ dependencies {
             module = "tesseract4android-openmp",
         )
     }
+
+    testImplementation("junit:junit:4.13.2")
 }

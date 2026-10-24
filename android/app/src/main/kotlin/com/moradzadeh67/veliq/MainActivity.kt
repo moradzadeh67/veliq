@@ -10,6 +10,7 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
+import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
@@ -165,14 +166,55 @@ class MainActivity : FlutterActivity() {
     }
 }
 
-/// On-device OCR for Android (T-136, T-163).
+/// Result holder for confidence-based OCR routing.
+data class OcrResult(
+    val text: String,
+    val chosenConfidence: Float,
+    val mlKitConfidence: Float,
+    val tessConfidence: Float,
+)
+
+/// Pure decision function for OCR confidence routing (T-165, D-021).
+fun chooseOcrResult(
+    mlKitText: String,
+    mlKitConf: Float,
+    tessText: String,
+    tessConf: Float,
+    sourceLanguage: String,
+): OcrResult {
+    val isAuto = sourceLanguage.isEmpty() || sourceLanguage.equals("auto", ignoreCase = true)
+
+    val (selectedText, selectedConf) = if (!isAuto) {
+        val isTesseractLanguage = AndroidOcrApi.TESSERACT_LANGUAGES.containsKey(sourceLanguage.lowercase())
+        if (isTesseractLanguage) {
+            tessText to tessConf
+        } else {
+            mlKitText to mlKitConf
+        }
+    } else {
+        if (mlKitConf >= AndroidOcrApi.ML_KIT_TRUST && mlKitText.isNotBlank()) {
+            mlKitText to mlKitConf
+        } else if (tessConf > mlKitConf && tessText.isNotBlank()) {
+            tessText to tessConf
+        } else {
+            mlKitText to mlKitConf
+        }
+    }
+
+    val finalText = if (selectedConf >= AndroidOcrApi.MIN_ACCEPT) selectedText.trim() else ""
+    return OcrResult(
+        text = finalText,
+        chosenConfidence = if (finalText.isEmpty()) 0.0f else selectedConf,
+        mlKitConfidence = mlKitConf,
+        tessConfidence = tessConf,
+    )
+}
+
+/// On-device OCR for Android (T-136, T-163, T-165).
 ///
-/// Two engines, because no single one covers the languages Veliq offers:
-///  * **ML Kit** ships a bundled Latin model (`en, de, fr, es, it, pt, nl, tr`)
-///    and needs no download — it stays the default.
-///  * **Tesseract** reads what ML Kit has no model for: Persian/Arabic
-///    (`fas`, `ara`) and Cyrillic (`rus`). Its traineddata files are bundled as
-///    assets and copied to app storage on first use, so it runs offline too.
+/// Two engines, with confidence-based routing:
+///  * **ML Kit** ships a bundled Latin model (`en, de, fr, es, it, pt, nl, tr`).
+///  * **Tesseract** reads Persian/Arabic (`fas`, `ara`) and Cyrillic (`rus`).
 ///
 /// The image stays in memory: JPEG bytes -> [Bitmap] -> engine; nothing is
 /// written to disk, logged or sent anywhere.
@@ -189,21 +231,41 @@ private class AndroidOcrApi(private val context: Context) : OcrApi {
                     "Could not read the image (invalid or corrupt image data).",
                 )
 
-            val hint = languageHint?.lowercase()
-            val tesseractForHint = hint?.let { TESSERACT_LANGUAGES[it] }
-            if (tesseractForHint != null) {
-                return@withContext tesseract(bitmap, tesseractForHint)
+            val hint = languageHint?.lowercase() ?: "auto"
+            val tesseractForHint = TESSERACT_LANGUAGES[hint]
+
+            val ocrResult: OcrResult = if (tesseractForHint != null) {
+                val (tessText, tessConf) = tesseract(bitmap, tesseractForHint)
+                chooseOcrResult("", 0.0f, tessText, tessConf, hint)
+            } else if (hint != "auto") {
+                val (mlText, mlConf) = latin(bitmap)
+                chooseOcrResult(mlText, mlConf, "", 0.0f, hint)
+            } else {
+                // Auto-detect: run ML Kit first.
+                val (mlText, mlConf) = latin(bitmap)
+                if (mlConf >= ML_KIT_TRUST && mlText.isNotBlank()) {
+                    chooseOcrResult(mlText, mlConf, "", 0.0f, "auto")
+                } else {
+                    val (tessText, tessConf) = tesseract(bitmap, FALLBACK_LANGUAGE)
+                    chooseOcrResult(mlText, mlConf, tessText, tessConf, "auto")
+                }
             }
 
-            val latin = latin(bitmap)
-            if (latin != null) return@withContext latin
+            Log.d(
+                "VeliqOcr",
+                String.format(
+                    java.util.Locale.US,
+                    "mlConf=%.2f tessConf=%.2f chosen=%.2f",
+                    ocrResult.mlKitConfidence,
+                    ocrResult.tessConfidence,
+                    ocrResult.chosenConfidence,
+                ),
+            )
 
-            // Auto-detect on a photo ML Kit could not read at all: try the
-            // non-Latin scripts we bundle. Slower, so only as a fallback.
-            tesseract(bitmap, FALLBACK_LANGUAGE)
+            ocrResult.text.ifEmpty { null }
         }
 
-    private suspend fun latin(bitmap: Bitmap): String? {
+    private suspend fun latin(bitmap: Bitmap): Pair<String, Float> {
         val result = try {
             Tasks.await(latinRecognizer.process(InputImage.fromBitmap(bitmap, 0)))
         } catch (e: Exception) {
@@ -214,11 +276,26 @@ private class AndroidOcrApi(private val context: Context) : OcrApi {
                 e,
             )
         }
-        return result.text.ifEmpty { null }
+        val text = result.text.trim()
+        var totalConf = 0.0f
+        var count = 0
+        for (block in result.textBlocks) {
+            for (line in block.lines) {
+                for (element in line.elements) {
+                    val conf = element.confidence
+                    if (conf != null && conf > 0.0f) {
+                        totalConf += conf
+                        count++
+                    }
+                }
+            }
+        }
+        val avgConf = if (count > 0) totalConf / count else 0.0f
+        return text to avgConf
     }
 
     @Synchronized
-    private fun tesseract(bitmap: Bitmap, language: String): String? {
+    private fun tesseract(bitmap: Bitmap, language: String): Pair<String, Float> {
         val engine = try {
             tesseractFor(language)
         } catch (e: Exception) {
@@ -230,7 +307,9 @@ private class AndroidOcrApi(private val context: Context) : OcrApi {
 
         return try {
             engine.setImage(bitmap)
-            engine.getUTF8Text()?.trim()?.ifEmpty { null }
+            val text = engine.getUTF8Text()?.trim() ?: ""
+            val meanConf = engine.meanConfidence() / 100.0f
+            text to meanConf
         } finally {
             engine.clear()
         }
@@ -280,7 +359,13 @@ private class AndroidOcrApi(private val context: Context) : OcrApi {
     override suspend fun supportedLanguages(): List<String> =
         listOf("en", "de", "fr", "es", "it", "pt", "nl", "tr", "fa", "ar", "ru")
 
-    private companion object {
+    companion object {
+        /// ML Kit result confidence threshold required to trust ML Kit when source is auto.
+        const val ML_KIT_TRUST = 0.75f
+
+        /// Minimum confidence threshold required to accept any OCR result.
+        const val MIN_ACCEPT = 0.35f
+
         /// Source language -> Tesseract language code.
         val TESSERACT_LANGUAGES = mapOf(
             "fa" to "fas",
@@ -288,7 +373,7 @@ private class AndroidOcrApi(private val context: Context) : OcrApi {
             "ru" to "rus",
         )
 
-        /// Tried when the source is `auto` and ML Kit read nothing at all.
+        /// Tried when the source is `auto` and ML Kit confidence is below ML_KIT_TRUST.
         const val FALLBACK_LANGUAGE = "rus+fas+ara"
     }
 }
