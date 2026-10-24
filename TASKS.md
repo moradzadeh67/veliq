@@ -19,6 +19,7 @@ P12 Android v1 .............. DONE
 P13 Public release (GitHub) .. DONE
 P14 Android release hotfix ... DONE
 P15 Multi-language input .... DONE
+P16 Free translation + safer Android OCR  DOING
 
 ---
 
@@ -420,3 +421,61 @@ Order: T-150 -> T-151 -> T-152 -> T-153 -> T-154 -> T-155 -> T-156.
 - **Offline translation:** only via a future research task with a quality gate — blind comparison against Gemini on ~50 real sentences, owner sets the threshold; if it fails, no offline engine ships. Note: Apple Translation has no Persian, and ML Kit Translate model downloads come from Google servers (may be unreachable from Iran).
 - **Persian (Arabic-script) OCR on Android** and **ML Kit CJK/Devanagari recognizers** (extra dependencies, APK size): separate task after P15, informed by the supported-language data.
 - Crop-before-OCR, Persian UI localisation, share-intent / PROCESS_TEXT, release automation, split-per-ABI APKs: tracked separately.
+
+---
+
+## P16 — Free translation + safer Android OCR (DOING)
+
+Goal: translation that needs no API key (Google Translate's free web endpoint), and Android
+OCR that stops trusting a low-confidence ML Kit result. Plus wording fixes.
+
+Why: many users are in Iran, where a Gemini key only works behind a VPN while the Google
+Translate web endpoint works without one. Separately, on a Persian photo with source =
+Auto-detect, ML Kit returns non-empty junk Latin letters, so the Tesseract fallback never runs
+and the junk gets "translated".
+
+Order: T-164 -> T-165 -> T-166 -> T-167.
+
+### T-164 · [M] "Google Translate (free)" provider
+- Files: lib/services/google_translate_free_service.dart (new), lib/services/settings_repository.dart, lib/services/switching_translation_service.dart, lib/main.dart, lib/features/settings/*, lib/features/translation/* (key checks only), test/services/google_translate_free_service_test.dart (new), tests, docs/PRIVACY.md, docs/ARCHITECTURE.md, README.md
+- Do: Add a third translation provider that needs no key: Google Translate's free web endpoint
+  (`translate_a/single`, `client=gtx`). New `GoogleTranslateFreeService implements TranslationService`
+  with an injected `http.Client` and timeout, response parsing (segments concatenated in order,
+  `data[2]` = detected source), `zh` -> `zh-CN` mapping, 1500-character chunking on line
+  boundaries, and the four exact `TranslationException` messages (HTTP 429 / other non-200 /
+  unreachable / unparsable). `TranslationProvider.googleTranslate` appended so stored values keep
+  loading; a fresh install defaults to it on all platforms. Every "Gemini API key required" check
+  must apply only when the provider is Gemini.
+- Done when: analyze clean, all tests green, `flutter build apk --debug` and `flutter build macos` succeed.
+- Status: TODO
+
+### T-165 · [M] Android OCR: don't trust a low-confidence result
+- Files: android/app/src/main/kotlin/com/moradzadeh67/veliq/MainActivity.kt (AndroidOcrApi), android/app/src/test/** (new JUnit tests if no setup), android/app/build.gradle.kts (test-only JUnit dep if needed), TASKS.md
+- Do: Verify `Text.Element.getConfidence()` exists and returns real values, then add
+  `ML_KIT_TRUST = 0.75` and `MIN_ACCEPT = 0.35` as named, tunable constants. Source = `auto`: accept
+  ML Kit only when confidence >= `ML_KIT_TRUST`; otherwise also run Tesseract `rus+fas+ara` and keep
+  the higher-confidence result; below `MIN_ACCEPT` fail with T-162's readable "misread photo" error.
+  Explicit Latin and `fa`/`ar`/`ru` sources apply `MIN_ACCEPT` to their single engine. Extract the
+  decision into a pure `chooseOcrResult` function with JUnit tests, and add one numbers-only
+  `Log.d("VeliqOcr", ...)` line for threshold tuning.
+- Done when: analyze + Dart tests green, Kotlin unit tests pass, `flutter build apk --release --split-per-abi` succeeds, release APK smoke test shows no FATAL EXCEPTION, keep rules unchanged.
+- Status: TODO
+
+### T-166 · [S] Clear messages and honest release notes
+- Files: lib/features/translation/bloc/translate_flow_bloc.dart, tests, release_notes_1.1.0.md, README.md
+- Do: When the source is explicit (not `auto`) and `source == target`, fail before OCR with
+  `Source and target language are both <Name>. Choose a different language in Settings.`
+  (`LanguageCatalog.displayName`). Correct the release-notes claim that Persian/Arabic/Russian are
+  "read correctly" and add the handwriting/Fraktur limit to the known limits in both files.
+- Done when: analyze + tests green.
+- Status: TODO
+
+### T-167 · [S] Docs and acceptance
+- Files: docs/ARCHITECTURE.md, PROJECT_SPEC.md, TASKS.md, CURRENT_TASK.md, assets/diagrams/*.svg
+- Do: Add **D-021 — OCR confidence routing on Android** (rules, the tunable constants, Pigeon
+  unchanged) and update the Android routing prose. Fix the stale `PROJECT_SPEC.md` (Android OCR scope,
+  version, releases list, roadmap, keyless provider). Update the Android diagram line to "ML Kit first;
+  Tesseract if confidence is low" (text only). Point `CURRENT_TASK.md` at the next open item and mark
+  P16 DONE.
+- Done when: full acceptance reported — analyze, tests, `flutter build macos`, `flutter build ios --simulator --no-codesign`, `flutter build apk --release --split-per-abi` + FATAL check.
+- Status: TODO

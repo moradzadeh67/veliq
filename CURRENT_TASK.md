@@ -1,8 +1,8 @@
 # CURRENT_TASK.md
 
-Active: **v1.1.0 is released** (2026-10-24) — tag `v1.1.0` on `655446a`, GitHub release published with
-three per-ABI APKs (+ `.sha256`) and the AAB, CI green, Pages deployed. Next up: T-164 (make Auto-detect
-work for Persian/Arabic/Russian on Android).
+Active: **P16 "Free translation + safer Android OCR"** (2026-10-24) — branch `p16-free-translation`.
+Next up: T-164 (Google Translate free provider), then T-165 (Android OCR confidence routing),
+T-166 (clear messages + release notes), T-167 (docs and acceptance).
 
 ## State of the repository (2026-10-24)
 
@@ -22,10 +22,16 @@ misread" instead of showing gibberish (T-162) — see the open item below.
 
 ## Open items
 
-1. **Auto-detect with non-Latin photos (next task, T-164)** — on Android the Latin model runs
-   first, so `auto` cannot read Persian/Arabic/Russian photos; the user must pick the language. Planned
-   fix: when Gemini reports a detected language that the bundled Tesseract models cover but the OCR text
-   is in the wrong script, re-run OCR with that model and translate again.
+1. **Auto-detect with non-Latin photos — SUPERSEDED (2026-10-24) — replaced by the
+   confidence-based routing in T-165.** The original plan was to re-run OCR with the language Gemini
+   reported; investigation showed that cannot work (Gemini's language detection returns wrong
+   neighbours such as `bg` on look-alike Latin gibberish, and ML Kit returns *non-empty* junk, so the
+   Tesseract fallback never fired). T-165 instead routes on ML Kit's own confidence, which is local
+   and reliable. Original prose kept below for the record.
+   — On Android the Latin model runs first, so `auto` cannot read Persian/Arabic/Russian photos; the
+   user must pick the language. Planned fix was: when Gemini reports a detected language that the
+   bundled Tesseract models cover but the OCR text is in the wrong script, re-run OCR with that model
+   and translate again.
 2. **iOS camera** — still untested on a physical iPhone (device-only, T-118 dropped).
 3. **Tesseract accuracy on paper photos** — verified on rendered images and one screen photo; curved
    pages/shadow are unmeasured. If quality disappoints: preprocessing or a higher OCR resolution, never a
