@@ -447,7 +447,7 @@ Order: T-164 -> T-165 -> T-166 -> T-167.
   loading; a fresh install defaults to it on all platforms. Every "Gemini API key required" check
   must apply only when the provider is Gemini.
 - Done when: analyze clean, all tests green, `flutter build apk --debug` and `flutter build macos` succeed.
-- Status: TODO
+- Status: DONE (2026-10-24)
 
 ### T-165 · [M] Android OCR: don't trust a low-confidence result
 - Files: android/app/src/main/kotlin/com/moradzadeh67/veliq/MainActivity.kt (AndroidOcrApi), android/app/src/test/** (new JUnit tests if no setup), android/app/build.gradle.kts (test-only JUnit dep if needed), TASKS.md

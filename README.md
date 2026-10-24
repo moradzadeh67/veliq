@@ -47,7 +47,7 @@ Select any region of your screen — or pick / take a photo — extract its text
 - ✅ **100% free** — no accounts, no ads, no tracking, no backend
 - ✅ **MIT licensed** — read it, fork it, ship it
 - ✅ **Local-first OCR** — screenshots and photos are held in memory and processed on-device (never uploaded)
-- ✅ **Bring your own key** — translation uses *your* Google Gemini API key, encrypted in the OS keychain/keystore
+- ✅ **Works out of the box** — free keyless translation by default, plus optional Google Gemini with your own key or Apple on-device translation
 
 ## 💡 Why I Built This
 

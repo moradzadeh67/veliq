@@ -51,9 +51,11 @@ class _FakeSettingsRepository implements SettingsRepository {
 void main() {
   group('SwitchingTranslationService', () {
     late _StubService apple;
+    late _StubService googleTranslate;
 
     setUp(() {
       apple = _StubService('apple');
+      googleTranslate = _StubService('googleTranslate');
     });
 
     test('routes to the Apple backend when it is selected', () async {
@@ -63,6 +65,7 @@ void main() {
           const AppSettings(translationProvider: TranslationProvider.apple),
         ),
         apple: apple,
+        googleTranslate: googleTranslate,
         googleFactory: (_) => google,
       );
 
@@ -72,6 +75,30 @@ void main() {
       expect(apple.calls, equals(['Hello|en|fa']));
       expect(google.calls, isEmpty);
     });
+
+    test(
+      'routes to the Google Translate free backend when it is selected',
+      () async {
+        final google = _StubService('google');
+        final service = SwitchingTranslationService(
+          settings: _FakeSettingsRepository(
+            const AppSettings(
+              translationProvider: TranslationProvider.googleTranslate,
+            ),
+          ),
+          apple: apple,
+          googleTranslate: googleTranslate,
+          googleFactory: (_) => google,
+        );
+
+        final result = await service.translateText('Hello', 'en', 'fa');
+
+        expect(result, equals('googleTranslate'));
+        expect(googleTranslate.calls, equals(['Hello|en|fa']));
+        expect(google.calls, isEmpty);
+        expect(apple.calls, isEmpty);
+      },
+    );
 
     test('routes to the Google backend when it is selected', () async {
       final google = _StubService('google');
@@ -85,6 +112,7 @@ void main() {
           ),
         ),
         apple: apple,
+        googleTranslate: googleTranslate,
         googleFactory: (apiKey) {
           usedKey = apiKey;
           return google;
@@ -111,6 +139,7 @@ void main() {
           ),
         ),
         apple: apple,
+        googleTranslate: googleTranslate,
         googleFactory: (_) {
           factoryCalls++;
           return google;
@@ -136,6 +165,7 @@ void main() {
       final service = SwitchingTranslationService(
         settings: repository,
         apple: apple,
+        googleTranslate: googleTranslate,
         googleFactory: (apiKey) {
           keys.add(apiKey);
           return _StubService('google-$apiKey');
@@ -157,6 +187,7 @@ void main() {
           const AppSettings(translationProvider: TranslationProvider.apple),
         ),
         apple: apple,
+        googleTranslate: googleTranslate,
         googleFactory: (_) => google,
       );
 
@@ -184,6 +215,7 @@ void main() {
           ),
         ),
         apple: apple,
+        googleTranslate: googleTranslate,
         googleFactory: (_) => google,
       );
 
@@ -204,6 +236,7 @@ void main() {
           ),
         ),
         apple: apple,
+        googleTranslate: googleTranslate,
         googleFactory: (_) => google,
       );
 
@@ -226,6 +259,7 @@ void main() {
       final service = SwitchingTranslationService(
         settings: repository,
         apple: apple,
+        googleTranslate: googleTranslate,
         googleFactory: (_) => google,
       );
 

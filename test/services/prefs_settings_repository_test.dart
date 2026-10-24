@@ -50,10 +50,13 @@ void main() {
       expect(a.hashCode, equals(b.hashCode));
     });
 
-    test('defaults select the Google provider without a key', () {
+    test('defaults select the googleTranslate provider without a key', () {
       const settings = AppSettings.defaults;
 
-      expect(settings.translationProvider, equals(TranslationProvider.google));
+      expect(
+        settings.translationProvider,
+        equals(TranslationProvider.googleTranslate),
+      );
       expect(settings.googleApiKey, isNull);
       expect(settings.hasGoogleApiKey, isFalse);
     });

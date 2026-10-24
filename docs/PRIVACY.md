@@ -60,8 +60,18 @@ On Android v1 the user supplies the image; there is no region selection.
 The translation layer is abstracted behind a service interface:
 `TranslationService.translateText(text, sourceLanguage, targetLanguage)`
 
-Veliq ships two providers, chosen by the user in Settings. Which one is active
+Veliq ships three providers, chosen by the user in Settings. Which one is active
 is the only thing that decides whether text leaves the machine.
+
+### Google Translate (free, keyless)
+- **Privacy**: The extracted text **is sent to Google** for translation. Screenshots are
+  never uploaded — only the recognized text.
+- **Keyless**: Requires **no API key**. Fresh installs default to this provider so the app
+  works out of the box without setup (D-020).
+- **Data Flow**: Extracted text is sent over HTTPS to Google Translate's web client
+  endpoint (`translate_a/single`).
+- **Limits**: Unofficial endpoint; can be rate-limited or change without notice. Gemini
+  remains available as a fallback.
 
 ### Apple (on-device)
 - **Privacy**: Text is translated on the machine; nothing is sent anywhere.
@@ -75,8 +85,6 @@ is the only thing that decides whether text leaves the machine.
 - **Privacy**: The extracted text **is sent to Google** for translation. This is a
   deliberate, user-selected exception to the local-first principle:
   screenshots are still never uploaded — only the recognized text.
-- **Android v1**: Gemini is the **only** provider there (Apple Translation does not exist on
-  Android; the provider selector is hidden), so every translation on Android sends text to Google.
 - **Requirements**: A user-supplied Google AI (Gemini) API key, created at
   https://aistudio.google.com/apikey.
 - **Data Flow**: The recognized text travels inside a single prompt, with

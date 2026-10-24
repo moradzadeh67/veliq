@@ -364,8 +364,7 @@ class _FailureState extends StatelessWidget {
                 'text.',
     TranslateFlowStage.translate =>
       _isAndroid
-          ? 'Check the language pair in Settings and make sure a valid '
-                'Google Gemini API key is set.'
+          ? 'Check the translation provider and language pair in Settings.'
           : 'Check the translation provider and language pair in Settings. '
                 "Apple's on-device engine needs macOS 26 or later and doesn't "
                 'support Persian; Google Gemini needs a valid API key.',

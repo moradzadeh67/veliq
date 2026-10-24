@@ -18,6 +18,16 @@ enum TranslationProvider {
   /// API key with `CREDENTIALS_MISSING` for many projects and demands OAuth2,
   /// which a desktop app cannot ship without exposing a private key.
   google,
+
+  /// Google Translate's free web endpoint (`translate_a/single`).
+  ///
+  /// Needs **no API key**, which is why it exists: many users are in Iran,
+  /// where the Gemini API is only reachable behind a VPN while this endpoint
+  /// answers directly (D-020). The text — never the image — is sent to Google.
+  ///
+  /// It is an unofficial endpoint: it can be rate-limited or change without
+  /// notice, so Gemini remains the supported fallback.
+  googleTranslate,
 }
 
 /// Immutable user-configurable application settings.
@@ -53,10 +63,13 @@ class AppSettings {
   static const String defaultSourceLanguage = LanguageCatalog.autoCode;
   static const String defaultTargetLanguage = 'fa';
 
-  /// Google is the default because the app's target language (Persian) is not
-  /// supported by Apple's on-device engine at all.
+  /// The default for a fresh install is the keyless Google Translate provider:
+  /// the app's target language (Persian) rules out Apple's on-device engine,
+  /// and Gemini needs an API key that is unreachable in Iran without a VPN
+  /// (D-020). A stored choice is never overwritten — see
+  /// [PrefsSettingsRepository]
   static const TranslationProvider defaultTranslationProvider =
-      TranslationProvider.google;
+      TranslationProvider.googleTranslate;
 
   /// The defaults used when nothing has been persisted yet.
   static const AppSettings defaults = AppSettings();

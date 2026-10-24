@@ -12,6 +12,7 @@ import 'features/translation/bloc/translate_flow_bloc.dart';
 import 'features/translation/bloc/translation_bloc.dart';
 import 'features/translation/translate_view.dart';
 import 'services/gemini_translation_service.dart';
+import 'services/google_translate_free_service.dart';
 import 'services/json_history_repository.dart';
 import 'services/pigeon_capture_service.dart';
 import 'services/pigeon_image_source_service.dart';
@@ -55,6 +56,7 @@ Future<void> main() async {
     translationService: SwitchingTranslationService(
       settings: settingsRepository,
       apple: PigeonTranslationService(),
+      googleTranslate: GoogleTranslateFreeService(),
       googleFactory: (apiKey) => GeminiTranslationService(
         apiKey: apiKey,
         includeDiagnostics: kDebugMode,

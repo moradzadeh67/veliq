@@ -10,6 +10,7 @@ import 'bloc/settings_state.dart';
 const Map<TranslationProvider, String> kTranslationProviderLabels = {
   TranslationProvider.apple: 'Apple (on-device)',
   TranslationProvider.google: 'Google Gemini',
+  TranslationProvider.googleTranslate: 'Google Translate (free, no key)',
 };
 
 /// Settings screen: translation backend, language pair and screenshot retention.
@@ -103,14 +104,15 @@ class _SettingsForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // Android ships Gemini only (T-137): Apple's Translation framework does not
-    // exist there, so a stored Apple choice is surfaced as a fixable notice
-    // rather than silently kept.
+    // Apple's Translation framework does not exist on Android.
     final isAndroid = defaultTargetPlatform == TargetPlatform.android;
     final isMac = defaultTargetPlatform == TargetPlatform.macOS;
     final storedProvider = settings.translationProvider;
-    final provider = isAndroid ? TranslationProvider.google : storedProvider;
-    final usesGoogle = provider == TranslationProvider.google;
+    final provider = isAndroid && storedProvider == TranslationProvider.apple
+        ? TranslationProvider.googleTranslate
+        : storedProvider;
+    final usesGemini = provider == TranslationProvider.google;
+    final usesGoogleTranslate = provider == TranslationProvider.googleTranslate;
     final appleNeedsFix =
         isAndroid && storedProvider == TranslationProvider.apple;
 
@@ -133,24 +135,24 @@ class _SettingsForm extends StatelessWidget {
         ListTile(
           title: const Text('Provider'),
           subtitle: Text(kTranslationProviderLabels[provider] ?? provider.name),
-          trailing: isAndroid
-              ? null
-              : _ProviderDropdown(
-                  value: provider,
-                  onChanged: onProviderChanged,
-                ),
+          trailing: _ProviderDropdown(
+            value: provider,
+            isAndroid: isAndroid,
+            onChanged: onProviderChanged,
+          ),
         ),
         if (appleNeedsFix)
           ListTile(
             leading: Icon(Icons.info_outline, color: theme.colorScheme.primary),
-            title: const Text('Android supports Google Gemini only'),
+            title: const Text('Android does not support Apple Translation'),
             subtitle: const Text(
               "Apple's on-device engine isn't available on Android, so Veliq "
-              'is using Google Gemini. Your stored choice was Apple.',
+              'is using Google Translate. Your stored choice was Apple.',
             ),
             trailing: TextButton(
-              onPressed: () => onProviderChanged(TranslationProvider.google),
-              child: const Text('Use Gemini'),
+              onPressed: () =>
+                  onProviderChanged(TranslationProvider.googleTranslate),
+              child: const Text('Use Google Translate'),
             ),
           ),
         ListTile(
@@ -201,7 +203,14 @@ class _SettingsForm extends StatelessWidget {
               'source.',
             ),
           ),
-        if (usesGoogle) ...[
+        if (usesGoogleTranslate)
+          const ListTile(
+            leading: Icon(Icons.info_outline),
+            subtitle: Text(
+              'Free, needs no key. Unofficial service: it can be limited or stop working. Only the recognised text (never the photo) is sent to Google.',
+            ),
+          ),
+        if (usesGemini) ...[
           _GoogleApiKeyField(
             apiKey: settings.googleApiKey,
             onChanged: onGoogleApiKeyChanged,
@@ -255,17 +264,26 @@ class _SettingsForm extends StatelessWidget {
 class _ProviderDropdown extends StatelessWidget {
   final TranslationProvider value;
   final ValueChanged<TranslationProvider> onChanged;
+  final bool isAndroid;
 
-  const _ProviderDropdown({required this.value, required this.onChanged});
+  const _ProviderDropdown({
+    required this.value,
+    required this.onChanged,
+    this.isAndroid = false,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final providers = TranslationProvider.values.where(
+      (provider) => !(isAndroid && provider == TranslationProvider.apple),
+    );
+
     return DropdownButton<TranslationProvider>(
       value: value,
       onChanged: (selected) {
         if (selected != null) onChanged(selected);
       },
-      items: TranslationProvider.values
+      items: providers
           .map(
             (provider) => DropdownMenuItem<TranslationProvider>(
               value: provider,

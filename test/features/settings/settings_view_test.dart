@@ -260,11 +260,13 @@ void main() {
       );
     });
 
-    testWidgetsMac('shows the Google provider by default', (tester) async {
+    testWidgetsMac('shows the Google Translate (free) provider by default', (
+      tester,
+    ) async {
       await _pumpView(tester, bloc);
       await tester.pumpAndSettle();
 
-      expect(find.text('Google Gemini'), findsWidgets);
+      expect(find.text('Google Translate (free, no key)'), findsWidgets);
     });
 
     testWidgetsMac('switching the provider to Apple persists it', (
@@ -284,9 +286,13 @@ void main() {
       );
     });
 
-    testWidgetsMac('shows the API key field while Google is selected', (
+    testWidgetsMac('shows the API key field while Google Gemini is selected', (
       tester,
     ) async {
+      repository.stored = const AppSettings(
+        translationProvider: TranslationProvider.google,
+      );
+
       await _pumpView(tester, bloc);
       await tester.pumpAndSettle();
 
@@ -294,22 +300,26 @@ void main() {
       expect(find.text('No API key yet'), findsOneWidget);
     });
 
-    testWidgetsMac('hides the API key field for the Apple provider', (
-      tester,
-    ) async {
-      repository.stored = const AppSettings(
-        translationProvider: TranslationProvider.apple,
-      );
+    testWidgetsMac(
+      'hides the API key field for the Google Translate provider',
+      (tester) async {
+        repository.stored = const AppSettings(
+          translationProvider: TranslationProvider.googleTranslate,
+        );
 
-      await _pumpView(tester, bloc);
-      await tester.pumpAndSettle();
+        await _pumpView(tester, bloc);
+        await tester.pumpAndSettle();
 
-      expect(find.text('Google AI API key'), findsNothing);
-      expect(find.byType(TextField), findsNothing);
-    });
+        expect(find.text('Google AI API key'), findsNothing);
+        expect(find.byType(TextField), findsNothing);
+      },
+    );
 
     testWidgetsMac('hides the warning once a key is stored', (tester) async {
-      repository.stored = const AppSettings(googleApiKey: 'test-api-key');
+      repository.stored = const AppSettings(
+        translationProvider: TranslationProvider.google,
+        googleApiKey: 'test-api-key',
+      );
 
       await _pumpView(tester, bloc);
       await tester.pumpAndSettle();
@@ -320,6 +330,10 @@ void main() {
     testWidgetsMac('Enter in the API key field saves and tests (T-129)', (
       tester,
     ) async {
+      repository.stored = const AppSettings(
+        translationProvider: TranslationProvider.google,
+      );
+
       await _pumpView(tester, bloc);
       await tester.pumpAndSettle();
 
@@ -335,6 +349,10 @@ void main() {
     testWidgetsMac('Save & test stores the key and reports success', (
       tester,
     ) async {
+      repository.stored = const AppSettings(
+        translationProvider: TranslationProvider.google,
+      );
+
       await _pumpView(tester, bloc);
       await tester.pumpAndSettle();
 
@@ -350,6 +368,9 @@ void main() {
     testWidgetsMac('Save & test reports why Google rejected the key', (
       tester,
     ) async {
+      repository.stored = const AppSettings(
+        translationProvider: TranslationProvider.google,
+      );
       verifyResult = 'The Generative Language API is not enabled.';
 
       await _pumpView(tester, bloc);
@@ -369,6 +390,10 @@ void main() {
     testWidgetsMac('the verdict clears once the key is edited again', (
       tester,
     ) async {
+      repository.stored = const AppSettings(
+        translationProvider: TranslationProvider.google,
+      );
+
       await _pumpView(tester, bloc);
       await tester.pumpAndSettle();
 
@@ -386,6 +411,10 @@ void main() {
     testWidgetsMac('a successful test clears the no-key warning', (
       tester,
     ) async {
+      repository.stored = const AppSettings(
+        translationProvider: TranslationProvider.google,
+      );
+
       await _pumpView(tester, bloc);
       await tester.pumpAndSettle();
       expect(find.text('No API key yet'), findsOneWidget);
@@ -416,14 +445,12 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('offers Gemini only: no Apple in the provider dropdown', (
+    testWidgets('offers no Apple in the provider dropdown on Android', (
       tester,
     ) async {
       await pumpAndroid(tester);
 
-      // The provider row has no dropdown at all on Android.
-      expect(find.byType(DropdownButton<TranslationProvider>), findsNothing);
-      expect(find.text('Google Gemini'), findsWidgets);
+      expect(find.byType(DropdownButton<TranslationProvider>), findsOneWidget);
       expect(find.text('Apple (on-device)'), findsNothing);
     });
 
@@ -437,36 +464,44 @@ void main() {
       await pumpAndroid(tester);
 
       expect(tester.takeException(), isNull);
-      expect(find.text('Android supports Google Gemini only'), findsOneWidget);
-      // Gemini is still the effective provider, so the API key UI is shown.
-      expect(find.text('Google Gemini'), findsWidgets);
-      expect(find.text('Google AI API key'), findsOneWidget);
+      expect(
+        find.text('Android does not support Apple Translation'),
+        findsOneWidget,
+      );
+      expect(find.text('Google Translate (free, no key)'), findsWidgets);
     });
 
-    testWidgets('"Use Gemini" persists the switch and clears the notice', (
+    testWidgets(
+      '"Use Google Translate" persists the switch and clears the notice',
+      (tester) async {
+        repository.stored = const AppSettings(
+          translationProvider: TranslationProvider.apple,
+        );
+
+        await pumpAndroid(tester);
+        await tester.tap(find.text('Use Google Translate'));
+        await tester.pumpAndSettle();
+
+        expect(
+          repository.stored.translationProvider,
+          equals(TranslationProvider.googleTranslate),
+        );
+        expect(
+          find.text('Android does not support Apple Translation'),
+          findsNothing,
+        );
+      },
+    );
+
+    testWidgets('the notice is absent when Google Translate is stored', (
       tester,
     ) async {
-      repository.stored = const AppSettings(
-        translationProvider: TranslationProvider.apple,
-      );
-
       await pumpAndroid(tester);
-      await tester.tap(find.text('Use Gemini'));
-      await tester.pumpAndSettle();
 
       expect(
-        repository.stored.translationProvider,
-        equals(TranslationProvider.google),
+        find.text('Android does not support Apple Translation'),
+        findsNothing,
       );
-      expect(find.text('Android supports Google Gemini only'), findsNothing);
-    });
-
-    testWidgets('the notice is absent when Gemini is already stored', (
-      tester,
-    ) async {
-      await pumpAndroid(tester);
-
-      expect(find.text('Android supports Google Gemini only'), findsNothing);
     });
   });
 
@@ -475,7 +510,11 @@ void main() {
     late SettingsBloc bloc;
 
     setUp(() {
-      repository = FakeSettingsRepository();
+      repository = FakeSettingsRepository(
+        initial: const AppSettings(
+          translationProvider: TranslationProvider.google,
+        ),
+      );
       bloc = SettingsBloc(settingsRepository: repository);
     });
 
@@ -523,7 +562,11 @@ void main() {
     late SettingsBloc bloc;
 
     setUp(() {
-      repository = FakeSettingsRepository();
+      repository = FakeSettingsRepository(
+        initial: const AppSettings(
+          translationProvider: TranslationProvider.google,
+        ),
+      );
       bloc = SettingsBloc(settingsRepository: repository);
     });
 
