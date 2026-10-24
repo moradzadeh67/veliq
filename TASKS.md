@@ -478,4 +478,4 @@ Order: T-164 -> T-165 -> T-166 -> T-167.
   Tesseract if confidence is low" (text only). Point `CURRENT_TASK.md` at the next open item and mark
   P16 DONE.
 - Done when: full acceptance reported — analyze, tests, `flutter build macos`, `flutter build ios --simulator --no-codesign`, `flutter build apk --release --split-per-abi` + FATAL check.
-- Status: TODO
+- Status: DONE (2026-10-24)

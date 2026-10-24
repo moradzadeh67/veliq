@@ -1,8 +1,7 @@
 # CURRENT_TASK.md
 
-Active: **P16 "Free translation + safer Android OCR"** (2026-10-24) — branch `p16-free-translation`.
-Next up: T-164 (Google Translate free provider), then T-165 (Android OCR confidence routing),
-T-166 (clear messages + release notes), T-167 (docs and acceptance).
+Active: **P16 "Free translation + safer Android OCR" completed** (2026-10-24) — branch `p16-free-translation`.
+All tasks T-164 through T-167 completed, analyzed, tested, and verified.
 
 ## State of the repository (2026-10-24)
 
