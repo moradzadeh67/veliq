@@ -78,9 +78,9 @@ A short tour of the macOS flow: start on the Translate tab, drag a region over t
 | ![Translate](assets/screenshots/android/translate.png) | ![Picker](assets/screenshots/android/picker.png) | ![Result](assets/screenshots/android/result.png) | ![History](assets/screenshots/android/history.png) |
 
 ### iOS
-| Translate | Picker | Result | History |
+| Translate View | Photo Picker | Result View | History |
 |:---:|:---:|:---:|:---:|
-| ![Translate](assets/screenshots/ios/translate.png) | ![Picker](assets/screenshots/ios/picker.png) | ![Result](assets/screenshots/ios/result.png) | ![History](assets/screenshots/ios/history.png) |
+| ![Translate View](assets/screenshots/ios/translate.png) | ![Photo Picker](assets/screenshots/ios/picker.png) | ![Result View](assets/screenshots/ios/result.png) | ![History](assets/screenshots/ios/history.png) |
 
 > 💡 **Note:** Screenshots live in `assets/screenshots/`, organised by platform.
 
