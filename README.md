@@ -266,9 +266,10 @@ Details: [docs/PRIVACY.md](docs/PRIVACY.md).
 > `app-armeabi-v7a-release.apk` (older 32-bit devices) or `app-x86_64-release.apk` (emulators).
 >
 > **macOS** has a ready-to-run universal build: `Veliq-1.2.0-macos-universal.dmg` — **one file for both
-> Intel (`x86_64`) and Apple Silicon (`arm64`)**, macOS 14+. Open the DMG, drag **veliq** into
-> *Applications*, then right-click → **Open** the first time — the app is not notarized yet, so Gatekeeper
-> asks once. If macOS still refuses, run `xattr -dr com.apple.quarantine /Applications/veliq.app`.
+> Intel (`x86_64`) and Apple Silicon (`arm64`)**, macOS 14+ (Intel Macs from 2018 on). Open the DMG, drag
+> **veliq** into *Applications*, then right-click → **Open** the first time — the app is not notarized yet,
+> so Gatekeeper asks once. If macOS still refuses, run
+> `xattr -dr com.apple.quarantine /Applications/veliq.app`.
 >
 > **iOS** has no binary release: build from source with Xcode and your own Apple Developer team, because
 > installing on a device needs a provisioning profile. (The app bundle — `.aab` — stays a build artifact:

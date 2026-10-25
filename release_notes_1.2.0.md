@@ -66,3 +66,6 @@ same upload key, so your history and settings survive the update.
 
 The macOS DMG is ad-hoc signed: open it, drag **veliq** into *Applications*, then right-click the app →
 **Open** the first time. If macOS still refuses, run `xattr -dr com.apple.quarantine /Applications/veliq.app`.
+
+One DMG covers both architectures — every binary inside is a universal `x86_64` + `arm64` fat binary, and
+the Intel slice was verified to start (run through Rosetta on an Apple Silicon machine).
