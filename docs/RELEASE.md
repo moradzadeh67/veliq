@@ -222,7 +222,6 @@ Also outstanding for the user: GitHub repository **About/Topics** (browser), ite
   Per-ABI APKs (`.sha256` each) + AAB (78.6 MB). Signed (`1332bc48…a651af`). Smoke-tested on device — pass.
   Aggregate Gradle (`./gradlew testDebugUnitTest`) verified on JBR 25 / Java 21: 244 JVM tests, 0 failures.
   Published: tag `v1.2.0`, GitHub release (3 APK + 3 .sha256 + AAB + AAB.sha256), CI `Analyze & test` + Pages green.
-- `v1.1.0` (2026-10-24): multi-language input
 - `v1.1.0` (2026-10-24): multi-language input — 14-language source catalog with Auto-detect, per-platform
   OCR capability query, an iOS Vision OCR backend, the source language Gemini detects shown in the result
   and History, and the Settings/iOS wording fixes. Per-ABI APKs (`.sha256` each) + AAB.
