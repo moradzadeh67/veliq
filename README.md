@@ -223,7 +223,7 @@ test/                                  → Offline unit and widget test suite
 
 | Platform | Status | Notes |
 |---|:---:|---|
-| 🖥️ macOS | ✅ Works end to end | macOS 14.6+ — region select → Vision OCR → translation provider → history; universal (Intel + Apple Silicon) zip in [the latest release](https://github.com/moradzadeh67/veliq/releases/latest) |
+| 🖥️ macOS | ✅ Works end to end | macOS 14.6+ — region select → Vision OCR → translation provider → history; universal (Intel + Apple Silicon) DMG in [the latest release](https://github.com/moradzadeh67/veliq/releases/latest) |
 | 🤖 Android | ✅ Works end to end | Photo Picker + ML Kit/Tesseract OCR + keyless translation; verified on the emulator and on a physical Galaxy S24; signed APK in [the latest release](https://github.com/moradzadeh67/veliq/releases/latest) |
 | 📱 iOS | 🟡 Simulator-verified | P7–P9 complete; picker, history and the first Vision OCR run verified on the iOS 26.5 simulator. Runs from source — installing on a device needs your own Apple Developer team. Camera capture is untested on a physical iPhone. |
 | 🪟 Windows | ❌ Out of scope | Desktop target limited to macOS |
@@ -265,13 +265,14 @@ Details: [docs/PRIVACY.md](docs/PRIVACY.md).
 > that matches your phone's CPU: `app-arm64-v8a-release.apk` (any recent phone),
 > `app-armeabi-v7a-release.apk` (older 32-bit devices) or `app-x86_64-release.apk` (emulators).
 >
-> **macOS** has a ready-to-run universal build: `Veliq-1.2.0-macos-universal.zip` (Intel **and** Apple
-> Silicon, macOS 14+). Unzip it and right-click → **Open** the first time — the app is not notarized yet,
-> so Gatekeeper asks once. If macOS still refuses, run `xattr -dr com.apple.quarantine veliq.app`.
+> **macOS** has a ready-to-run universal build: `Veliq-1.2.0-macos-universal.dmg` — **one file for both
+> Intel (`x86_64`) and Apple Silicon (`arm64`)**, macOS 14+. Open the DMG, drag **veliq** into
+> *Applications*, then right-click → **Open** the first time — the app is not notarized yet, so Gatekeeper
+> asks once. If macOS still refuses, run `xattr -dr com.apple.quarantine /Applications/veliq.app`.
 >
 > **iOS** has no binary release: build from source with Xcode and your own Apple Developer team, because
-> installing on a device needs a provisioning profile. The release `.aab` is the Google Play upload
-> format — it is **not** installable on any device; use the APKs instead.
+> installing on a device needs a provisioning profile. (The app bundle — `.aab` — stays a build artifact:
+> it is Google Play upload format and cannot be installed on any device, so it is not published here.)
 
 ### Prerequisites
 
@@ -409,9 +410,9 @@ wired into the release build type in `android/app/build.gradle.kts` (`proguardFi
 - **Printed Russian accuracy depends on the photo:** shadows, skew and low resolution hurt Tesseract. Image preprocessing is on the roadmap; the bundled models are the same on every device.
 - **Persian OCR depends on the platform:** Apple Vision reports its supported languages at runtime, so what Veliq offers on macOS/iOS is exactly what that OS release supports.
 - **Apple's on-device translation** needs macOS 26+, cannot be combined with Auto-detect (it needs a concrete source language) and has no Persian. The iOS target does not register Apple's translation channel, so choosing it there reports that translation is not available in this build.
-- **Unsigned macOS Builds:** macOS Gatekeeper flags the ad-hoc-signed build on first launch — the release
-  zip needs right-click → **Open** once (or `xattr -dr com.apple.quarantine veliq.app`). There is no
-  notarized desktop build yet. Android release builds are signed with the project upload key.
+- **Unsigned macOS Builds:** macOS Gatekeeper flags the ad-hoc-signed build on first launch — the DMG
+  build needs right-click → **Open** once (or `xattr -dr com.apple.quarantine /Applications/veliq.app`).
+  There is no notarized desktop build yet. Android release builds are signed with the project upload key.
 
 ## ❓ Troubleshooting & FAQ
 

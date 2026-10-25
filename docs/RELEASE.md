@@ -14,10 +14,11 @@ MIT (see LICENSE). The repository is public, has a description, 16 topics and a 
   `app-arm64-v8a-release.apk`, `app-armeabi-v7a-release.apk`, `app-x86_64-release.apk`
   (each with a `.sha256`) plus `app-release.aab`. `v1.0.1` (2026-10-16) and `v1.0.0` (2026-10-16) each
   ship the single universal `app-release.apk` (+ `.sha256`).
-- macOS: a ready-to-run **universal** build (`x86_64` + `arm64`, macOS 14+) is attached to each release
-  from 1.2.0 as `Veliq-<version>-macos-universal.zip`. It is ad-hoc signed only — not notarized — so the
-  first launch needs right-click → **Open** (or `xattr -dr com.apple.quarantine veliq.app`). Building
-  from source with `flutter build macos` stays supported.
+- macOS: a ready-to-run **universal** DMG (`x86_64` + `arm64`, macOS 14+) is attached to each release
+  from 1.2.0 as `Veliq-<version>-macos-universal.dmg`, so one file covers Intel and Apple Silicon. It is
+  ad-hoc signed only — not notarized — so the first launch needs right-click → **Open**
+  (or `xattr -dr com.apple.quarantine /Applications/veliq.app`). Building from source with
+  `flutter build macos` stays supported.
 - iOS is **not distributed yet** (only `flutter build ios --no-codesign` is run, as a build check).
   There is no binary release: installing on a device needs a provisioning profile, i.e. an Apple
   Developer team. The Xcode target carries the real bundle id `com.moradzadeh67.veliq` and the D-013
@@ -133,12 +134,24 @@ the keystore, `android/key.properties` or a password.
    flutter build macos --release        # → build/macos/Build/Products/Release/veliq.app
    lipo -archs build/macos/Build/Products/Release/veliq.app/Contents/MacOS/veliq   # expect: x86_64 arm64
    codesign --verify --deep --strict build/macos/Build/Products/Release/veliq.app   # ad-hoc signature
-   cd build/macos/Build/Products/Release \
-     && ditto -c -k --sequesterRsrc --keepParent veliq.app /tmp/Veliq-<version>-macos-universal.zip \
-     && shasum -a 256 /tmp/Veliq-<version>-macos-universal.zip > /tmp/Veliq-<version>-macos-universal.zip.sha256
+   # every Mach-O must be universal (the Intel slice is what Intel Macs run):
+   find build/macos/Build/Products/Release/veliq.app -type f | while read f; do
+     file -b "$f" | grep -q Mach-O && echo "$(lipo -archs "$f")  $f"; done
+   # optional: prove the Intel slice starts (Rosetta on Apple Silicon)
+   (cd build/macos/Build/Products/Release && arch -x86_64 ./veliq.app/Contents/MacOS/veliq &)
+   # package a DMG with the usual drag-to-Applications helper
+   rm -rf /tmp/veliq-dmg && mkdir -p /tmp/veliq-dmg \
+     && cp -R build/macos/Build/Products/Release/veliq.app /tmp/veliq-dmg/ \
+     && ln -s /Applications /tmp/veliq-dmg/Applications \
+     && hdiutil create -volname "Veliq <version>" -srcfolder /tmp/veliq-dmg -ov -format UDZO \
+        /tmp/Veliq-<version>-macos-universal.dmg \
+     && shasum -a 256 /tmp/Veliq-<version>-macos-universal.dmg \
+        > /tmp/Veliq-<version>-macos-universal.dmg.sha256
    ```
-   Users unzip it and right-click → **Open** once; `xattr -dr com.apple.quarantine veliq.app` is the
-   fallback. Real notarization needs a paid Apple Developer account (not set up).
+   Mount it once to confirm the app inside is still universal and still verifies, then detach.
+   Users open the DMG, drag the app to *Applications* and right-click → **Open** once;
+   `xattr -dr com.apple.quarantine /Applications/veliq.app` is the fallback. Real notarization needs a
+   paid Apple Developer account (not set up).
 7. **Publish** (owner only):
    ```bash
    git checkout main && git merge --ff-only release-1.2.0
@@ -148,7 +161,7 @@ the keystore, `android/key.properties` or a password.
      build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk{,.sha256} \
      build/app/outputs/flutter-apk/app-x86_64-release.apk{,.sha256} \
      build/app/outputs/bundle/release/app-release.aab{,.sha256} \
-     /tmp/Veliq-<version>-macos-universal.zip{,.sha256} \
+     /tmp/Veliq-<version>-macos-universal.dmg{,.sha256} \
      --title "Veliq <version>" --notes-file release_notes_<version>.md
    ```
 8. **Post-release:** confirm `Analyze & test` and the Pages deployment are green, then update
@@ -238,11 +251,12 @@ Also outstanding for the user: GitHub repository **About/Topics** (browser), ite
 ## Released
 - `v1.2.0` (2026-10-25): free translation + safer Android OCR — keyless Google Translate default, confidence-based
   Android OCR routing (ML Kit ≥0.70 / competitor + explicit), line rejoin before translation, same-lang guard.
-  Per-ABI APKs (`.sha256` each) + AAB (78.6 MB) + **macOS universal zip** (19.5 MB, Intel + Apple Silicon, ad-hoc
-  signed; verified to launch). Signed APKs (`1332bc48…a651af`). Smoke-tested on device — pass.
+  Per-ABI APKs (`.sha256` each) + **macOS universal DMG** (20.4 MB, Intel `x86_64` + Apple Silicon `arm64`,
+  ad-hoc signed, mounts and verifies; the Intel slice launches under Rosetta). APKs signed
+  (`1332bc48…a651af`) and smoke-tested on device — pass.
   Aggregate Gradle (`./gradlew testDebugUnitTest`) verified on JBR 25 / Java 21: 244 JVM tests, 0 failures.
-  Published: tag `v1.2.0`, GitHub release (3 APK + 3 .sha256 + AAB + AAB.sha256 + macOS zip + zip.sha256),
-  CI `Analyze & test` + Pages green.
+  Published: tag `v1.2.0`, GitHub release (3 APK + 3 .sha256 + macOS DMG + DMG.sha256; the AAB is
+  deliberately **not** attached because it cannot be installed), CI `Analyze & test` + Pages green.
 - `v1.1.0` (2026-10-24): multi-language input — 14-language source catalog with Auto-detect, per-platform
   OCR capability query, an iOS Vision OCR backend, the source language Gemini detects shown in the result
   and History, and the Settings/iOS wording fixes. Per-ABI APKs (`.sha256` each) + AAB.

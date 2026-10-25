@@ -48,6 +48,9 @@ misread" message, never as gibberish.
 - **macOS is not notarized** (no Apple Developer account behind the build): the first launch needs
   right-click → **Open**. **iOS has no binary release** — it runs from source with your own Apple
   Developer team, because installing on a device needs a provisioning profile.
+- **Intel Macs:** the DMG is a universal binary (every framework ships `x86_64` as well as `arm64`) and
+  the Intel slice was verified to launch under Rosetta on Apple Silicon. It has not been run on a
+  physical Intel Mac yet, so please report anything that misbehaves.
 
 ### Downloads
 
@@ -56,11 +59,10 @@ misread" message, never as gibberish.
 | `app-arm64-v8a-release.apk` | Android | any recent phone (recommended) |
 | `app-armeabi-v7a-release.apk` | Android | older 32-bit devices |
 | `app-x86_64-release.apk` | Android | emulators |
-| `Veliq-1.2.0-macos-universal.zip` | macOS 14+ | one build for **both** Apple Silicon and Intel Macs |
-| `app-release.aab` | Android (Play) | store uploads / archives only — **not installable** on a device |
+| `Veliq-1.2.0-macos-universal.dmg` | macOS 14+ | one file for **both** Intel and Apple Silicon Macs |
 
 Install the APK over a previous GitHub build of `com.moradzadeh67.veliq`; the APKs are signed with the
 same upload key, so your history and settings survive the update.
 
-The macOS zip is ad-hoc signed. Unzip it, then right-click the app → **Open** the first time; if macOS
-still refuses, run `xattr -dr com.apple.quarantine veliq.app`.
+The macOS DMG is ad-hoc signed: open it, drag **veliq** into *Applications*, then right-click the app →
+**Open** the first time. If macOS still refuses, run `xattr -dr com.apple.quarantine /Applications/veliq.app`.
