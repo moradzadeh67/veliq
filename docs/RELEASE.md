@@ -217,10 +217,12 @@ Also outstanding for the user: GitHub repository **About/Topics** (browser), ite
    Camera capture stays device-only (T-118 dropped) and has never been run on a physical iPhone.
 
 ## Released
-- `v1.2.0` (2026-10-25): free translation + safer Android OCR — a keyless Google Translate provider as
-  the default for fresh installs, confidence-based routing between the two Android engines, OCR line
-  unwrapping before translation, and a clear error when the source and target languages are the same.
-  Per-ABI APKs (`.sha256` each) + AAB.
+- `v1.2.0` (2026-10-25): free translation + safer Android OCR — keyless Google Translate default, confidence-based
+  Android OCR routing (ML Kit ≥0.70 / competitor + explicit), line rejoin before translation, same-lang guard.
+  Per-ABI APKs (`.sha256` each) + AAB (78.6 MB). Signed (`1332bc48…a651af`). Smoke-tested on device — pass.
+  Aggregate Gradle (`./gradlew testDebugUnitTest`) verified on JBR 25 / Java 21: 244 JVM tests, 0 failures.
+  Published: tag `v1.2.0`, GitHub release (3 APK + 3 .sha256 + AAB + AAB.sha256), CI `Analyze & test` + Pages green.
+- `v1.1.0` (2026-10-24): multi-language input
 - `v1.1.0` (2026-10-24): multi-language input — 14-language source catalog with Auto-detect, per-platform
   OCR capability query, an iOS Vision OCR backend, the source language Gemini detects shown in the result
   and History, and the Settings/iOS wording fixes. Per-ABI APKs (`.sha256` each) + AAB.
