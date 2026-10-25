@@ -53,9 +53,9 @@ Select any region of your screen — or pick / take a photo — extract its text
 
 As a developer working on macOS and mobile devices, I frequently encounter English text on my screen — whether in documents, code comments, design specs, or system dialogs — that I want to extract and translate to Persian instantly. Existing browser-based translation tools require leaving the current app context, manually cropping or uploading screenshots to third-party cloud services, or retyping text by hand.
 
-I built Veliq to solve this with a fast, keyboard-driven, local-first workflow. By combining native screen capture (ScreenCaptureKit on macOS, Photo Picker & Camera on mobile) with on-device Optical Character Recognition (Apple Vision / ML Kit), Veliq extracts on-screen text instantly without writing temporary image files to disk.
+I built Veliq to solve this with a fast, keyboard-driven, local-first workflow. By combining native screen capture (ScreenCaptureKit on macOS, Photo Picker & Camera on mobile) with on-device Optical Character Recognition (Apple Vision, ML Kit and Tesseract), Veliq extracts on-screen text instantly without writing temporary image files to disk.
 
-Only the clean extracted text is sent to the Gemini API using your own private API key, keeping your workflow private, efficient, and seamlessly integrated into macOS, iOS, and Android.
+Only the clean extracted text ever leaves the device, and only on its way to the translation provider: Google Translate's free endpoint by default (no account, no key), or optionally Google Gemini with your own key, or Apple's on-device engine — keeping your workflow private, efficient and integrated into macOS, iOS and Android.
 
 ## 🎬 Demo
 
@@ -82,7 +82,7 @@ A short tour of the macOS flow: start on the Translate tab, drag a region over t
 |:---:|
 | ![Home](assets/screenshots/ios/home.png) |
 
-> 💡 **Note:** Screenshots live in `assets/screenshots/`, organised by platform. Remaining iOS screenshots (picker, result, settings) will be added after the P9 manual-verification pass.
+> 💡 **Note:** Screenshots live in `assets/screenshots/`, organised by platform.
 
 ## ✨ Features
 
@@ -93,24 +93,24 @@ A short tour of the macOS flow: start on the Translate tab, drag a region over t
 
 ### 📷 Photos & Camera (iOS)
 - Pick a photo from the library (`PHPickerViewController`, no permissions needed) or take a new photo with the camera.
-- On-device Apple Vision OCR and Gemini Persian translation.
+- On-device Apple Vision OCR, then translation through the provider you pick — Google Translate needs no key.
 - `SafeArea`-aware layout with a native iOS bottom `NavigationBar`.
 
 ### 🤖 Photos & Camera (Android)
 - Pick a photo with the system **Photo Picker** (no permissions required) or capture via camera (`ACTION_IMAGE_CAPTURE`).
-- On-device OCR using bundled **ML Kit Text Recognition** (Latin script).
-- **Gemini REST API** as the primary translation provider.
-- Full Android Keystore encryption for secure API key storage.
+- On-device OCR with two bundled engines: **ML Kit** for Latin script and **Tesseract** for Persian, Arabic and Russian. Both run offline and the photo stays in memory.
+- **Google Translate (free, no key)** works out of the box; **Google Gemini** with your own key is optional.
+- Optional API keys are encrypted with the Android Keystore.
 
 ### 🔍 OCR & Translation
-- On-device OCR: **Apple Vision** on macOS/iOS, **ML Kit** on Android.
-- Translation via **Google Gemini API** using **your own private API key**.
-- **Auto-detect tells you what it found:** with the source set to Auto-detect, Gemini reports the language it detected, so the result reads `Original (French)` and history records `French → Persian` instead of a generic "Auto-detect".
+- On-device OCR: **Apple Vision** on macOS/iOS; **ML Kit** plus **Tesseract** on Android, confidence-routed.
+- Three providers: **Google Translate (free, no key)** — the default for fresh installs — **Google Gemini** with your own key, and **Apple's on-device engine** on macOS 26+.
+- **Auto-detect tells you what it found:** with the source set to Auto-detect, the provider reports the language it detected (Gemini and Google Translate do; Apple's engine cannot), so the result reads `Original (French)` and history records `French → Persian` instead of a generic "Auto-detect".
 - Beautiful right-to-left (RTL), justified Persian result view with copy actions for both original and translated text.
 
 ### 📚 History & Settings
 - Local, deletable translation history stored in Application Support (`history.json`).
-- API key stored in the **macOS Keychain** (legacy keychain for non-paid dev accounts) / **Android Keystore**.
+- An API key, added only if you use Gemini, stored in the **macOS Keychain** (legacy keychain for non-paid dev accounts) / **Android Keystore**.
 - Persistent language pair and provider preferences via `shared_preferences`.
 
 ### ⌨️ Keyboard Shortcuts (macOS)
@@ -144,8 +144,11 @@ Veliq is designed with first-class Persian (Farsi) localization:
 - [ ] **P11 — Shortcuts:** System-wide capture hotkey
 - [x] **P12 — Android v1:** Photo Picker, Camera, ML Kit OCR & Keystore
 - [x] **P15 — Multi-language input:** 14-language catalog, Auto-detect source, per-platform OCR capability query, iOS Vision OCR handler
-- [ ] **More OCR scripts & offline translation:** Arabic/Persian and Cyrillic OCR on Android (extra ML Kit models, larger APK) and an offline translation engine, gated on a quality check (see the P15 notes in [TASKS.md](TASKS.md))
-- [x] **Public Release:** signed Android APKs + GitHub release `v1.1.0` (macOS/iOS stay build-from-source) — [docs/RELEASE.md](docs/RELEASE.md)
+- [ ] **Better printed-Russian OCR:** one Tesseract language per run plus image preprocessing (grayscale, upscale, contrast) — accuracy on real photographs varies today
+- [ ] **More scripts on Android:** Chinese, Japanese, Korean and Devanagari recognition, which needs extra Tesseract models and more APK size
+- [ ] **Offline translation:** gated on a blind quality comparison against the cloud providers (see the P15 notes in [TASKS.md](TASKS.md))
+- [x] **P16 — Free translation + safer Android OCR:** keyless Google Translate provider, confidence-based Android OCR routing, OCR line unwrapping
+- [x] **Public Release:** signed Android APKs + GitHub release `v1.1.0`, current `v1.2.0` (macOS/iOS stay build-from-source) — [docs/RELEASE.md](docs/RELEASE.md)
 
 The active task list is tracked in [TASKS.md](TASKS.md).
 
@@ -153,8 +156,8 @@ The active task list is tracked in [TASKS.md](TASKS.md).
 
 - **Hand-written BLoC architecture** — The app uses pure Dart state classes (`TranslateFlowBloc`, `OcrBloc`, `HistoryBloc`, `SettingsBloc`) instead of pulling in `flutter_bloc`. For a project of this size that keeps the state layer small, predictable and fully testable with plain fakes.
 - **`pigeon` over raw `MethodChannel`s** — The Dart ↔ Swift/Kotlin bridge is generated from a single interface definition, so every native call is compile-time type-checked instead of string-matched at runtime.
-- **On-device OCR first** — Apple Vision (macOS/iOS) and ML Kit (Android) run *before* any network call. The image bytes never leave the process; only the recognised text is sent to the provider.
-- **`flutter_secure_storage` over `shared_preferences`** — API keys go to the macOS Keychain / Android Keystore; `shared_preferences` is used only for non-sensitive preferences (language pair, provider).
+- **On-device OCR first** — Apple Vision (macOS/iOS) and ML Kit + Tesseract (Android) run *before* any network call. The image bytes never leave the process; only the recognised text is sent to the provider.
+- **`flutter_secure_storage` over `shared_preferences`** — an API key, if the user adds one for Gemini, goes to the macOS Keychain / Android Keystore; `shared_preferences` is used only for non-sensitive preferences (language pair, provider).
 - **A local JSON file for history** — `history.json` in the application-support directory keeps the app dependency-free and the data inspectable and deletable by the user.
 
 ## 📦 Key Dependencies
@@ -164,7 +167,7 @@ The active task list is tracked in [TASKS.md](TASKS.md).
 | `pigeon` | `^29.0.8` | Type-safe code generator for Dart ↔ Swift / Kotlin native IPC |
 | `flutter_secure_storage` | `^11.0.0` | Encrypted API key storage in the macOS Keychain and Android Keystore |
 | `shared_preferences` | `^2.3.3` | Persistent storage for app preferences and provider settings |
-| `http` | `^1.2.2` | Minimal HTTP client for Google Gemini REST API requests |
+| `http` | `^1.2.2` | Minimal HTTP client for the Gemini and Google Translate requests |
 | `path_provider` | `^2.1.5` | Locates the app-private directory for the local `history.json` |
 
 > 💡 **Note:** Versions are the constraints declared in `pubspec.yaml`. Resolved versions at the time the P12 build shipped (`pubspec.lock`): `pigeon` 29.0.8, `flutter_secure_storage` 11.2.0, `shared_preferences` 2.5.6, `http` 1.6.0, `path_provider` 2.1.6.
@@ -193,23 +196,26 @@ lib/
 ├── features/                          → Feature-first UI and BLoC implementations
 │   ├── home/                          → Navigation shell (Rail / Bottom Bar, Cmd+1/2/3)
 │   ├── capture/                       → Screen region-selection overlay
-│   ├── translation/                   → Translate flow: capture -> OCR -> Gemini -> save
+│   ├── translation/                   → Translate flow: capture -> OCR -> translate -> save
 │   ├── ocr/                           → OCR state management
 │   ├── history/                       → History view & entry deletion
 │   └── settings/                      → API key management & provider selection
-├── services/                          → Interfaces + Pigeon native impls + Gemini REST client
+├── services/                          → Interfaces + Pigeon native impls + translation providers
 │   ├── selection/capture/ocr/...      → Service abstractions (faked in the test suite)
 │   ├── pigeon_*.dart                  → Pigeon Swift/Kotlin implementations
-│   ├── gemini_translation_service.dart→ Gemini REST client
+│   ├── switching_translation_service.dart → Picks the provider stored in Settings
+│   ├── google_translate_free_service.dart → Google Translate, keyless
+│   ├── gemini_translation_service.dart→ Gemini REST client (user key)
 │   ├── json_history_repository.dart   → history.json in Application Support
 │   └── keychain_api_key_store.dart    → Keychain / Keystore secure storage
-├── models/                            → Pure Dart data models (ScreenRegion, TranslationEntry)
+├── models/                            → Pure Dart data models (ScreenRegion, TranslationEntry, Language/LanguageCatalog)
 └── pigeon/messages.g.dart             → Generated Pigeon bindings (do not edit)
 
 macos/Runner/                          → Swift: ScreenCaptureKit, Vision OCR, Overlay Window
 ios/Runner/                            → Swift: PHPicker, Camera ImageSourceHandler, Vision OCR
-android/app/                           → Kotlin: Photo Picker, Camera FileProvider, ML Kit OCR
+android/app/                           → Kotlin: Photo Picker, Camera FileProvider, ML Kit + Tesseract OCR
 pigeons/messages.dart                  → Pigeon interface definitions
+tool/gen_pigeon.sh                     → Regenerates the bindings (CI fails when they are stale)
 test/                                  → Offline unit and widget test suite
 ```
 
@@ -217,9 +223,9 @@ test/                                  → Offline unit and widget test suite
 
 | Platform | Status | Notes |
 |---|:---:|---|
-| 🖥️ macOS | ✅ Works end to end | macOS 14.6+ — region select → Vision OCR → Gemini → history |
-| 🤖 Android | ✅ v1 Done (P12) | Photo Picker + ML Kit OCR (Latin) + Gemini; emulator-verified; signed APK published in [the latest release](https://github.com/moradzadeh67/veliq/releases/latest) |
-| 📱 iOS | 🟡 Verification pending | P7–P9 code complete; UI simulator-verified (iPhone 17 Pro Max); manual checks outstanding |
+| 🖥️ macOS | ✅ Works end to end | macOS 14.6+ — region select → Vision OCR → translation provider → history |
+| 🤖 Android | ✅ Works end to end | Photo Picker + ML Kit/Tesseract OCR + keyless translation; verified on the emulator and on a physical Galaxy S24; signed APK in [the latest release](https://github.com/moradzadeh67/veliq/releases/latest) |
+| 📱 iOS | 🟡 Simulator-verified | P7–P9 complete; picker, history and the first Vision OCR run verified on the iOS 26.5 simulator. Camera capture is untested on a physical iPhone. |
 | 🪟 Windows | ❌ Out of scope | Desktop target limited to macOS |
 | 🐧 Linux | ❌ Out of scope | Out of scope |
 
@@ -241,8 +247,8 @@ test/                                  → Offline unit and widget test suite
 
 > [!IMPORTANT]
 > - **In-Memory Image Processing:** Captured screenshots and selected photos are kept solely in RAM and discarded immediately after OCR extraction.
-> - **Text-Only Cloud Transmission:** Only the recognized text string is sent to Google's Gemini API over HTTPS using your personal API key. No image files are ever uploaded.
-> - **Encrypted Credentials:** Your Gemini API key is stored securely in the macOS Keychain / Android Keystore — never in plain text.
+> - **Text-Only Cloud Transmission:** Only the recognized text string leaves the device, and only towards the provider you choose — Google Translate's endpoint (the default, no key) or Gemini with your own key. Apple's on-device provider sends nothing. No image files are ever uploaded.
+> - **Encrypted Credentials:** An API key, if you add one for Gemini, is stored securely in the macOS Keychain / Android Keystore — never in plain text.
 > - **Local Data:** Translation history is saved locally in Application Support (`history.json`) and can be cleared at any time from the History tab.
 
 Details: [docs/PRIVACY.md](docs/PRIVACY.md).
@@ -250,7 +256,11 @@ Details: [docs/PRIVACY.md](docs/PRIVACY.md).
 ## 🚀 Installation & Running
 
 > [!NOTE]
-> The signed Android APKs for **v1.1.0** are on the
+> **No API key needed.** Install, pick a language pair and start translating — the default provider
+> (Google Translate, free) works without an account. A Gemini key is only required if you switch to
+> Gemini in Settings.
+>
+> The signed Android APKs for **v1.2.0** are on the
 > [Releases page](https://github.com/moradzadeh67/veliq/releases/latest) (`minSdk 24`). Pick the file
 > that matches your phone's CPU: `app-arm64-v8a-release.apk` (any recent phone),
 > `app-armeabi-v7a-release.apk` (older 32-bit devices) or `app-x86_64-release.apk` (emulators). macOS
@@ -264,7 +274,8 @@ Details: [docs/PRIVACY.md](docs/PRIVACY.md).
   - **macOS**: Xcode 15+ (development used Xcode 27.0), macOS 14.6+
   - **iOS**: Xcode 15+, iOS 16.0+, CocoaPods
   - **Android**: Android Studio / Android SDK 24+ (`minSdk 24`)
-- A Google Gemini API key (get one from [Google AI Studio](https://aistudio.google.com/apikey))
+- Nothing else: the default provider (Google Translate, free) needs no key. Optionally, a
+  [Google Gemini API key](https://aistudio.google.com/apikey) if you prefer the Gemini provider.
 
 ### Getting Started
 
@@ -311,7 +322,7 @@ The test suite runs 100% offline using service-interface fakes. No permissions, 
 # Analyze code for errors and lint compliance (must report zero issues)
 flutter analyze
 
-# Run unit and widget tests (199 passing tests)
+# Run unit and widget tests (268 passing tests)
 flutter test
 ```
 
@@ -344,7 +355,7 @@ Then build and verify the signed artifacts:
 ```bash
 flutter build appbundle --release   # → build/app/outputs/bundle/release/app-release.aab
 flutter build apk --release         # → universal build/app/outputs/flutter-apk/app-release.apk
-flutter build apk --release --split-per-abi  # → per-ABI APKs, what the 1.1.0 release ships
+flutter build apk --release --split-per-abi  # → per-ABI APKs, what the 1.2.0 release ships
 
 # Confirm which key signed it
 $ANDROID_HOME/build-tools/<version>/apksigner verify --print-certs \
@@ -379,14 +390,18 @@ wired into the release build type in `android/app/build.gradle.kts` (`proguardFi
 
 > [!NOTE]
 > No release pipeline exists yet (see [docs/RELEASE.md](docs/RELEASE.md)). There is no web target,
-> and no secrets or API keys live in this repository — the app asks for the user's own Gemini key at runtime.
+> and no secrets or API keys live in this repository — the default provider needs none, and an optional
+> Gemini key is entered by the user at runtime.
 
 ## ⚠️ Known Limitations
 
 - **iOS Camera in Simulator:** The iOS Simulator does not support camera capture hardware; camera workflows require a physical iPhone.
-- **iOS Verification:** The P9 manual simulator checks (cancel path, revoked-permission message, history across restart) are still open.
-- **Android OCR Scope:** The bundled ML Kit model is Latin-script only (`en`, `de`, `fr`, `es`, `it`, `pt`, `nl`, `tr`). Chinese, Japanese, Korean, Russian, Arabic and Persian need additional ML Kit recognizers, so those languages are disabled in Settings on Android.
-- **Persian OCR depends on the platform:** Apple Vision reports its supported languages at runtime, so what Veliq offers on macOS/iOS is exactly what that OS release supports. Apple's on-device *translation* still has no Persian, so the Gemini provider stays the default.
+- **iOS Verification:** The iOS target is verified on the simulator only — picker cancel, history across restarts and the first Vision OCR run (iOS 26.5). Camera capture has never been run on a physical iPhone.
+- **Android OCR Scope:** The bundled ML Kit model reads Latin scripts (`en`, `de`, `fr`, `es`, `it`, `pt`, `nl`, `tr`); a bundled Tesseract engine adds Persian, Arabic and Russian (`fa`, `ar`, `ru`). Chinese, Japanese and Korean are disabled in Settings on Android because Veliq ships no model for them (Devanagari is not in the catalog at all).
+- **Handwriting and blackletter are unreliable:** handwriting, Fraktur/Gothic fonts and heavily stylised text are frequently misread by both Android engines. Veliq reports that the photo was probably misread instead of showing gibberish, but it will not translate them.
+- **Printed Russian accuracy depends on the photo:** shadows, skew and low resolution hurt Tesseract. Image preprocessing is on the roadmap; the bundled models are the same on every device.
+- **Persian OCR depends on the platform:** Apple Vision reports its supported languages at runtime, so what Veliq offers on macOS/iOS is exactly what that OS release supports.
+- **Apple's on-device translation** needs macOS 26+, cannot be combined with Auto-detect (it needs a concrete source language) and has no Persian. The iOS target does not register Apple's translation channel, so choosing it there reports that translation is not available in this build.
 - **Unsigned macOS Builds:** macOS Gatekeeper flags unsigned developer builds on first double-click launch, and there is no notarized desktop build yet. Android release builds are signed with the project upload key.
 
 ## ❓ Troubleshooting & FAQ
@@ -400,31 +415,37 @@ Go to **System Settings → Privacy & Security → Screen Recording**, enable **
 <details>
 <summary><b>2. Are my screenshots or photos uploaded to cloud servers?</b></summary>
 
-No. Screenshots and photos are held in system RAM during local OCR text extraction and discarded immediately. Only the extracted plain-text string is sent to the Gemini API.
+No. Screenshots and photos are held in system RAM during local OCR text extraction and discarded immediately. Only the extracted plain-text string is sent on, and only to the translation provider you selected — Google Translate (the default) or Gemini. Apple's on-device provider sends nothing at all.
 </details>
 
 <details>
-<summary><b>3. How do I get a free Google Gemini API Key?</b></summary>
+<summary><b>3. Do I need an API key?</b></summary>
 
-Visit [Google AI Studio](https://aistudio.google.com/apikey), log in with a Google account, create an API key, and paste it into Veliq's **Settings** tab.
+No. Fresh installs use **Google Translate (free)**, which needs no account and no key — it is also the provider that works from Iran without a VPN. A key is only needed if you switch to **Gemini**, and existing installs keep whatever provider they had already stored.
 </details>
 
 <details>
-<summary><b>4. Where is my translation history stored?</b></summary>
+<summary><b>4. How do I get a Google Gemini API key?</b></summary>
+
+Visit [Google AI Studio](https://aistudio.google.com/apikey), log in with a Google account, create an API key, and paste it into Veliq's **Settings** tab. Note that Gemini is only reachable from Iran through a VPN; the free Google Translate provider is not affected.
+</details>
+
+<details>
+<summary><b>5. Where is my translation history stored?</b></summary>
 
 History is stored locally in `history.json` within your OS Application Support directory (`~/Library/Containers/com.moradzadeh67.veliq/Data/Library/Application Support/com.moradzadeh67.veliq/history.json` on macOS; `/data/data/com.moradzadeh67.veliq/files/history.json` on Android). It can be deleted from the History tab.
 </details>
 
 <details>
-<summary><b>5. Why does camera capture fail on the iOS Simulator?</b></summary>
+<summary><b>6. Why does camera capture fail on the iOS Simulator?</b></summary>
 
 Apple's iOS Simulator does not emulate camera hardware (`UIImagePickerControllerSourceTypeCamera`). Use the photo library picker in the simulator or test on a physical iOS device.
 </details>
 
 <details>
-<summary><b>6. Why can't Veliq recognise Persian or Arabic text?</b></summary>
+<summary><b>7. Which languages does each platform read?</b></summary>
 
-It depends on the platform's OCR, not on the translator. On **Android** Veliq bundles two engines: **ML Kit Latin** (`en`, `de`, `fr`, `es`, `it`, `pt`, `nl`, `tr`) and **Tesseract** for the scripts ML Kit has no model for — Persian, Arabic and Russian (`fas`, `ara`, `rus`). Both run offline; the image never leaves the device. Chinese, Japanese and Korean are still macOS/iOS-only, so Settings shows those disabled on Android. On **macOS/iOS** the list comes from **Apple Vision** at runtime (`VNRecognizeTextRequest.supportedRecognitionLanguages()`), so a language is offered only if that macOS/iOS version can read it. Auto-detect is always available as the source. See D-018 in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+It depends on the platform's OCR, not on the translator. On **Android** Veliq bundles two engines: **ML Kit Latin** (`en`, `de`, `fr`, `es`, `it`, `pt`, `nl`, `tr`) and **Tesseract** for the scripts ML Kit has no model for — Persian, Arabic and Russian (`fas`, `ara`, `rus`). Both run offline; the image never leaves the device. With Auto-detect the Latin model runs first and, when its confidence is low, the Tesseract result competes with it (the higher confidence wins, and an unreadable photo is refused instead of showing gibberish). Chinese, Japanese and Korean are still macOS/iOS-only, so Settings shows those disabled on Android. On **macOS/iOS** the list comes from **Apple Vision** at runtime (`VNRecognizeTextRequest.supportedRecognitionLanguages()`), so a language is offered only if that macOS/iOS version can read it. Auto-detect is always available as the source. See D-018 in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 </details>
 
 ## 💻 Development Environment
@@ -452,12 +473,12 @@ Veliq is built with:
 - [Flutter](https://flutter.dev) & [Dart](https://dart.dev)
 - [Pigeon](https://pub.dev/packages/pigeon)
 - [Apple Vision](https://developer.apple.com/documentation/vision) & [ScreenCaptureKit](https://developer.apple.com/documentation/screencapturekit)
-- [ML Kit Text Recognition](https://developers.google.com/ml-kit/vision/text-recognition/v2)
+- [ML Kit Text Recognition](https://developers.google.com/ml-kit/vision/text-recognition/v2) & [Tesseract4Android](https://github.com/adaptech-cz/Tesseract4Android)
 - [`flutter_secure_storage`](https://pub.dev/packages/flutter_secure_storage)
 - [Google Gemini API](https://ai.google.dev/)
 
-> ℹ️ Unlike a typical open API app, Veliq needs a key: translation runs on **your own** free-tier
-> Gemini API key, entered at runtime and stored only on your device.
+> ℹ️ Veliq needs **no key** to start translating: the default provider is Google Translate's free
+> endpoint. A Gemini key is optional, entered at runtime and stored only on your device.
 
 ## 🤝 Contributing
 

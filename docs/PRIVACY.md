@@ -12,8 +12,8 @@ as long as possible.
 Target flow:
 macOS:   screen region -> local capture -> local OCR -> extracted text -> translation provider (text only) -> result
 iOS:     picked/taken photo -> local OCR -> extracted text -> translation provider (text only) -> result
-Android: picked/taken photo -> local OCR (ML Kit Latin, or Tesseract for fa/ar/ru) -> extracted text -> Gemini (text only) -> result
-         (Android v1 has Gemini only — the text always leaves the device when translating)
+Android: picked/taken photo -> local OCR (ML Kit Latin, or Tesseract for fa/ar/ru) -> extracted text -> selected provider (text only) -> result
+         (the text leaves the device whenever a cloud provider translates it — Google Translate, the default, or Gemini; Apple's on-device provider is not wired on Android)
 
 ## Screen content
 A selected region may contain sensitive information.
@@ -50,10 +50,10 @@ On Android v1 the user supplies the image; there is no region selection.
 - Preferred: Apple Vision, local processing, no network for the OCR stage.
 - Android: **two bundled, offline engines** — ML Kit Latin (`com.google.mlkit:text-recognition`)
   for `en, de, fr, es, it, pt, nl, tr` and Tesseract with the `fas`, `ara` and `rus` traineddata
-  files for Persian, Arabic and Russian (D-016, T-163). Both run in-process, need no network, and
-  are the only addition: nothing is downloaded, nothing is uploaded, and the traineddata files are
-  read-only assets copied into the app's private storage on first use. Chinese, Japanese and Korean
-  are not bundled, so those languages stay unavailable on Android.
+  files for Persian, Arabic and Russian (D-019). Both run in-process and need no network: nothing is
+  downloaded, nothing is uploaded, and the traineddata files are read-only assets copied into the
+  app's private storage on first use. Chinese, Japanese and Korean are not bundled, so those
+  languages stay unavailable on Android.
 - The OCR service returns text and relevant metadata and does not retain the source image unnecessarily.
 
 ## Translation
@@ -124,7 +124,8 @@ is the only thing that decides whether text leaves the machine.
 
 ## Logging
 Production logs must avoid: screenshots, complete OCR output (unless intentionally enabled
-for debugging), API keys, tokens, unnecessary personal data.
+for debugging), API keys, tokens, unnecessary personal data. Android's OCR routing log
+(`Log.d("VeliqOcr", …)`) is numbers only — confidences and text lengths — never the recognised text.
 Debug logging must be easy to disable or remove before release.
 
 ## Analytics and tracking

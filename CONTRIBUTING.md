@@ -37,7 +37,9 @@ Guidelines:
 - Flutter 3.47.2 / Dart 3.13.2.
 - macOS debug rebuilds are treated as a new app by the system: Screen Recording permission must be
   re-granted and the Keychain may re-prompt for the API key after each rebuild.
-- Android release builds are debug-signed for now — see the Release Signing section of the README.
+- Android release builds are signed with the project upload key when `android/key.properties` is
+  present, and fall back to the debug key otherwise — see the Release Signing section of the README.
+- Regenerate the Pigeon bindings with `bash tool/gen_pigeon.sh`; CI fails on drift.
 
 ## License
 

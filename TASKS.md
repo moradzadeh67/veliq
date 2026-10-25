@@ -424,7 +424,7 @@ Order: T-150 -> T-151 -> T-152 -> T-153 -> T-154 -> T-155 -> T-156.
 
 ---
 
-## P16 — Free translation + safer Android OCR (DOING)
+## P16 — Free translation + safer Android OCR (DONE 2026-10-24)
 
 Goal: translation that needs no API key (Google Translate's free web endpoint), and Android
 OCR that stops trusting a low-confidence ML Kit result. Plus wording fixes.
@@ -434,7 +434,10 @@ Translate web endpoint works without one. Separately, on a Persian photo with so
 Auto-detect, ML Kit returns non-empty junk Latin letters, so the Tesseract fallback never runs
 and the junk gets "translated".
 
-Order: T-164 -> T-165 -> T-166 -> T-167.
+Order: T-164 -> T-165 -> T-166 -> T-167, plus T-168 after the on-device run exposed two defects.
+
+Status: DONE 2026-10-24 — all five tasks complete; `flutter analyze` clean, 268/268 Dart tests, 12/12
+Kotlin routing tests. `pubspec.yaml` is still `1.1.0+3`; the bump to `1.2.0+4` happens in the release-prep phase.
 
 ### T-164 · [M] "Google Translate (free)" provider
 - Files: lib/services/google_translate_free_service.dart (new), lib/services/settings_repository.dart, lib/services/switching_translation_service.dart, lib/main.dart, lib/features/settings/*, lib/features/translation/* (key checks only), test/services/google_translate_free_service_test.dart (new), tests, docs/PRIVACY.md, docs/ARCHITECTURE.md, README.md

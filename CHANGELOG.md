@@ -5,6 +5,49 @@ All notable changes to Veliq are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-10-25
+
+### Added
+- **Translation without an API key.** A third provider, Google Translate (free), talks to Google's
+  web client endpoint and needs no account and no key. It is the default for **fresh installs**,
+  which also makes Veliq usable from Iran without a VPN; an existing install keeps the provider it
+  already had. Gemini (your own key) and Apple's on-device engine are unchanged (T-164, D-020).
+- **Android OCR confidence routing.** Source = Auto-detect now compares both bundled engines instead
+  of trusting the Latin model: ML Kit is accepted at confidence >= 0.70, otherwise Tesseract
+  (`rus+fas+ara`) also runs and the better valid reading wins. A winner below 0.45 is reported as an
+  unreadable photo instead of being shown as a translation. A Tesseract result only competes when it
+  has a comparable amount of text (`max(10, 30 % of the ML Kit length)` characters), so a confident
+  three-letter fragment can no longer beat a correct paragraph (T-165, T-168, D-021).
+- **OCR line breaks are rejoined for Google Translate.** Hard-wrapped lines used to be translated one
+  by one ("By pitching the tailfinishing…"); blank lines still separate paragraphs, and a line that
+  ends a sentence or a list item keeps its break. Gemini and Apple receive the text unchanged (T-168).
+
+### Changed
+- Settings shows the Gemini API-key fields only when Gemini is the selected provider, and describes
+  the keyless provider as needing no setup.
+- The Android "no text found" guidance and the release notes no longer claim that Persian, Arabic and
+  Russian are read without qualification: an explicit source remains the most reliable choice, and
+  handwriting is out of scope.
+
+### Fixed
+- **A non-Latin photo on Auto-detect is no longer shown as gibberish.** On Android a Persian, Arabic
+  or Russian photo was "read" as look-alike Latin letters and the junk reached the translator; the
+  confidence routing above, together with the existing writing-system check, now yields either real
+  text or a clear "the photo was probably misread" message (T-162, T-165, T-168).
+- **Source equal to target is rejected before OCR** with a readable message instead of translating a
+  language into itself (T-166).
+
+### Known limitations
+- **Handwriting and blackletter (Fraktur) are not supported** — both engines misread them.
+- **Printed Russian accuracy varies with the photo** (shadows, skew, low resolution). Image
+  preprocessing and one Tesseract language per run are on the roadmap.
+- **Chinese, Japanese, Korean and Devanagari are unreadable on Android**; macOS/iOS read them through
+  Apple Vision.
+- **iOS camera capture has not been tested on a physical iPhone**, and macOS/iOS are still built from
+  source (no notarized desktop build).
+- The free Google Translate endpoint is unofficial: it can be rate-limited or change without notice.
+  Gemini remains the supported fallback.
+
 ## [1.1.0] - 2026-10-24
 
 ### Added
@@ -71,6 +114,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Photo Picker / Camera input on iOS and Android with ML Kit OCR, translation history and a settings
   screen.
 
+[1.2.0]: https://github.com/moradzadeh67/veliq/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/moradzadeh67/veliq/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/moradzadeh67/veliq/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/moradzadeh67/veliq/releases/tag/v1.0.0

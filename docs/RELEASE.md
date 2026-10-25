@@ -1,13 +1,15 @@
 # Veliq — Release and Distribution
 
 ## Status
-Active as of 2026-10-24: the public GitHub releases ship a **signed** Android APK — `v1.1.0` (current:
-multi-language input), `v1.0.1` (Android release-build hotfix) and `v1.0.0` (first release). License:
+Active as of 2026-10-25: the public GitHub releases ship **signed** Android APKs — `v1.2.0` (current:
+keyless Google Translate, confidence-routed Android OCR), `v1.1.0` (multi-language input), `v1.0.1`
+(Android release-build hotfix) and `v1.0.0` (first release). License:
 MIT (see LICENSE). The repository is public, has a description, 16 topics and a GitHub Pages site
 (https://moradzadeh67.github.io/veliq/).
 
 ## Current distribution
-- **GitHub releases** — `v1.1.0` (2026-10-23, multi-language input) ships per-ABI APKs and an AAB built
+- **GitHub releases** — `v1.2.0` (2026-10-25, free translation + safer Android OCR) and `v1.1.0`
+  (2026-10-24, multi-language input) ship per-ABI APKs and an AAB built
   from this repository and signed with the project upload key (see "Android release signing" below):
   `app-arm64-v8a-release.apk`, `app-armeabi-v7a-release.apk`, `app-x86_64-release.apk`
   (each with a `.sha256`) plus `app-release.aab`. `v1.0.1` (2026-10-16) and `v1.0.0` (2026-10-16) each
@@ -77,6 +79,52 @@ launch inside `MainActivity.configureFlutterEngine()` → `TextRecognition.getCl
   OCR code, dependencies or build configuration. Both defects above were release-only and invisible
   in debug.
 
+## Release procedure (per release, from 1.2.0)
+
+Everything below is run locally by the owner; nothing is uploaded by an agent. No step prints or copies
+the keystore, `android/key.properties` or a password.
+
+1. **Pre-flight** on the release branch: `flutter analyze` (zero issues), `flutter test` (all green),
+   `(cd android && ./gradlew :app:testDebugUnitTest)`, and `tool/gen_pigeon.sh` drift clean (CI enforces it).
+2. **Clean build** (build output is git-ignored):
+   ```bash
+   flutter clean && flutter pub get
+   flutter build appbundle --release                          # → build/app/outputs/bundle/release/app-release.aab
+   flutter build apk --release --split-per-abi                # → build/app/outputs/flutter-apk/app-*-release.apk
+   ```
+3. **Signing check** — every APK must report the upload certificate (D-009 / "Android release signing"):
+   ```bash
+   $ANDROID_HOME/build-tools/<version>/apksigner verify --print-certs \
+     build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+   ```
+   Expected SHA-256 digest: `1332bc480e4fac26acab2ad82db950501dc9643604af2e0429b28668c1a651af`.
+   If a build falls back to the debug key, `android/key.properties` is missing — stop and fix that, do not
+   publish.
+4. **Checksums** next to each artifact (one `.sha256` per file, APKs and AAB):
+   ```bash
+   cd build/app/outputs/flutter-apk
+   for f in app-*-release.apk; do shasum -a 256 "$f" > "$f.sha256"; done
+   cd ../bundle/release && shasum -a 256 app-release.aab > app-release.aab.sha256
+   ```
+5. **Smoke test** (D-017): install `app-arm64-v8a-release.apk` on the emulator or a device, launch it, wait
+   ~10 s, then `adb logcat -d | grep -E "FATAL EXCEPTION|AndroidRuntime"` must be empty and
+   `adb shell dumpsys package com.moradzadeh67.veliq | grep versionName` must show the new version.
+   `INSTALL_FAILED_UPDATE_INCOMPATIBLE` means a debug-signed build is installed: uninstall it first, then
+   install the release APK (it is upload-key signed).
+6. **Publish** (owner only):
+   ```bash
+   git checkout main && git merge --ff-only release-1.2.0
+   git tag v1.2.0 && git push origin main --tags
+   gh release create v1.2.0 \
+     build/app/outputs/flutter-apk/app-arm64-v8a-release.apk{,.sha256} \
+     build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk{,.sha256} \
+     build/app/outputs/flutter-apk/app-x86_64-release.apk{,.sha256} \
+     build/app/outputs/bundle/release/app-release.aab \
+     --title "Veliq 1.2.0" --notes-file release_notes_1.2.0.md
+   ```
+7. **Post-release:** confirm `Analyze & test` and the Pages deployment are green, then update
+   `CURRENT_TASK.md` with what shipped.
+
 ## Public repository hygiene (check BEFORE the first public push and before every release)
 1. `git ls-files` contains no secrets, keys, certificates, provisioning profiles, .env files,
    build output, IDE folders, backups or logs.
@@ -144,8 +192,10 @@ Also outstanding for the user: GitHub repository **About/Topics** (browser), ite
   plus `app-release.aab` (78.6 MB). Signed with the upload key (`1332bc48…a651af`) and smoke-tested on
   `Pixel_10_Pro_XL` (zero `FATAL EXCEPTION`). The owner also verified Persian and Russian OCR on a Galaxy
   S24 with the release APK. CI (`Analyze & test`) and Pages both green.
-- Follow-up for the next release: Auto-detect on Android still runs the Latin model first, so a Persian,
-  Arabic or Russian photo needs the language picked explicitly (T-164).
+- Follow-up for the next release: better printed-Russian OCR (one Tesseract language per run plus image
+  preprocessing), CJK/Devanagari models on Android. Auto-detect with a Persian/Arabic/Russian photo is no
+  longer a known defect: T-165/T-168 route it by confidence and refuse an unreadable photo instead of
+  showing gibberish (the Latin model still runs first, so an explicit source remains the most reliable).
 
 ## Outstanding before a public release
 1. Item 8 above (clean-machine / separate-user-account permission verification) — user's task.
@@ -157,6 +207,10 @@ Also outstanding for the user: GitHub repository **About/Topics** (browser), ite
    Camera capture stays device-only (T-118 dropped) and has never been run on a physical iPhone.
 
 ## Released
+- `v1.2.0` (2026-10-25): free translation + safer Android OCR — a keyless Google Translate provider as
+  the default for fresh installs, confidence-based routing between the two Android engines, OCR line
+  unwrapping before translation, and a clear error when the source and target languages are the same.
+  Per-ABI APKs (`.sha256` each) + AAB.
 - `v1.1.0` (2026-10-24): multi-language input — 14-language source catalog with Auto-detect, per-platform
   OCR capability query, an iOS Vision OCR backend, the source language Gemini detects shown in the result
   and History, and the Settings/iOS wording fixes. Per-ABI APKs (`.sha256` each) + AAB.

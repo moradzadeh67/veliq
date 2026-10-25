@@ -24,8 +24,23 @@ Primarily the author. Secondarily GitHub users who want a local-first screen/pho
 
 Delivered after the MVP, so no longer deferred: translation history (user-deletable), the settings
 screen, source-language selection and multi-language input — a 14-language catalog with an
-auto-detect source, per-platform OCR capability query, and the source language Gemini detects
-reported back in the result and in History (P15, T-150…T-158).
+auto-detect source, per-platform OCR capability query, and the source language the provider detects
+reported back in the result and in History (P15, T-150…T-158). P16 then added a keyless translation
+provider and confidence-based Android OCR routing (T-164…T-168).
+
+## Translation providers
+Three providers behind one `TranslationService` interface, chosen in Settings and fanned out by
+`SwitchingTranslationService`:
+- **Google Translate (free)** — `translate_a/single`, no API key; the default for **fresh installs**
+  (D-020). Unofficial endpoint: it can be rate-limited or change without notice, and it is the only
+  provider that works from Iran without a VPN. A stored provider choice is never overwritten.
+- **Google Gemini** — the user's own API key, `flutter_secure_storage`, needs a VPN in Iran.
+- **Apple (on-device)** — macOS 26+ only, needs a concrete source language (cannot take `auto`) and has
+  no Persian. The iOS target does not register Apple's translation channel, so the provider reports
+  that translation is not available in this build.
+
+Only the recognised text ever leaves the device — never the image — and the default provider sends
+nothing but that text.
 
 ## Out of scope
 Windows/Linux, accounts, cloud sync, analytics, backend, payments, saving screenshots
@@ -38,8 +53,10 @@ Apple Translation — see "Android scope (P12, v1)".
 - Do not design around App Store submission, but do not block it.
 - Distribution: GitHub first. Android releases are signed with the upload key `Veliq-upload.jks`
   (kept outside the repository; `android/key.properties` is git-ignored, with a debug fallback when
-  the file is absent). GitHub releases `v1.0.0` (first release, 2026-10-16) and `v1.0.1`
-  (Android release-build hotfix, 2026-10-16) ship the signed APK. No store listing:
+  the file is absent). GitHub releases `v1.0.0` (first release, 2026-10-16), `v1.0.1` (Android
+  release-build hotfix, 2026-10-16), `v1.1.0` (multi-language input, 2026-10-24) and `v1.2.0`
+  (keyless translation + safer Android OCR, 2026-10-25) ship the signed APK(s); current version is
+  `1.2.0+4`. No store listing:
   Google Play was explicitly declined by the owner on 2026-10-16, and the public web presence is the
   GitHub Pages landing site under `docs/` (with robots.txt + sitemap.xml).
 - Privacy rules: docs/PRIVACY.md. Permissions: docs/MACOS_PERMISSIONS.md.
@@ -59,9 +76,10 @@ iOS was added as a second target after the macOS MVP shipped.
 - **Storage**: history lives in the app's Application Support directory via `path_provider`
   (`getApplicationSupportDirectory()`, T-120/T-121).
 - **Status**: T-110..T-117 and T-119..T-123 DONE; T-118 (physical iPhone) DROPPED — no device
-  in scope, its scenarios folded into T-124; T-124 (simulator review) mostly verified 2026-10-14
-  (gallery picker works after T-127; short remainder checklist open); T-126 (iOS 16.0 floor
-  + real bundle id `com.moradzadeh67.veliq`) and T-127 (picker fix) DONE.
+  in scope, its scenarios folded into T-124; T-124 closed 2026-10-23 on the iOS 26.5 simulator
+  (picker cancel, history across restarts, first Vision OCR run); T-126 (iOS 16.0 floor + real
+  bundle id `com.moradzadeh67.veliq`) and T-127 (picker fix) DONE. Camera capture has never run on a
+  physical iPhone.
 
 ## Android scope (P12, v1)
 Android was added as a third target after the iOS port (decision D-016). v1 is photo input only:
@@ -71,19 +89,26 @@ Android was added as a third target after the iOS port (decision D-016). v1 is p
   reading (CAMERA runtime permission; camera declared optional in the Manifest so camera-less devices
   can install the app). `ActivityResultContracts.TakePicture` was not usable because `FlutterActivity`
   is not a `ComponentActivity` (deviation from the original plan, T-135).
-- **OCR**: on-device with the bundled ML Kit Latin recognizer (`com.google.mlkit:text-recognition`,
-  Latin script only), implemented directly in Kotlin behind Pigeon — no Flutter ML Kit package, so the
-  Dart layer is untouched. Only `ImageSourceApi` and `OcrApi` are registered on the Android Pigeon host.
-- **Translation**: Google Gemini only (the user's own key, `flutter_secure_storage`). The Apple
-  provider is hidden on Android.
+- **OCR**: on-device with two bundled engines, implemented directly in Kotlin behind Pigeon — no
+  Flutter OCR package, so the Dart layer is untouched. **ML Kit Latin**
+  (`com.google.mlkit:text-recognition`) reads `en, de, fr, es, it, pt, nl, tr`; **Tesseract**
+  (Tesseract4Android, `fas`/`ara`/`rus` traineddata shipped as assets) reads Persian, Arabic and
+  Russian. Routing (D-021): an explicit `fa`/`ar`/`ru` uses Tesseract only, an explicit Latin source
+  uses ML Kit only, and `auto` trusts ML Kit at confidence >= 0.70, otherwise also runs Tesseract
+  `rus+fas+ara` and keeps the better valid candidate (a Tesseract reading needs at least
+  `max(10, 30 % of the ML Kit length)` characters). A winner below 0.45 is refused as unreadable.
+  Only `ImageSourceApi` and `OcrApi` are registered on the Android Pigeon host.
+- **Translation**: Google Translate (free, default) or Gemini with the user's own key
+  (`flutter_secure_storage`). The Apple provider is hidden on Android.
 - **UI**: the mobile layout already used by iOS — bottom `NavigationBar`, no "Select region".
 - **Not in v1**: region selection, screen capture (MediaProjection + foreground service), Apple
   Translation, any new feature.
 - **Identity**: app label "Veliq" (`res/values/strings.xml`), adaptive launcher icon derived from
-  `assets/branding/logo.svg` (D-015); version is `1.0.1+2`.
+  `assets/branding/logo.svg` (D-015); version is `1.2.0+4`.
 - **Status**: P12 tasks T-131..T-139 all DONE (2026-10-15); verified end to end on the Android
   emulator (Pixel 10 Pro XL AVD), including a real Gemini translation and history surviving an app
-  restart (T-139). No physical Android device is in scope. A post-release hotfix (T-141, shipped as
+  restart (T-139). A physical Galaxy S24 was later used for field checks (Persian/Russian OCR and
+  release-APK installs, 2026-10-24), but no device is a supported test target. A post-release hotfix (T-141, shipped as
   `v1.0.1`) fixed two **release-only** defects found after v1.0.0: the missing `INTERNET` manifest
   permission (Flutter only declares it in debug/profile) and an R8 launch crash caused by ML Kit's
   reflectively-loaded internals — the keep rules live in `android/app/proguard-rules.pro` and are
