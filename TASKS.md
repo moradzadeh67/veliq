@@ -12,14 +12,14 @@ P5 History & settings ...... DONE
 P6 Polish & release ........ DONE
 P7 iOS Research ............ DONE
 P8 iOS Image acquisition ... DONE
-P9 iOS UI & storage ........ DOING
+P9 iOS UI & storage ........ DONE
 P10 Branding & icons ....... DONE
 P11 Keyboard affordances .... DOING
 P12 Android v1 .............. DONE
 P13 Public release (GitHub) .. DONE
 P14 Android release hotfix ... DONE
 P15 Multi-language input .... DONE
-P16 Free translation + safer Android OCR  DOING
+P16 Free translation + safer Android OCR  DONE
 
 ---
 
