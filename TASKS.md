@@ -159,7 +159,7 @@ P16 Free translation + safer Android OCR  DONE
 
 ---
 
-## P9 — iOS UI & storage adaptation (DOING)
+## P9 — iOS UI & storage adaptation (DONE)
 
 ### T-120 · [S] Add path_provider dependency
 - Files: pubspec.yaml
