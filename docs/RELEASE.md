@@ -86,6 +86,16 @@ the keystore, `android/key.properties` or a password.
 
 1. **Pre-flight** on the release branch: `flutter analyze` (zero issues), `flutter test` (all green),
    `(cd android && ./gradlew :app:testDebugUnitTest)`, and `tool/gen_pigeon.sh` drift clean (CI enforces it).
+   - **JDK version note**: Robolectric's Android SDK 36 runner needs **Java 21+**. On the owner's machine the
+     system JDK is 17, so the *aggregate* Gradle run (`./gradlew testDebugUnitTest`, which also builds the
+     plugins) fails inside `:shared_preferences_android` with
+     `Android SDK 36 requires Java 21 (have Java 17)`. App tests pass either way; for the full run point
+     `JAVA_HOME` at the JDK bundled with Android Studio — no project or system toolchain change needed:
+     ```bash
+     (cd android && JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" \
+        ./gradlew testDebugUnitTest)
+     ```
+     Verified 2026-10-25 on JBR 25.0.3: 244 JVM tests (`:app` 12, plugins 232), 0 failures.
 2. **Clean build** (build output is git-ignored):
    ```bash
    flutter clean && flutter pub get
