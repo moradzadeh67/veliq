@@ -14,12 +14,18 @@ MIT (see LICENSE). The repository is public, has a description, 16 topics and a 
   `app-arm64-v8a-release.apk`, `app-armeabi-v7a-release.apk`, `app-x86_64-release.apk`
   (each with a `.sha256`) plus `app-release.aab`. `v1.0.1` (2026-10-16) and `v1.0.0` (2026-10-16) each
   ship the single universal `app-release.apk` (+ `.sha256`).
-- macOS: build from source (`flutter build macos`); no code signing / notarization yet.
+- macOS: a ready-to-run **universal** build (`x86_64` + `arm64`, macOS 14+) is attached to each release
+  from 1.2.0 as `Veliq-<version>-macos-universal.zip`. It is ad-hoc signed only — not notarized — so the
+  first launch needs right-click → **Open** (or `xattr -dr com.apple.quarantine veliq.app`). Building
+  from source with `flutter build macos` stays supported.
 - iOS is **not distributed yet** (only `flutter build ios --no-codesign` is run, as a build check).
-  The Xcode target carries the real bundle id `com.moradzadeh67.veliq` and the D-013 iOS 16.0 floor
-  (T-126, 2026-10-14).
+  There is no binary release: installing on a device needs a provisioning profile, i.e. an Apple
+  Developer team. The Xcode target carries the real bundle id `com.moradzadeh67.veliq` and the D-013
+  iOS 16.0 floor (T-126, 2026-10-14).
 - Android: signed APK **and** AAB are reproducible locally; there is still **no store listing**
-  (Google Play was explicitly declined by the owner on 2026-10-16 — distribution stays on GitHub).
+  (Google Play was explicitly declined by the owner on 2026-10-16 — distribution stays on GitHub). The
+  AAB is attached for archives only: it is **not installable** on a device, so the APKs are what users
+  download.
 
 ## Future (nothing decided)
 - Code signing and notarization for Gatekeeper.
@@ -121,7 +127,19 @@ the keystore, `android/key.properties` or a password.
    `adb shell dumpsys package com.moradzadeh67.veliq | grep versionName` must show the new version.
    `INSTALL_FAILED_UPDATE_INCOMPATIBLE` means a debug-signed build is installed: uninstall it first, then
    install the release APK (it is upload-key signed).
-6. **Publish** (owner only):
+6. **macOS build** (universal, so it runs on Intel and Apple Silicon). The app is ad-hoc signed, which
+   is enough for local use but not for Gatekeeper:
+   ```bash
+   flutter build macos --release        # → build/macos/Build/Products/Release/veliq.app
+   lipo -archs build/macos/Build/Products/Release/veliq.app/Contents/MacOS/veliq   # expect: x86_64 arm64
+   codesign --verify --deep --strict build/macos/Build/Products/Release/veliq.app   # ad-hoc signature
+   cd build/macos/Build/Products/Release \
+     && ditto -c -k --sequesterRsrc --keepParent veliq.app /tmp/Veliq-<version>-macos-universal.zip \
+     && shasum -a 256 /tmp/Veliq-<version>-macos-universal.zip > /tmp/Veliq-<version>-macos-universal.zip.sha256
+   ```
+   Users unzip it and right-click → **Open** once; `xattr -dr com.apple.quarantine veliq.app` is the
+   fallback. Real notarization needs a paid Apple Developer account (not set up).
+7. **Publish** (owner only):
    ```bash
    git checkout main && git merge --ff-only release-1.2.0
    git tag v1.2.0 && git push origin main --tags
@@ -129,10 +147,11 @@ the keystore, `android/key.properties` or a password.
      build/app/outputs/flutter-apk/app-arm64-v8a-release.apk{,.sha256} \
      build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk{,.sha256} \
      build/app/outputs/flutter-apk/app-x86_64-release.apk{,.sha256} \
-     build/app/outputs/bundle/release/app-release.aab \
-     --title "Veliq 1.2.0" --notes-file release_notes_1.2.0.md
+     build/app/outputs/bundle/release/app-release.aab{,.sha256} \
+     /tmp/Veliq-<version>-macos-universal.zip{,.sha256} \
+     --title "Veliq <version>" --notes-file release_notes_<version>.md
    ```
-7. **Post-release:** confirm `Analyze & test` and the Pages deployment are green, then update
+8. **Post-release:** confirm `Analyze & test` and the Pages deployment are green, then update
    `CURRENT_TASK.md` with what shipped.
 
 ## Public repository hygiene (check BEFORE the first public push and before every release)
@@ -219,9 +238,11 @@ Also outstanding for the user: GitHub repository **About/Topics** (browser), ite
 ## Released
 - `v1.2.0` (2026-10-25): free translation + safer Android OCR — keyless Google Translate default, confidence-based
   Android OCR routing (ML Kit ≥0.70 / competitor + explicit), line rejoin before translation, same-lang guard.
-  Per-ABI APKs (`.sha256` each) + AAB (78.6 MB). Signed (`1332bc48…a651af`). Smoke-tested on device — pass.
+  Per-ABI APKs (`.sha256` each) + AAB (78.6 MB) + **macOS universal zip** (19.5 MB, Intel + Apple Silicon, ad-hoc
+  signed; verified to launch). Signed APKs (`1332bc48…a651af`). Smoke-tested on device — pass.
   Aggregate Gradle (`./gradlew testDebugUnitTest`) verified on JBR 25 / Java 21: 244 JVM tests, 0 failures.
-  Published: tag `v1.2.0`, GitHub release (3 APK + 3 .sha256 + AAB + AAB.sha256), CI `Analyze & test` + Pages green.
+  Published: tag `v1.2.0`, GitHub release (3 APK + 3 .sha256 + AAB + AAB.sha256 + macOS zip + zip.sha256),
+  CI `Analyze & test` + Pages green.
 - `v1.1.0` (2026-10-24): multi-language input — 14-language source catalog with Auto-detect, per-platform
   OCR capability query, an iOS Vision OCR backend, the source language Gemini detects shown in the result
   and History, and the Settings/iOS wording fixes. Per-ABI APKs (`.sha256` each) + AAB.
